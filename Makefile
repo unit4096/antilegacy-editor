@@ -5,13 +5,17 @@ TOL_INCLUDE_PATH = ./include/tol/
 CFLAGS = -std=c++20 -O2
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
-VulkanTest: main.cpp
-	g++ $(CFLAGS) -o VulkanTest main.cpp $(LDFLAGS) -I$(STB_INCLUDE_PATH) -I$(TOL_INCLUDE_PATH)
+editor: main.cpp
+	g++ $(CFLAGS) -o build/editor main.cpp $(LDFLAGS) -I$(STB_INCLUDE_PATH) -I$(TOL_INCLUDE_PATH)
 
-.PHONY: test clean
+.PHONY: test clean shaders
 
-test: VulkanTest
-	./VulkanTest
+test: editor
+	./build/editor
 
 clean:
-	rm -f VulkanTest
+	rm -f ./build/editor
+
+shaders:
+	glslc shaders/shader.vert -o shaders/vert.spv & glslc shaders/shader.frag -o shaders/frag.spv
+	
