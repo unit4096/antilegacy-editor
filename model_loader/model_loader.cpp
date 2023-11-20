@@ -2,10 +2,10 @@
 #include "model_loader.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "../include/tol/tiny_obj_loader.h"
+#include <tol/tiny_obj_loader.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../include/stb/stb_image.h"
+#include <stb/stb_image.h>
 
 using namespace loader;
 

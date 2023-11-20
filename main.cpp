@@ -30,8 +30,8 @@
 #include <set>
 #include <unordered_map>
 
-#include "primitives.h"
-#include "model_loader/model_loader.h"
+#include <primitives.h>
+#include <model_loader.h>
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
@@ -97,6 +97,7 @@ class HelloTriangleApplication {
 public:
     void run() {
         initWindow();
+
         initVulkan();
         mainLoop();
         cleanup();
@@ -193,7 +194,7 @@ private:
 
     void initWindow() {
         glfwInit();
-
+    
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
@@ -220,10 +221,13 @@ private:
         createCommandPool();
         createDepthResources();
         createFramebuffers();
+        // Texture loading
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
+        // Model loading
         loadModel();
+        // VK buffer creation
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -980,7 +984,6 @@ private:
 
     void loadModel() {
         loader::Loader loader;
-
         loader.loadModel(dummy_model_path.data(), indices, vertices);
     }
 
