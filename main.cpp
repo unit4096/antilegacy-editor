@@ -15,9 +15,6 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "include/stb/stb_image.h"
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -40,7 +37,7 @@ const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 
 std::string dummy_model_path = "models/viking_room.obj";
-const std::string TEXTURE_PATH = "textures/viking_room.png";
+std::string dummy_texture_path = "textures/viking_room.png";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -800,12 +797,12 @@ private:
 
     void createTextureImage() {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        VkDeviceSize imageSize = texWidth * texHeight * 4;
+        loader::Loader loader;
 
-        if (!pixels) {
-            throw std::runtime_error("failed to load texture image!");
-        }
+
+
+        unsigned char* pixels = loader.loadTexture(dummy_texture_path.data(), texWidth, texHeight, texChannels);
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -816,7 +813,7 @@ private:
             memcpy(data, pixels, static_cast<size_t>(imageSize));
         vkUnmapMemory(device, stagingBufferMemory);
 
-        stbi_image_free(pixels);
+        loader.unloadBuffer(pixels);
 
         createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
@@ -982,7 +979,7 @@ private:
     }
 
     void loadModel() {
-        loader::ModelLoader loader;
+        loader::Loader loader;
 
         loader.loadModel(dummy_model_path.data(), indices, vertices);
     }

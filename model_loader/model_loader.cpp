@@ -4,13 +4,16 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../include/tol/tiny_obj_loader.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "../include/stb/stb_image.h"
+
 using namespace loader;
 
-ModelLoader::ModelLoader() { }   
+Loader::Loader() { }   
 
-ModelLoader::~ModelLoader() { }
+Loader::~Loader() { }
 
-void ModelLoader::loadModel(char *model_path, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
+void Loader::loadModel(char *model_path, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -47,5 +50,30 @@ void ModelLoader::loadModel(char *model_path, std::vector<unsigned int> &indices
 
             indices.push_back(uniqueVertices[vertex]);
         }
+    }
+}
+
+
+unsigned char* Loader::loadTexture(char *tex_path,
+                            int &texWidth,
+                            int &texHeight,
+                            int &texChannels) {
+    
+    unsigned char* _pixels = stbi_load(tex_path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    
+    
+
+    if (!_pixels) {
+        throw std::runtime_error("failed to load texture image!");
+    }
+    
+    
+    return _pixels;
+}
+
+
+void Loader::unloadBuffer(unsigned char* _pixels){
+    if (_pixels) {
+        stbi_image_free(_pixels);        
     }
 }
