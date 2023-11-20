@@ -4,7 +4,17 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
+
+#ifndef GLM
+#define GLM
+
 #include <glm/glm.hpp>
+
+#endif
+
+
+
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 
@@ -31,6 +41,7 @@
 
 
 // #include "model_loader/model_loader.h"
+#include "primitives.h"
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -85,15 +96,15 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-struct Vertex {
-    glm::vec3 pos;
-    glm::vec3 color;
-    glm::vec2 texCoord;
+// struct Vertex {
+//     glm::vec3 pos;
+//     glm::vec3 color;
+//     glm::vec2 texCoord;
 
-    bool operator==(const Vertex& other) const {
-        return pos == other.pos && color == other.color && texCoord == other.texCoord;
-    }
-};
+//     bool operator==(const Vertex& other) const {
+//         return pos == other.pos && color == other.color && texCoord == other.texCoord;
+//     }
+// };
 
 namespace std {
     template<> struct hash<Vertex> {
