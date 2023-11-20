@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "hash_map": "cpp",
+        "optional": "cpp"
     }
 }
