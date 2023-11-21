@@ -1284,6 +1284,9 @@ private:
 
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
+            // TODO: make implementation of imgui into a separate abstraction
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
+
         vkCmdEndRenderPass(commandBuffer);
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
@@ -1435,7 +1438,7 @@ private:
         // END
 
 
-
+        ImGui::Render();
 
         updateUniformBuffer(currentFrame);
 
@@ -1487,12 +1490,6 @@ private:
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
-
-        ImGui::Render();
-
-        // FIXME: so far it causes multiple failed asserts and does not display any GUI
-        // Deal with that later
-        // ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[0]);
     }
 
     VkShaderModule createShaderModule(const std::vector<char>& code) {
