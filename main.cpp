@@ -33,6 +33,10 @@
 #include <primitives.h>
 #include <model_loader.h>
 
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_vulkan.h>
+
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
 
@@ -97,8 +101,8 @@ class HelloTriangleApplication {
 public:
     void run() {
         initWindow();
-
         initVulkan();
+        initImGUI();
         mainLoop();
         cleanup();
     }
@@ -1293,6 +1297,17 @@ private:
 
         memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
     }
+
+    // INIT IMGUI
+    // BEG
+
+    void initImGUI(){
+
+    }
+
+    // END
+
+
 
     void drawFrame() {
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
