@@ -12,9 +12,12 @@ editor: main.cpp
 	g++ $(CFLAGS) -o build/editor $(SOURCES)  $(LDFLAGS) -I$(INCLUDE_PATH) -I$(LOADER_INCLUDE_PATH) -I$(IMGUI_INCLUDE_PATH)
 
 
-.PHONY: test clean shaders
+.PHONY: test clean shaders run
 
 test: editor
+	./build/editor
+
+run:
 	./build/editor
 
 clean:
