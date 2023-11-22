@@ -5,10 +5,10 @@ IMGUI_INCLUDE_PATH = ./include/imgui/
 CFLAGS = -std=c++20 -O2
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
-SOURCES:= main.cpp model_loader/model_loader.cpp model_loader/model_loader.h include/primitives.h include/imgui/*.cpp
+SOURCES:= renderer.cpp model_loader/model_loader.cpp model_loader/model_loader.h include/primitives.h include/imgui/*.cpp
 
 
-editor: main.cpp
+editor: renderer.cpp
 	g++ $(CFLAGS) -o build/editor $(SOURCES)  $(LDFLAGS) -I$(INCLUDE_PATH) -I$(LOADER_INCLUDE_PATH) -I$(IMGUI_INCLUDE_PATH)
 
 

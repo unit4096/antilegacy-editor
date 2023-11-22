@@ -97,6 +97,13 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 proj;
 };
 
+struct CameraProperties {
+    glm::vec3 position;
+    float fov;
+    // Only two axis, no need for a quaternion
+    glm::vec2 rotation;
+};
+
 class AntilegacyRenderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
