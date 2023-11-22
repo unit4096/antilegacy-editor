@@ -97,10 +97,10 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 proj;
 };
 
-class HelloTriangleApplication {
+class AntilegacyRenderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
-    HelloTriangleApplication(ImGuiIO& _io):io(_io){};
+    AntilegacyRenderer(ImGuiIO& _io):io(_io){};
     void run() {
         initWindow();
         initVulkan();
@@ -111,6 +111,10 @@ public:
 
 private:
     GLFWwindow* window;
+
+    UniformBufferObject ubo{};
+
+    // GLFW variables
 
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
@@ -219,7 +223,7 @@ private:
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<AntilegacyRenderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
 
@@ -366,7 +370,7 @@ private:
 
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "Hello Triangle";
+        appInfo.pApplicationName = "Antilegacy Editor";
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -424,6 +428,8 @@ private:
     }
 
     void pickPhysicalDevice() {
+        // TODO: Implement device preference 
+
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
@@ -639,6 +645,7 @@ private:
     }
 
     void createGraphicsPipeline() {
+        // TODO: implement custom shader choise helpers
         auto vertShaderCode = readFile("shaders/vert.spv");
         auto fragShaderCode = readFile("shaders/frag.spv");
 
@@ -1321,7 +1328,7 @@ private:
         auto currentTime = std::chrono::high_resolution_clock::now();
         float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-        UniformBufferObject ubo{};
+        
         ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
@@ -1383,27 +1390,7 @@ private:
 
     }
 
-    // END
-
-
-
-    void drawFrame() {
-        vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
-
-        uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-
-            ImGui_ImplVulkan_SetMinImageCount(chainMinImageCount);
-            recreateSwapChain();
-            return;
-        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-            throw std::runtime_error("failed to acquire swap chain image!");
-        }
-
-        
-        // IMGUI START
+    void drawImGui() {
 
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -1414,6 +1401,7 @@ private:
         bool isDemo = true;
 
         ImGui::ShowDemoWindow(&isDemo);
+        
         {
             static float f = 0.0f;
             static int counter = 0;
@@ -1435,10 +1423,29 @@ private:
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
         }
-        // END
-
-
+        
         ImGui::Render();
+    }
+
+
+
+    void drawFrame() {
+        vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+
+        uint32_t imageIndex;
+        VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+
+            ImGui_ImplVulkan_SetMinImageCount(chainMinImageCount);
+            recreateSwapChain();
+            return;
+        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+            throw std::runtime_error("failed to acquire swap chain image!");
+        }
+
+        // Draw UI
+        drawImGui();
 
         updateUniformBuffer(currentFrame);
 
@@ -1703,7 +1710,7 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO(); (void)io;
-    HelloTriangleApplication app(io);
+    AntilegacyRenderer app(io);
 
     try {
         app.run();
