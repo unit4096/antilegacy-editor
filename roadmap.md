@@ -5,12 +5,19 @@
 - [x] move tinyobjloader and stbi to separate .cpp files
   - [x] tinyobj
   - [x] stbi
-- [ ] separate the vulkan renderer and the editor into different files
+- [x] separate the vulkan renderer and the editor into different files
 - [x] add input handling using GLFW
 - [ ] add ImGUI interface
   - [x] Add Demo code
   - [ ] Add handlers and gizmos
-- [ ] 
+- [ ] rewrite the project using C++ modules
+  - [x] renderer
+  - [ ] loader
+
+- [ ] renderer
+  - [ ] add API for input
+  - [ ] add more helpers to Vulkan functions
+  - [ ] 
 
 ## Global
 
