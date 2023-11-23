@@ -1,3 +1,5 @@
+module;
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -33,9 +35,20 @@
 #include <primitives.h>
 #include <model_loader.h>
 
+#ifndef IMGUI
+#define IMGUI
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
+
+#endif //IMGUI
+
+
+
+export module renderer;
+
+export {
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
@@ -1712,19 +1725,4 @@ private:
     }
 };
 
-int main() {
-
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO(); (void)io;
-    AntilegacyRenderer app(io);
-
-    try {
-        app.run();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
 }
