@@ -25,10 +25,17 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO(); (void)io;
-    AntilegacyRenderer app(io);
+    AntilegacyRenderer renderer(io);
 
     try {
-        app.run();
+        renderer.run();
+        while (!glfwWindowShouldClose(renderer.getWindow())) {
+            glfwPollEvents();    
+            renderer.drawFrame();
+        }
+        renderer.drawFrame();
+        renderer.cleanup();
+        
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
