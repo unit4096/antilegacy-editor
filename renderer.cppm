@@ -44,11 +44,14 @@ module;
 
 #endif //IMGUI
 
-
+namespace ale {};
+using namespace ale;
 
 export module renderer;
 
 export {
+
+namespace ale {
 
 const uint32_t WIDTH = 1200;
 const uint32_t HEIGHT = 800;
@@ -117,10 +120,10 @@ struct CameraProperties {
     glm::vec2 rotation;
 };
 
-class AntilegacyRenderer {
+class Renderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
-    AntilegacyRenderer(ImGuiIO& _io):io(_io){};
+    Renderer(ImGuiIO& _io):io(_io){};
     void init() {
         initWindow();
         initVulkan();
@@ -390,7 +393,7 @@ private:
     }
 
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        auto app = reinterpret_cast<AntilegacyRenderer*>(glfwGetWindowUserPointer(window));
+        auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
 
@@ -1734,4 +1737,6 @@ private:
     }
 };
 
-}
+} // namespace ale
+
+} // export module
