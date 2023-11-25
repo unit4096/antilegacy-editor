@@ -23,9 +23,10 @@ int main() {
     AntilegacyRenderer renderer(io);
 
     try {
-        renderer.run();
+        renderer.init();
+        
         // FIXME: closing using windowShouldClose generates vk errors in cleanup
-        while (!glfwWindowShouldClose(renderer.getWindow())) {
+        while (!renderer.shouldClose()) {
             glfwPollEvents();    
             renderer.drawFrame();
         } 

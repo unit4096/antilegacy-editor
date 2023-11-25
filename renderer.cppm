@@ -121,10 +121,18 @@ class AntilegacyRenderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
     AntilegacyRenderer(ImGuiIO& _io):io(_io){};
-    void run() {
+    void init() {
         initWindow();
         initVulkan();
         initImGUI();
+    }
+
+
+    void loadModel() {
+        std::string gltf = "./models/cube/Cube.gltf";
+        loader::Loader loader;
+        loader.loadModelOBJ(dummy_model_path.data(), model.indices, model.vertices);
+        // loader.loadModelGLTF(gltf, indices, vertices);
     }
 
     void drawFrame() {
@@ -261,11 +269,8 @@ public:
         glfwTerminate();
     }
 
-    GLFWwindow* getWindow() {
-        if (!window) {
-            throw std::runtime_error("No GLFW window created yet!");    
-        }
-        return window;
+    bool shouldClose() {
+        return glfwWindowShouldClose(window);
     };
 
 private:
@@ -308,8 +313,8 @@ private:
     VkImageView textureImageView;
     VkSampler textureSampler;
 
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    // TODO: add multiple model handling and scene hierarchy
+    Model model;
 
 
 
@@ -1122,13 +1127,8 @@ private:
         endSingleTimeCommands(commandBuffer);
     }
 
-    void loadModel() {
-        loader::Loader loader;
-        loader.loadModelOBJ(dummy_model_path.data(), indices, vertices);
-    }
-
     void createVertexBuffer() {
-        VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
+        VkDeviceSize bufferSize = sizeof(model.vertices[0]) * model.vertices.size();
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1136,7 +1136,7 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, vertices.data(), (size_t) bufferSize);
+            memcpy(data, model.vertices.data(), (size_t) bufferSize);
         vkUnmapMemory(device, stagingBufferMemory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
@@ -1148,7 +1148,7 @@ private:
     }
 
     void createIndexBuffer() {
-        VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+        VkDeviceSize bufferSize = sizeof(model.indices[0]) * model.indices.size();
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1156,7 +1156,7 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, indices.data(), (size_t) bufferSize);
+            memcpy(data, model.indices.data(), (size_t) bufferSize);
         vkUnmapMemory(device, stagingBufferMemory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
@@ -1389,7 +1389,7 @@ private:
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(model.indices.size()), 1, 0, 0, 0);
 
             // TODO: make implementation of imgui into a separate abstraction
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
