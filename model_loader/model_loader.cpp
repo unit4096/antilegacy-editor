@@ -9,7 +9,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tinygltf/tiny_gltf.h>
 
-using namespace loader;
+using namespace ale;
 
 Loader::Loader() { }   
 
@@ -83,12 +83,12 @@ int Loader::loadModelGLTF(const std::string filename,
         return -1;
     }
 
-    throw std::runtime_error("loadModelGLTF: function not implemented!");
+    // throw std::runtime_error("loadModelGLTF: function not implemented!");
     return -1;
-
-    tinygltf::Mesh mesh = model.meshes[0];
     
-
+    // tinygltf::Mesh mesh = model.meshes[0];
+    
+    
     
     // TODO: implement proper model loading
     

@@ -7,7 +7,7 @@
 #include <primitives.h>
 #include <string>
 
-namespace loader {
+namespace ale {
     class Loader {
         
     public: 

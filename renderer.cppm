@@ -133,7 +133,7 @@ public:
 
     void loadModel() {
         std::string gltf = "./models/cube/Cube.gltf";
-        loader::Loader loader;
+        ale::Loader loader;
         loader.loadModelOBJ(dummy_model_path.data(), model.indices, model.vertices);
         // loader.loadModelGLTF(gltf, indices, vertices);
     }
