@@ -8,14 +8,9 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
 
-// #ifndef IMGUI
-// #define IMGUI
-
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
-
-// #endif //IMGUI
 
 import renderer;
 
@@ -29,10 +24,11 @@ int main() {
 
     try {
         renderer.run();
+        // FIXME: closing using windowShouldClose generates vk errors in cleanup
         while (!glfwWindowShouldClose(renderer.getWindow())) {
             glfwPollEvents();    
             renderer.drawFrame();
-        }
+        } 
         renderer.drawFrame();
         renderer.cleanup();
         
