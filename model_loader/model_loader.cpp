@@ -9,16 +9,15 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tinygltf/tiny_gltf.h>
 
-
-
-
 using namespace loader;
 
 Loader::Loader() { }   
 
 Loader::~Loader() { }
 
-void Loader::loadModelOBJ(char *model_path, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
+void Loader::loadModelOBJ(char *model_path,
+                        std::vector<unsigned int> &indices,
+                        std::vector<Vertex> &vertices) {
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -59,7 +58,9 @@ void Loader::loadModelOBJ(char *model_path, std::vector<unsigned int> &indices, 
 }
 
 // TODO: this is a WIP, not working for now
-int Loader::loadModelGLTF(const std::string filename, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
+int Loader::loadModelGLTF(const std::string filename,
+                        std::vector<unsigned int> &indices,
+                        std::vector<Vertex> &vertices) {
 
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
@@ -81,7 +82,7 @@ int Loader::loadModelGLTF(const std::string filename, std::vector<unsigned int> 
         throw std::runtime_error("Could not parse a GLTF model!");
         return -1;
     }
-    
+
     throw std::runtime_error("loadModelGLTF: function not implemented!");
     return -1;
 
@@ -110,9 +111,11 @@ unsigned char* Loader::loadTexture(char *tex_path,
                             int &texHeight,
                             int &texChannels) {
     
-    unsigned char* _pixels = stbi_load(tex_path, &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-    
-    
+    unsigned char* _pixels = stbi_load(tex_path, 
+                            &texWidth,
+                            &texHeight,
+                            &texChannels,
+                            STBI_rgb_alpha);
 
     if (!_pixels) {
         throw std::runtime_error("failed to load texture image!");
