@@ -949,7 +949,7 @@ private:
 
     void createTextureImage() {
         int texWidth, texHeight, texChannels;
-        loader::Loader loader;
+        ale::Loader loader;
 
 
 
