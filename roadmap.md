@@ -19,6 +19,13 @@
   - [ ] add more helpers to Vulkan functions
   - [ ] 
 
+- [ ] loader
+  - [ ] add GLTF model import
+
+- [ ] logging
+  - [ ] add basic logging functions
+  - [ ] create wrappers to errors
+
 ## Global
 
 - [ ] Editor
