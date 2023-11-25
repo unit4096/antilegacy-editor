@@ -125,8 +125,6 @@ public:
         initWindow();
         initVulkan();
         initImGUI();
-        // mainLoop();
-        // cleanup();
     }
 
     void drawFrame() {
@@ -312,6 +310,9 @@ private:
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
+
+
+
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
@@ -1123,7 +1124,7 @@ private:
 
     void loadModel() {
         loader::Loader loader;
-        loader.loadModel(dummy_model_path.data(), indices, vertices);
+        loader.loadModelOBJ(dummy_model_path.data(), indices, vertices);
     }
 
     void createVertexBuffer() {

@@ -8,6 +8,7 @@
 #ifndef PRIMITIVES
 #define PRIMITIVES
 
+#include <vector>
 #include <functional>
 #include <glm/gtx/hash.hpp>
 
@@ -21,6 +22,11 @@ struct Vertex {
     }
 };
 
+
+struct Model {
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+};
 
 
 // TODO: this is a temporary solution, some aspects may be redundant

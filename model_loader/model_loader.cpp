@@ -4,8 +4,13 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tol/tiny_obj_loader.h>
 
+#define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
-#include <stb/stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <tinygltf/tiny_gltf.h>
+
+
+
 
 using namespace loader;
 
@@ -13,7 +18,7 @@ Loader::Loader() { }
 
 Loader::~Loader() { }
 
-void Loader::loadModel(char *model_path, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
+void Loader::loadModelOBJ(char *model_path, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -52,6 +57,52 @@ void Loader::loadModel(char *model_path, std::vector<unsigned int> &indices, std
         }
     }
 }
+
+// TODO: this is a WIP, not working for now
+int Loader::loadModelGLTF(const std::string filename, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices) {
+
+    tinygltf::Model model;
+    tinygltf::TinyGLTF loader;
+    std::string err;
+    std::string warn;
+
+    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, filename);
+    //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
+
+    if (!warn.empty()) {
+        throw std::runtime_error(warn);
+    }
+
+    if (!err.empty()) {
+        throw std::runtime_error(err);
+    }
+
+    if (!ret) {
+        throw std::runtime_error("Could not parse a GLTF model!");
+        return -1;
+    }
+    
+    throw std::runtime_error("loadModelGLTF: function not implemented!");
+    return -1;
+
+    tinygltf::Mesh mesh = model.meshes[0];
+    
+
+    
+    // TODO: implement proper model loading
+    
+
+    // for (auto primitive : mesh.primitives) {
+    //     for (auto i : primitive.attributes) {
+            
+    //     }
+    // }
+
+    // return 0;
+}
+
+
+
 
 
 unsigned char* Loader::loadTexture(char *tex_path,
