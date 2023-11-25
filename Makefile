@@ -23,7 +23,7 @@ imgui:
 	cd ../..
 
 
-test: loader editor 
+test: renderer editor
 	./build/editor
 
 run:
