@@ -425,9 +425,6 @@ private:
         createSyncObjects();
     }
 
-    void ModelInit() {
-
-    }
 
     void mainLoop() {
         while (!glfwWindowShouldClose(window)) {
