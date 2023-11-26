@@ -6,6 +6,7 @@
   - [x] tinyobj
   - [x] stbi
 - [x] separate the vulkan renderer and the editor into different files
+  - [x] remove dependencies between the renderer and the loader
 - [x] add input handling using GLFW
 - [ ] add ImGUI interface
   - [x] Add Demo code
@@ -17,14 +18,24 @@
 - [ ] renderer
   - [ ] add API for input
   - [ ] add more helpers to Vulkan functions
-  - [ ] 
+  - [ ] implement loading of multiple models to the renderer
+  - [ ] implement runtime model loading/unloading
 
 - [ ] loader
   - [ ] add GLTF model import
+    - [x] mesh data
+    - [ ] textures
+    - [ ] normals
+    - [ ] PBR
+  - [ ] make loader functions static
 
 - [ ] logging
   - [ ] add basic logging functions
   - [ ] create wrappers to errors
+
+- [ ] misc
+  - [ ] add namespaces to ALE classes
+
 
 ## Global
 
