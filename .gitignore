@@ -2,3 +2,4 @@ build/
 *.pcm
 *.gch
 *.o
+.vscode/
