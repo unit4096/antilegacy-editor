@@ -1,1 +1,4 @@
 build/
+*.pcm
+*.gch
+*.o
