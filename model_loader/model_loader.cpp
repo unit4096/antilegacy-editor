@@ -84,8 +84,8 @@ int Loader::loadModelGLTF(const std::string filename,
         return -1;
     }
 
-    // throw std::runtime_error("loadModelGLTF: function not implemented!");
-    // return -1;
+    throw std::runtime_error("loadModelGLTF: function not implemented!");
+    return -1;
     
 
     tinygltf::Mesh mesh = model.meshes[0];
