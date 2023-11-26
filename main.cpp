@@ -34,14 +34,20 @@ int main() {
 
     std::string dummy_model_path = "models/viking_room.obj";
     std::string dummy_texture_path = "textures/viking_room.png";
+    const std::string uv_checker_path = "textures/tex_uv_checker.jpg";
     
     
+    // Load GLTF models
+    // loader.loadModelGLTF(model_cube_path, model, image);
     
-    // loader.loadModelGLTF(model_cube_path, model);
-    
+
+    // Load dummy model (should always work)
     loader.loadModelOBJ(dummy_model_path.data(), model);
-    
+    // Load dummy texture (should always work)
     loader.loadTexture(dummy_texture_path.data(), image);
+    
+    // Load this texture to check UV layout
+    // loader.loadTexture(uv_checker_path.data(), image);
 
     ale::Renderer renderer(io,model,image);
 
