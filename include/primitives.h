@@ -28,6 +28,12 @@ struct Model {
     std::vector<uint32_t> indices;
 };
 
+struct Image {
+    int w;
+    int h;
+    int channels;
+    unsigned char* data;
+};
 
 // TODO: this is a temporary solution, some aspects may be redundant
 namespace std {
