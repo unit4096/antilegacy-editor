@@ -33,7 +33,6 @@ module;
 #include <unordered_map>
 
 #include <primitives.h>
-#include <model_loader.h>
 
 #ifndef IMGUI
 #define IMGUI
@@ -947,7 +946,6 @@ private:
     }
 
     void createTextureImage() {
-        ale::Loader loader;
          
         VkDeviceSize imageSize = image.w * image.h * 4;
 
@@ -959,8 +957,9 @@ private:
         vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
             memcpy(data, image.data, static_cast<size_t>(imageSize));
         vkUnmapMemory(device, stagingBufferMemory);
-
-        loader.unloadBuffer(image.data);
+        
+        // TODO: rewrite example code using smart pointers
+        free(image.data);
 
         createImage(image.w, image.h, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
