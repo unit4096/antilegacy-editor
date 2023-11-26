@@ -12,6 +12,11 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
 
+#ifndef ALE_LOADER
+#define ALE_LOADER
+#include <model_loader.h>
+#endif //ALE_LOADER
+
 import renderer;
 
 
@@ -20,7 +25,25 @@ int main() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO(); (void)io;
-    ale::Renderer renderer(io);
+    ale::Loader loader;
+    Model model;
+    Image image;
+
+
+    // std::string model_cube_path = "./models/cube/Cube.gltf";
+
+    std::string dummy_model_path = "models/viking_room.obj";
+    std::string dummy_texture_path = "textures/viking_room.png";
+    
+    
+    
+    // loader.loadModelGLTF(model_cube_path,model.indices, model.vertices);
+    
+    loader.loadModelOBJ(dummy_model_path.data(), model.indices, model.vertices);
+    
+    loader.loadTexture(dummy_texture_path.data(), image);
+
+    ale::Renderer renderer(io,model,image);
 
     try {
         renderer.init();

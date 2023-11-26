@@ -15,7 +15,7 @@ namespace ale {
         ~Loader();
         void loadModelOBJ(char *model_path, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices);
         int loadModelGLTF(const std::string filename, std::vector<unsigned int> &indices, std::vector<Vertex> &vertices);
-        unsigned char *loadTexture(char *tex_path, int &texWidth, int &texHeight, int &texChannels);
+        bool loadTexture(const char* path, Image& img);
         void unloadBuffer(unsigned char *_pixels);
     };
 

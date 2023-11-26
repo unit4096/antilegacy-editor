@@ -123,7 +123,11 @@ struct CameraProperties {
 class Renderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
-    Renderer(ImGuiIO& _io):io(_io){};
+    // separate model loading and vulkan init
+    Renderer(ImGuiIO& _io, Model _model, Image _image)
+                                                :io(_io), 
+                                                model(_model), 
+                                                image(_image){};
     void init() {
         initWindow();
         initVulkan();
@@ -135,7 +139,7 @@ public:
         std::string gltf = "./models/cube/Cube.gltf";
         ale::Loader loader;
         loader.loadModelOBJ(dummy_model_path.data(), model.indices, model.vertices);
-        // loader.loadModelGLTF(gltf, indices, vertices);
+        // loader.loadModelGLTF(gltf, model.indices, model.vertices);
     }
 
     void drawFrame() {
@@ -319,6 +323,8 @@ private:
     // TODO: add multiple model handling and scene hierarchy
     Model model;
 
+    Image image;
+
 
 
     VkBuffer vertexBuffer;
@@ -398,6 +404,8 @@ private:
     }
 
     void initVulkan() {
+
+        // Generic vulkan init
         createInstance();
         setupDebugMessenger();
         createSurface();
@@ -411,12 +419,15 @@ private:
         createCommandPool();
         createDepthResources();
         createFramebuffers();
+
+        // Model init
+
         // Texture loading
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
-        // Model loading
-        loadModel();
+        // Model loading        
+        // loadModel();
         // VK buffer creation
         createVertexBuffer();
         createIndexBuffer();
@@ -425,6 +436,10 @@ private:
         createDescriptorSets();
         createCommandBuffers();
         createSyncObjects();
+    }
+
+    void ModelInit() {
+
     }
 
     void mainLoop() {
@@ -948,13 +963,9 @@ private:
     }
 
     void createTextureImage() {
-        int texWidth, texHeight, texChannels;
         ale::Loader loader;
-
-
-
-        unsigned char* pixels = loader.loadTexture(dummy_texture_path.data(), texWidth, texHeight, texChannels);
-        VkDeviceSize imageSize = texWidth * texHeight * 4;
+         
+        VkDeviceSize imageSize = image.w * image.h * 4;
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -962,15 +973,15 @@ private:
 
         void* data;
         vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-            memcpy(data, pixels, static_cast<size_t>(imageSize));
+            memcpy(data, image.data, static_cast<size_t>(imageSize));
         vkUnmapMemory(device, stagingBufferMemory);
 
-        loader.unloadBuffer(pixels);
+        loader.unloadBuffer(image.data);
 
-        createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+        createImage(image.w, image.h, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
         transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-            copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+            copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(image.w), static_cast<uint32_t>(image.h));
         transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         vkDestroyBuffer(device, stagingBuffer, nullptr);

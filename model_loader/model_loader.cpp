@@ -15,6 +15,7 @@ Loader::Loader() { }
 
 Loader::~Loader() { }
 
+
 void Loader::loadModelOBJ(char *model_path,
                         std::vector<unsigned int> &indices,
                         std::vector<Vertex> &vertices) {
@@ -84,45 +85,82 @@ int Loader::loadModelGLTF(const std::string filename,
     }
 
     // throw std::runtime_error("loadModelGLTF: function not implemented!");
-    return -1;
+    // return -1;
     
-    // tinygltf::Mesh mesh = model.meshes[0];
+
+    tinygltf::Mesh mesh = model.meshes[0];
     
     
     
     // TODO: implement proper model loading
     
 
-    // for (auto primitive : mesh.primitives) {
-    //     for (auto i : primitive.attributes) {
-            
-    //     }
+    for (auto primitive : mesh.primitives) {
+
+        std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+
+        const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes["POSITION"]];
+        const tinygltf::Accessor& UVAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
+        const tinygltf::BufferView& bufferView = model.bufferViews[posAccessor.bufferView];
+
+        const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+        
+        
+        const float* positions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + posAccessor.byteOffset]);
+        const float* uvPositions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + UVAccessor.byteOffset]);
+        
+        for (size_t i = 0; i < posAccessor.count; ++i) {
+                // Positions are Vec3 components, so for each vec3 stride, offset for x, y, and z.
+            Vertex vertex{};
+
+            vertex.pos = {
+                positions[i * 3 + 0],
+                positions[i * 3 + 1],
+                positions[i * 3 + 2],
+            };
+
+            vertex.texCoord = {
+                uvPositions[i * 2 + 0],
+                1.0f - uvPositions[i * 2 + 1],
+            };
+            vertex.color = {1.0f, 1.0f, 1.0f};                        
+
+
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<u_int32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
+    
+    // std::cout << "indices:" << std::endl;
+    
+    // for (auto i: indices) {
+    //     std::cout << i << std::endl;
     // }
 
-    // return 0;
+    // std::cout << "vertices: "<< std::endl;
+    // for (auto i: vertices) {
+    //     std::cout << i.pos[0] << " " << i.pos[1] << " " << i.pos[2] << std::endl;    
+    // }
+    
+    return 0;
 }
 
 
-
-
-
-unsigned char* Loader::loadTexture(char *tex_path,
-                            int &texWidth,
-                            int &texHeight,
-                            int &texChannels) {
+bool Loader::loadTexture(const char* path, Image& img) {
     
-    unsigned char* _pixels = stbi_load(tex_path, 
-                            &texWidth,
-                            &texHeight,
-                            &texChannels,
-                            STBI_rgb_alpha);
+    unsigned char* _data = stbi_load(path, &img.w, &img.h, &img.channels, STBI_rgb_alpha);
 
-    if (!_pixels) {
-        throw std::runtime_error("failed to load texture image!");
+    if (!_data) {        
+        return 1;
     }
     
+    img.data = _data;
     
-    return _pixels;
+    return 0;
 }
 
 
