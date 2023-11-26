@@ -56,9 +56,9 @@ void Loader::loadModelOBJ(char *model_path, Model& _model) {
     }
 }
 
-// TODO: this is a WIP, not working for now
-int Loader::loadModelGLTF(const std::string filename,
-                        Model& _model) {
+// TODO: Add loading full GLTF scenes
+// Now loads one mesh and one texture from the gltf file
+int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _image) {
 
     tinygltf::Model gltfModel;
     tinygltf::TinyGLTF loader;
@@ -84,6 +84,25 @@ int Loader::loadModelGLTF(const std::string filename,
     // throw std::runtime_error("loadModelGLTF: function not implemented!");
     // return -1;
     
+    if (gltfModel.textures.size() > 0) {
+        tinygltf::Texture &tex = gltfModel.textures[0];
+        
+        if (tex.source > -1) {
+            tinygltf::Image &image = gltfModel.images[tex.source];
+            
+            _image.data = &image.image.at(0);
+            _image.w = image.width;
+            _image.h = image.height;            
+        }
+        
+
+    }
+    
+    
+    
+
+    
+        
 
     tinygltf::Mesh mesh = gltfModel.meshes[0];
     
