@@ -134,14 +134,6 @@ public:
         initImGUI();
     }
 
-
-    void loadModel() {
-        std::string gltf = "./models/cube/Cube.gltf";
-        ale::Loader loader;
-        loader.loadModelOBJ(dummy_model_path.data(), model.indices, model.vertices);
-        // loader.loadModelGLTF(gltf, model.indices, model.vertices);
-    }
-
     void drawFrame() {
         vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -419,16 +411,11 @@ private:
         createCommandPool();
         createDepthResources();
         createFramebuffers();
-
-        // Model init
-
-        // Texture loading
+        // image member should contain a texture now
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
-        // Model loading        
-        // loadModel();
-        // VK buffer creation
+        // model member should contain vertices and indices now
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
