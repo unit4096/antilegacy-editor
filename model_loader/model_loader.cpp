@@ -16,9 +16,7 @@ Loader::Loader() { }
 Loader::~Loader() { }
 
 
-void Loader::loadModelOBJ(char *model_path,
-                        std::vector<unsigned int> &indices,
-                        std::vector<Vertex> &vertices) {
+void Loader::loadModelOBJ(char *model_path, Model& _model) {
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -49,26 +47,25 @@ void Loader::loadModelOBJ(char *model_path,
             vertex.color = {1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<u_int32_t>(vertices.size());
-                vertices.push_back(vertex);
+                uniqueVertices[vertex] = static_cast<u_int32_t>(_model.vertices.size());
+                _model.vertices.push_back(vertex);
             }
 
-            indices.push_back(uniqueVertices[vertex]);
+            _model.indices.push_back(uniqueVertices[vertex]);
         }
     }
 }
 
 // TODO: this is a WIP, not working for now
 int Loader::loadModelGLTF(const std::string filename,
-                        std::vector<unsigned int> &indices,
-                        std::vector<Vertex> &vertices) {
+                        Model& _model) {
 
-    tinygltf::Model model;
+    tinygltf::Model gltfModel;
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
 
-    bool ret = loader.LoadASCIIFromFile(&model, &err, &warn, filename);
+    bool ret = loader.LoadASCIIFromFile(&gltfModel, &err, &warn, filename);
     //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
 
     if (!warn.empty()) {
@@ -84,11 +81,11 @@ int Loader::loadModelGLTF(const std::string filename,
         return -1;
     }
 
-    throw std::runtime_error("loadModelGLTF: function not implemented!");
-    return -1;
+    // throw std::runtime_error("loadModelGLTF: function not implemented!");
+    // return -1;
     
 
-    tinygltf::Mesh mesh = model.meshes[0];
+    tinygltf::Mesh mesh = gltfModel.meshes[0];
     
     
     
@@ -99,11 +96,11 @@ int Loader::loadModelGLTF(const std::string filename,
 
         std::unordered_map<Vertex, unsigned int> uniqueVertices{};
 
-        const tinygltf::Accessor& posAccessor = model.accessors[primitive.attributes["POSITION"]];
-        const tinygltf::Accessor& UVAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
-        const tinygltf::BufferView& bufferView = model.bufferViews[posAccessor.bufferView];
+        const tinygltf::Accessor& posAccessor = gltfModel.accessors[primitive.attributes["POSITION"]];
+        const tinygltf::Accessor& UVAccessor = gltfModel.accessors[primitive.attributes["TEXCOORD_0"]];
+        const tinygltf::BufferView& bufferView = gltfModel.bufferViews[posAccessor.bufferView];
 
-        const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
+        const tinygltf::Buffer& buffer = gltfModel.buffers[bufferView.buffer];
         
         
         const float* positions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + posAccessor.byteOffset]);
@@ -127,11 +124,11 @@ int Loader::loadModelGLTF(const std::string filename,
 
 
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<u_int32_t>(vertices.size());
-                vertices.push_back(vertex);
+                uniqueVertices[vertex] = static_cast<u_int32_t>(_model.vertices.size());
+                _model.vertices.push_back(vertex);
             }
 
-            indices.push_back(uniqueVertices[vertex]);
+            _model.indices.push_back(uniqueVertices[vertex]);
         }
     }
     

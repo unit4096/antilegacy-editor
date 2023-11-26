@@ -30,16 +30,16 @@ int main() {
     Image image;
 
 
-    // std::string model_cube_path = "./models/cube/Cube.gltf";
+    std::string model_cube_path = "./models/cube/Cube.gltf";
 
     std::string dummy_model_path = "models/viking_room.obj";
     std::string dummy_texture_path = "textures/viking_room.png";
     
     
     
-    // loader.loadModelGLTF(model_cube_path,model.indices, model.vertices);
+    // loader.loadModelGLTF(model_cube_path, model);
     
-    loader.loadModelOBJ(dummy_model_path.data(), model.indices, model.vertices);
+    loader.loadModelOBJ(dummy_model_path.data(), model);
     
     loader.loadTexture(dummy_texture_path.data(), image);
 
