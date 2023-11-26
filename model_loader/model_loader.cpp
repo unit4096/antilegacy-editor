@@ -57,7 +57,7 @@ void Loader::loadModelOBJ(char *model_path, Model& _model) {
 }
 
 // TODO: Add loading full GLTF scenes
-// Now loads one mesh and one texture from the gltf file
+// Now loads one mesh and one texture from the .gltf file
 int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _image) {
 
     tinygltf::Model gltfModel;
@@ -65,8 +65,9 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
     std::string err;
     std::string warn;
 
+    // TODO: implement model type deduction, test with .glb models
     bool ret = loader.LoadASCIIFromFile(&gltfModel, &err, &warn, filename);
-    //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, argv[1]); // for binary glTF(.glb)
+    //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, filename); // for binary glTF(.glb)
 
     if (!warn.empty()) {
         throw std::runtime_error(warn);
@@ -80,9 +81,6 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         throw std::runtime_error("Could not parse a GLTF model!");
         return -1;
     }
-
-    // throw std::runtime_error("loadModelGLTF: function not implemented!");
-    // return -1;
     
     if (gltfModel.textures.size() > 0) {
         tinygltf::Texture &tex = gltfModel.textures[0];
@@ -96,25 +94,16 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         }
         
 
-    }
-    
-    
-    
+    }    
 
-    
-        
-
-    tinygltf::Mesh mesh = gltfModel.meshes[0];
-    
-    
-    
-    // TODO: implement proper model loading
-    
+    // TODO: implement loading multiple nodes
+    tinygltf::Mesh mesh = gltfModel.meshes[0];    
 
     for (auto primitive : mesh.primitives) {
 
         std::unordered_map<Vertex, unsigned int> uniqueVertices{};
-
+        
+        // TOOD: implement generic attribute deduction
         const tinygltf::Accessor& posAccessor = gltfModel.accessors[primitive.attributes["POSITION"]];
         const tinygltf::Accessor& UVAccessor = gltfModel.accessors[primitive.attributes["TEXCOORD_0"]];
         const tinygltf::BufferView& bufferView = gltfModel.bufferViews[posAccessor.bufferView];
@@ -126,7 +115,6 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         const float* uvPositions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + UVAccessor.byteOffset]);
         
         for (size_t i = 0; i < posAccessor.count; ++i) {
-                // Positions are Vec3 components, so for each vec3 stride, offset for x, y, and z.
             Vertex vertex{};
 
             vertex.pos = {
@@ -134,7 +122,8 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
                 positions[i * 3 + 1],
                 positions[i * 3 + 2],
             };
-
+            
+            // FIXME: the UV layout is completely wrong
             vertex.texCoord = {
                 uvPositions[i * 2 + 0],
                 1.0f - uvPositions[i * 2 + 1],
@@ -150,17 +139,6 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
             _model.indices.push_back(uniqueVertices[vertex]);
         }
     }
-    
-    // std::cout << "indices:" << std::endl;
-    
-    // for (auto i: indices) {
-    //     std::cout << i << std::endl;
-    // }
-
-    // std::cout << "vertices: "<< std::endl;
-    // for (auto i: vertices) {
-    //     std::cout << i.pos[0] << " " << i.pos[1] << " " << i.pos[2] << std::endl;    
-    // }
     
     return 0;
 }
