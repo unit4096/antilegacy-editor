@@ -112,6 +112,15 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 proj;
 };
 
+struct CameraData {
+    glm::vec3 position;
+    glm::vec3 front;
+    glm::vec3 worldUp;
+    float fov;
+    float yaw, pitch;
+    float nearPlane, farPlane;
+};
+
 class Renderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
@@ -122,6 +131,7 @@ public:
                                                 image(_image){};
     void init() {
         initWindow();
+        initCamera();
         initVulkan();
         initImGUI();
     }
@@ -267,6 +277,8 @@ public:
 private:
     GLFWwindow* window;
 
+    CameraData camera;
+
     UniformBufferObject ubo{};
 
     // GLFW variables
@@ -385,6 +397,16 @@ private:
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
+    }
+
+    void initCamera() {
+        CameraData _data;
+        _data.fov = 45.0f;
+        _data.farPlane = 10000.0f;
+        _data.nearPlane = 0.001f;
+        _data.front = glm::vec3(0,0,1);
+        _data.position = glm::vec3(2.0f,2.0f,3.0f);
+        camera = _data;
     }
 
     void initVulkan() {
@@ -1413,15 +1435,16 @@ private:
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
-        static auto startTime = std::chrono::high_resolution_clock::now();
+        // Time not needed now
+        // static auto startTime = std::chrono::high_resolution_clock::now();
 
-        auto currentTime = std::chrono::high_resolution_clock::now();
-        float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+        // auto currentTime = std::chrono::high_resolution_clock::now();
+        // float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
         
-        ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(45.0f), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.view = glm::lookAt(camera.position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        ubo.proj = glm::perspective(glm::radians(camera.fov), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
         ubo.proj[1][1] *= -1;
 
         memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
@@ -1430,11 +1453,32 @@ private:
     // INIT IMGUI
     // START
 
+    void setStyleImGui() {
+        ImGuiStyle &style = ImGui::GetStyle();
+        
+        
+        style.WindowMinSize        = ImVec2( 160, 20 );
+        style.FramePadding         = ImVec2( 4, 2 );
+        style.ItemSpacing          = ImVec2( 6, 2 );
+        style.ItemInnerSpacing     = ImVec2( 6, 4 );
+        style.Alpha                = 0.95f;
+        style.WindowRounding       = 4.0f;
+        style.FrameRounding        = 2.0f;
+        style.IndentSpacing        = 6.0f;
+        style.ItemInnerSpacing     = ImVec2( 2, 4 );
+        style.ColumnsMinSpacing    = 50.0f;
+        style.GrabMinSize          = 14.0f;
+        style.GrabRounding         = 16.0f;
+        style.ScrollbarSize        = 12.0f;
+        style.ScrollbarRounding    = 16.0f;        
+    }
+
     void initImGUI(){
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
         // Set up style
         ImGui::StyleColorsDark();
+        setStyleImGui();
         
         // FIXME: this pool definition a: is an overkill; b: does not use helpers
         VkDescriptorPoolSize pool_sizes[] =
@@ -1487,28 +1531,27 @@ private:
         ImGui::NewFrame();
 
 
-        // TODO: Replace Demo code with something meaningful
-        bool isDemo = true;
+        // TODO: Implement more handlers
+        // bool isDemo = true;
 
-        ImGui::ShowDemoWindow(&isDemo);
+        // ImGui::ShowDemoWindow(&isDemo);
         
         {
-            static float f = 0.0f;
-            static int counter = 0;
+            // static int counter = 0;
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it
+            ImGui::Begin("Basic configs");
+            ImGui::Text("Camera properties");
+            ImGui::SliderFloat("X", &camera.position.x, -10.0f, 10.0f);
+            ImGui::SliderFloat("Y", &camera.position.y, -10.0f, 10.0f);
+            ImGui::SliderFloat("Z", &camera.position.z, -10.0f, 10.0f);
+            ImGui::SliderFloat("FOV", &camera.fov, 10.0f, 60.0f);
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &isDemo);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &isDemo);
+            // ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+            // if (ImGui::Button("Button"))
+            //     counter++;
+            // ImGui::SameLine();
+            // ImGui::Text("counter = %d", counter);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
