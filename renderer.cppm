@@ -12,7 +12,7 @@ module;
 
 #include <glm/glm.hpp>
 
-#endif
+#endif //GLM
 
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -110,13 +110,6 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
-};
-
-struct CameraProperties {
-    glm::vec3 position;
-    float fov;
-    // Only two axis, no need for a quaternion
-    glm::vec2 rotation;
 };
 
 class Renderer {
