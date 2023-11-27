@@ -1,5 +1,5 @@
-#ifndef ANTI_LOADER
-#define ANTI_LOADER
+#ifndef ALE_LOADER
+#define ALE_LOADER
 
 #pragma once
 #include <vector>
@@ -21,7 +21,7 @@ namespace ale {
 
 } // namespace loader
 
-#endif // ANTI_LOADER
+#endif // ALE_LOADER
 
 
 

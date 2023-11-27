@@ -12,10 +12,7 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
 
-#ifndef ALE_LOADER
-#define ALE_LOADER
 #include "model_loader/model_loader.h"
-#endif //ALE_LOADER
 
 import renderer;
 
