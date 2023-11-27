@@ -14,7 +14,7 @@
 
 #ifndef ALE_LOADER
 #define ALE_LOADER
-#include <model_loader.h>
+#include "model_loader/model_loader.h"
 #endif //ALE_LOADER
 
 import renderer;
