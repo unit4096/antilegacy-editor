@@ -1,42 +1,6 @@
 # Antilegacy editor roadmap
 *This is a simple development roadmap for the antilegacy editor*
 
-## Current
-- [x] move tinyobjloader and stbi to separate .cpp files
-  - [x] tinyobj
-  - [x] stbi
-- [x] separate the vulkan renderer and the editor into different files
-  - [x] remove dependencies between the renderer and the loader
-- [x] add input handling using GLFW
-- [ ] add ImGUI interface
-  - [x] Add Demo code
-  - [ ] Add handlers and gizmos
-- [ ] rewrite the project using C++ modules
-  - [x] renderer
-  - [ ] loader
-
-- [ ] renderer
-  - [ ] add API for input
-  - [ ] add more helpers to Vulkan functions
-  - [ ] implement loading of multiple models to the renderer
-  - [ ] implement runtime model loading/unloading
-
-- [ ] loader
-  - [ ] add GLTF model import
-    - [x] mesh data
-    - [x] textures
-    - [ ] normals
-    - [ ] PBR
-  - [ ] make loader functions static
-
-- [ ] logging
-  - [ ] add basic logging functions
-  - [ ] create wrappers to errors
-
-- [ ] misc
-  - [ ] add namespaces to ALE classes
-
-
 ## Global
 
 - [ ] Editor
@@ -47,7 +11,7 @@
   - [ ] Shortcut config feature
 
 - [ ] IO
-  - [ ] Import model
+  - [x] Import model
   - [ ] Create scene file
   - [ ] Serialize scene file
   - [ ] Export model
