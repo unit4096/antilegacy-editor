@@ -24,7 +24,7 @@
 - [ ] loader
   - [ ] add GLTF model import
     - [x] mesh data
-    - [ ] textures
+    - [x] textures
     - [ ] normals
     - [ ] PBR
   - [ ] make loader functions static
@@ -60,12 +60,12 @@
   - [ ] Camera movement
     - [ ] Direction
       - [ ] free rotation
-      - [ ] Focus on model
+      - [x] Focus on model
       - [ ] Fix camera direction along global XYZ
       - [ ] manually set angle
     - [ ] Movement
       - [ ] free movement
-      - [ ] along global XYZ
+      - [x] along global XYZ
       - [ ] along local XYZ
       - [ ] fix camera position
       - [ ] manually set rotation
