@@ -23,9 +23,10 @@ struct CameraData {
 
 class Camera {
 private:
+    CameraData data;
 public:
     CameraMode mode;
-    CameraData data;
+    
     glm::vec3 targetPos;
     Camera();
     ~Camera();
@@ -69,6 +70,13 @@ void Camera::toggleMode() {
     }
 }
 
+CameraData Camera::getData() {
+    return data;
+}
+
+void Camera::setData(CameraData _data) {
+    data = _data;
+}
 
 } // namespace ale
 

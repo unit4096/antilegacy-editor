@@ -140,7 +140,10 @@ public:
     void setCamera() {
         // NOTE: for now the "up" axis is Y
 
+        CameraData data = mainCamera.getData();
+
         // TODO: get this data from the node transform matrix
+        // FIXME: remove the rotation offset from the model
         // Model matrix
         ubo.model = glm::rotate(glm::mat4(1.0f),
                                 glm::radians(-90.0f),
@@ -150,29 +153,29 @@ public:
         if (mainCamera.mode == CameraMode::FREE) { 
             glm::mat4x4 viewMatrix(1.0f);
             
-            float yawAng = glm::radians(mainCamera.data.yaw);
+            float yawAng = glm::radians(data.yaw);
 
             // Generate pitch vector based on the yaw angle
             glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
-            float pitchAng = glm::radians(mainCamera.data.pitch);
+            float pitchAng = glm::radians(data.pitch);
             
             // Apply yaw rotation            
-            viewMatrix = glm::rotate(viewMatrix, yawAng, mainCamera.data.up);
+            viewMatrix = glm::rotate(viewMatrix, yawAng, data.up);
             // Apply pitch rotation
             viewMatrix = glm::rotate(viewMatrix, pitchAng, pitchVec);
             // Apply translation
-            viewMatrix = glm::translate(viewMatrix, -mainCamera.data.position);
+            viewMatrix = glm::translate(viewMatrix, -data.position);
 
             ubo.view = viewMatrix;
         } else {
-            ubo.view = glm::lookAt(mainCamera.data.position, mainCamera.targetPos, mainCamera.data.up);
+            ubo.view = glm::lookAt(data.position, mainCamera.targetPos, data.up);
         }
 
 
         // Porjection matrix
-        ubo.proj = glm::perspective(glm::radians(mainCamera.data.fov),
+        ubo.proj = glm::perspective(glm::radians(data.fov),
                         swapChainExtent.width / (float) swapChainExtent.height,
-                        mainCamera.data.nearPlane, mainCamera.data.farPlane);
+                        data.nearPlane, data.farPlane);
         ubo.proj[1][1] *= -1;                
     }
 
@@ -451,7 +454,7 @@ private:
         _data.position = glm::vec3(0.0f,0.0f,1.0f);
         _data.pitch = 0;
         _data.yaw = 0;
-        mainCamera.data = _data;
+        mainCamera.setData(_data);
     }
 
     void initVulkan() {
@@ -1572,23 +1575,21 @@ private:
 
 
         // TODO: Implement more handlers
-        // bool isDemo = true;
 
         // ImGui::ShowDemoWindow(&isDemo);
+
+        CameraData camData = mainCamera.getData();
         
         {
-            // static int counter = 0;
-
             ImGui::Begin("Basic configs");
             ImGui::Text("Camera properties");
-            ImGui::SliderFloat("X", &mainCamera.data.position.x, -10.0f, 10.0f);
-            ImGui::SliderFloat("Y", &mainCamera.data.position.y, -10.0f, 10.0f);
-            ImGui::SliderFloat("Z", &mainCamera.data.position.z, -10.0f, 10.0f);
-            ImGui::SliderFloat("FOV", &mainCamera.data.fov, 10.0f, 60.0f);
+            ImGui::SliderFloat("X", &camData.position.x, -10.0f, 10.0f);
+            ImGui::SliderFloat("Y", &camData.position.y, -10.0f, 10.0f);
+            ImGui::SliderFloat("Z", &camData.position.z, -10.0f, 10.0f);
+            ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 60.0f);
 
-            ImGui::SliderFloat("YAW", &mainCamera.data.yaw, 0.0f, 360.0f);
-            ImGui::SliderFloat("PITCH", &mainCamera.data.pitch, -90.0f, 90.0f);
-            // ImGui::ColorEdit3("clear color", (float*)&clear_color);
+            ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
+            ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
 
             if (ImGui::Button("Toggle Camera mode"))
                 mainCamera.toggleMode();
@@ -1599,9 +1600,13 @@ private:
             ImGui::SameLine();
             ImGui::Text(mode_name.data());
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                                 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
         }
+
+        mainCamera.setData(camData);
+
         ImGui::Render();
     }
 
