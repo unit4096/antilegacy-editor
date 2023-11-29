@@ -1,5 +1,9 @@
-#pragma once
+#ifndef GLM
+#define GLM
+
 #include <glm/glm.hpp>
+
+#endif // GLM
 
 #ifndef ALE_CAMERA
 #define ALE_CAMERA
@@ -51,9 +55,7 @@ Camera::Camera() {
     targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
-Camera::~Camera() {
-
-}
+Camera::~Camera() {}
 
 void Camera::toggleMode() {
     switch (mode) {
