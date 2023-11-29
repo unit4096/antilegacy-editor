@@ -379,8 +379,6 @@ private:
 
     // Variables for ImGUI
     ImGuiIO& io;
-    // TODO: Delete with the demo code
-    const ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -1574,10 +1572,7 @@ private:
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-
-        // TODO: Implement more handlers
-
-        // ImGui::ShowDemoWindow(&isDemo);
+        // ImGui::ShowDemoWindow();
 
         CameraData camData = mainCamera.getData();
         
@@ -1587,7 +1582,7 @@ private:
             ImGui::SliderFloat("X", &camData.position.x, -10.0f, 10.0f);
             ImGui::SliderFloat("Y", &camData.position.y, -10.0f, 10.0f);
             ImGui::SliderFloat("Z", &camData.position.z, -10.0f, 10.0f);
-            ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 60.0f);
+            ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
 
             ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
             ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
