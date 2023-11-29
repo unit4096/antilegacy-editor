@@ -1496,18 +1496,19 @@ private:
     // START
 
     void setStyleImGui() {
+        //TODO: move this code to a config file
         ImGuiStyle &style = ImGui::GetStyle();
         
         
         style.WindowMinSize        = ImVec2( 160, 20 );
-        style.FramePadding         = ImVec2( 4, 2 );
+        style.FramePadding         = ImVec2( 2, 1 );
         style.ItemSpacing          = ImVec2( 6, 2 );
-        style.ItemInnerSpacing     = ImVec2( 6, 4 );
+        // style.ItemInnerSpacing     = ImVec2( 6, 4 );
         style.Alpha                = 0.95f;
         style.WindowRounding       = 4.0f;
         style.FrameRounding        = 2.0f;
         style.IndentSpacing        = 6.0f;
-        style.ItemInnerSpacing     = ImVec2( 2, 4 );
+        style.ItemInnerSpacing     = ImVec2( 1, 1 );
         style.ColumnsMinSpacing    = 50.0f;
         style.GrabMinSize          = 14.0f;
         style.GrabRounding         = 16.0f;
