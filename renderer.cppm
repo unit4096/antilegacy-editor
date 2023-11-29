@@ -1599,7 +1599,7 @@ private:
                                     ?"ARCBALL"
                                     :"FREE";
             ImGui::SameLine();
-            ImGui::Text(mode_name.data());
+            ImGui::Text("%s",mode_name.data());
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                                  1000.0f / io.Framerate, io.Framerate);
