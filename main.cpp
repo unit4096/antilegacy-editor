@@ -11,6 +11,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
 
+#include <input_manager.h>
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
@@ -31,7 +33,6 @@ int main() {
 
 
     std::string model_cube_path = "./models/cube/Cube.gltf";
-
     std::string dummy_model_path = "models/viking_room.obj";
     std::string dummy_texture_path = "textures/viking_room.png";
     const std::string uv_checker_path = "textures/tex_uv_checker.jpg";
@@ -50,9 +51,11 @@ int main() {
     // loader.loadTexture(uv_checker_path.data(), image);
 
     ale::Renderer renderer(io,model,image);
+    ale::InputManager input;
 
     try {
         renderer.initWindow();
+        input.init(renderer.getWindow());
         renderer.initCamera();
         renderer.initRenderer();
         
