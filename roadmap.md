@@ -23,16 +23,16 @@
 - [ ] View
   - [ ] Camera movement
     - [ ] Direction
-      - [ ] free rotation
+      - [x] free rotation
       - [x] Focus on model
       - [ ] Fix camera direction along global XYZ
-      - [ ] manually set angle
+      - [x] manually set angle
     - [ ] Movement
       - [ ] free movement
       - [x] along global XYZ
       - [ ] along local XYZ
       - [ ] fix camera position
-      - [ ] manually set rotation
+      - [x] manually set rotation
     
 - [ ] Mesh manipulation
   primitives -- vertices, edges, faces
