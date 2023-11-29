@@ -52,14 +52,14 @@ int main() {
     ale::Renderer renderer(io,model,image);
 
     try {
-        renderer.init();
+        renderer.initWindow();
+        renderer.initCamera();
+        renderer.initRenderer();
         
-        // FIXME: closing using windowShouldClose generates vk errors in cleanup
         while (!renderer.shouldClose()) {
             glfwPollEvents();    
             renderer.drawFrame();
-        } 
-        renderer.drawFrame();
+        }
         renderer.cleanup();
         
     } catch (const std::exception& e) {

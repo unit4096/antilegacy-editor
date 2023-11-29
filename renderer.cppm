@@ -130,11 +130,34 @@ public:
                                                 :io(_io), 
                                                 model(_model), 
                                                 image(_image){};
-    void init() {
-        initWindow();
-        initCamera();
+    
+
+    void initWindow() {
+        glfwInit();
+    
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        glfwSetWindowUserPointer(window, this);
+        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+    }
+    
+    void initRenderer() {
         initVulkan();
         initImGUI();
+    }
+
+    void initCamera() {
+        CameraData _data;
+        _data.fov = 45.0f;
+        _data.farPlane = 10000.0f;
+        _data.nearPlane = 0.001f;
+        _data.up = glm::vec3(0,1,0);
+        _data.front = glm::vec3(1,0,0);
+        _data.position = glm::vec3(0.0f,0.0f,1.0f);
+        _data.pitch = 0;
+        _data.yaw = 0;
+        mainCamera.setData(_data);
     }
 
     void setCamera() {
@@ -253,7 +276,8 @@ public:
 
 
     void cleanup() {
-
+        // Stop the device for cleanup
+        vkDeviceWaitIdle(device);
 
         // CLEAN IMGUI 
         // START
@@ -427,33 +451,11 @@ private:
         return attributeDescriptions;
     }
 
-    void initWindow() {
-        glfwInit();
-    
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
-        glfwSetWindowUserPointer(window, this);
-        glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-    }
-
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
         auto app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
         app->framebufferResized = true;
     }
 
-    void initCamera() {
-        CameraData _data;
-        _data.fov = 45.0f;
-        _data.farPlane = 10000.0f;
-        _data.nearPlane = 0.001f;
-        _data.up = glm::vec3(0,1,0);
-        _data.front = glm::vec3(1,0,0);
-        _data.position = glm::vec3(0.0f,0.0f,1.0f);
-        _data.pitch = 0;
-        _data.yaw = 0;
-        mainCamera.setData(_data);
-    }
 
     void initVulkan() {
 
@@ -483,16 +485,6 @@ private:
         createDescriptorSets();
         createCommandBuffers();
         createSyncObjects();
-    }
-
-
-    void mainLoop() {
-        while (!glfwWindowShouldClose(window)) {
-            glfwPollEvents();
-            drawFrame();
-        }
-
-        vkDeviceWaitIdle(device);
     }
 
     void cleanupSwapChain() {
