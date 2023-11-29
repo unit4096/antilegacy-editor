@@ -343,6 +343,10 @@ public:
         return glfwWindowShouldClose(window);
     };
 
+    GLFWwindow* getWindow() {
+        return window;
+    }
+
 private:
     GLFWwindow* window;
 
