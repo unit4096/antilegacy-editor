@@ -33,6 +33,7 @@ module;
 #include <unordered_map>
 
 #include <primitives.h>
+#include <camera.h>
 
 #ifndef IMGUI
 #define IMGUI
@@ -52,8 +53,8 @@ export {
 
 namespace ale {
 
-const uint32_t WIDTH = 1200;
-const uint32_t HEIGHT = 800;
+const uint32_t WIDTH = 1600;
+const uint32_t HEIGHT = 1200;
 
 std::string dummy_model_path = "models/viking_room.obj";
 std::string dummy_texture_path = "textures/viking_room.png";
@@ -112,14 +113,14 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 proj;
 };
 
-struct CameraData {
-    glm::vec3 position;
-    glm::vec3 front;
-    glm::vec3 worldUp;
-    float fov;
-    float yaw, pitch;
-    float nearPlane, farPlane;
-};
+// struct CameraData {
+//     glm::vec3 position;
+//     glm::vec3 front;
+//     glm::vec3 worldUp;
+//     float fov;
+//     float yaw, pitch;
+//     float nearPlane, farPlane;
+// };
 
 class Renderer {
 public:
@@ -134,6 +135,45 @@ public:
         initCamera();
         initVulkan();
         initImGUI();
+    }
+
+    void setCamera() {
+        // NOTE: for now the "up" axis is Y
+
+        // TODO: get this data from the node transform matrix
+        // Model matrix
+        ubo.model = glm::rotate(glm::mat4(1.0f),
+                                glm::radians(-90.0f),
+                                glm::vec3(1.0f, 0.0f, 0.0f));
+
+        // View matrix
+        if (mainCamera.mode == CameraMode::FREE) { 
+            glm::mat4x4 viewMatrix(1.0f);
+            
+            float yawAng = glm::radians(mainCamera.data.yaw);
+
+            // Generate pitch vector based on the yaw angle
+            glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
+            float pitchAng = glm::radians(mainCamera.data.pitch);
+            
+            // Apply yaw rotation            
+            viewMatrix = glm::rotate(viewMatrix, yawAng, mainCamera.data.up);
+            // Apply pitch rotation
+            viewMatrix = glm::rotate(viewMatrix, pitchAng, pitchVec);
+            // Apply translation
+            viewMatrix = glm::translate(viewMatrix, -mainCamera.data.position);
+
+            ubo.view = viewMatrix;
+        } else {
+            ubo.view = glm::lookAt(mainCamera.data.position, mainCamera.targetPos, mainCamera.data.up);
+        }
+
+
+        // Porjection matrix
+        ubo.proj = glm::perspective(glm::radians(mainCamera.data.fov),
+                        swapChainExtent.width / (float) swapChainExtent.height,
+                        mainCamera.data.nearPlane, mainCamera.data.farPlane);
+        ubo.proj[1][1] *= -1;                
     }
 
     void drawFrame() {
@@ -153,6 +193,8 @@ public:
 
         // Draw UI
         drawImGui();
+
+        setCamera();
 
         updateUniformBuffer(currentFrame);
 
@@ -277,7 +319,7 @@ public:
 private:
     GLFWwindow* window;
 
-    CameraData camera;
+    Camera mainCamera = Camera();
 
     UniformBufferObject ubo{};
 
@@ -404,9 +446,12 @@ private:
         _data.fov = 45.0f;
         _data.farPlane = 10000.0f;
         _data.nearPlane = 0.001f;
-        _data.front = glm::vec3(0,0,1);
-        _data.position = glm::vec3(2.0f,2.0f,3.0f);
-        camera = _data;
+        _data.up = glm::vec3(0,1,0);
+        _data.front = glm::vec3(1,0,0);
+        _data.position = glm::vec3(0.0f,0.0f,1.0f);
+        _data.pitch = 0;
+        _data.yaw = 0;
+        mainCamera.data = _data;
     }
 
     void initVulkan() {
@@ -1441,12 +1486,6 @@ private:
         // auto currentTime = std::chrono::high_resolution_clock::now();
         // float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
-        
-        ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.view = glm::lookAt(camera.position, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        ubo.proj = glm::perspective(glm::radians(camera.fov), swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
-        ubo.proj[1][1] *= -1;
-
         memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
     }
 
@@ -1471,6 +1510,7 @@ private:
         style.GrabRounding         = 16.0f;
         style.ScrollbarSize        = 12.0f;
         style.ScrollbarRounding    = 16.0f;        
+        style.ScaleAllSizes(4);
     }
 
     void initImGUI(){
@@ -1541,22 +1581,27 @@ private:
 
             ImGui::Begin("Basic configs");
             ImGui::Text("Camera properties");
-            ImGui::SliderFloat("X", &camera.position.x, -10.0f, 10.0f);
-            ImGui::SliderFloat("Y", &camera.position.y, -10.0f, 10.0f);
-            ImGui::SliderFloat("Z", &camera.position.z, -10.0f, 10.0f);
-            ImGui::SliderFloat("FOV", &camera.fov, 10.0f, 60.0f);
+            ImGui::SliderFloat("X", &mainCamera.data.position.x, -10.0f, 10.0f);
+            ImGui::SliderFloat("Y", &mainCamera.data.position.y, -10.0f, 10.0f);
+            ImGui::SliderFloat("Z", &mainCamera.data.position.z, -10.0f, 10.0f);
+            ImGui::SliderFloat("FOV", &mainCamera.data.fov, 10.0f, 60.0f);
 
+            ImGui::SliderFloat("YAW", &mainCamera.data.yaw, 0.0f, 360.0f);
+            ImGui::SliderFloat("PITCH", &mainCamera.data.pitch, -90.0f, 90.0f);
             // ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
-            // if (ImGui::Button("Button"))
-            //     counter++;
-            // ImGui::SameLine();
-            // ImGui::Text("counter = %d", counter);
+            if (ImGui::Button("Toggle Camera mode"))
+                mainCamera.toggleMode();
+
+            std::string mode_name = mainCamera.mode==CameraMode::ARCBALL
+                                    ?"ARCBALL"
+                                    :"FREE";
+            ImGui::SameLine();
+            ImGui::Text(mode_name.data());
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
             ImGui::End();
         }
-        
         ImGui::Render();
     }
 
