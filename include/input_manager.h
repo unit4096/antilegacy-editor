@@ -1,9 +1,13 @@
 #ifndef ALE_INPUT
 #define ALE_INPUT
 
-#pragma once
 
+// ext
+#pragma once
 #include <iostream>
+#include <map>
+
+// int
 
 #ifndef GLFW
 #define GLFW
@@ -13,13 +17,27 @@
 
 namespace ale {
 
+enum InputAction {
+    CAMERA_MOVE_F,
+    CAMERA_MOVE_B,
+    CAMERA_MOVE_L,
+    CAMERA_MOVE_R,
+    CAMERA_MOVE_U,
+    CAMERA_MOVE_D,
+};
+
 class InputManager {
 private:
-        
+    // map of bindigns to actions (not an unordered_map for better traversal)
+    std::map<int, InputAction> _inputBindings; 
+    void _setBinding(int key, InputAction action);
+    static void _keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+    void executeAction(InputAction _action);
+
 public:
     InputManager();
     ~InputManager();
-    void init(GLFWwindow *window);
+    void init(GLFWwindow *window);   
 };
 
 InputManager::InputManager() {}
@@ -27,14 +45,36 @@ InputManager::InputManager() {}
 InputManager::~InputManager() {}
 
 void InputManager::init(GLFWwindow* window) {
-    std::cout << "PRESS E TO CHECK INPUT"<< std::endl;
-        
-    auto key_callback = [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-        if (key == GLFW_KEY_E && action == GLFW_PRESS) {
-            std::cout << "KEY E CALLBACK" << std::endl;
-        }
-    };
-    glfwSetKeyCallback(window, key_callback);
+    glfwSetWindowUserPointer(window, this);
+    std::cout << "INIT INPUT MANAGER"<< std::endl;
+
+    // TODO: load config from a TOML file, add wrappers for raw GLFW macros
+    _inputBindings[GLFW_KEY_W] = InputAction::CAMERA_MOVE_F;
+    _inputBindings[GLFW_KEY_S] = InputAction::CAMERA_MOVE_B;
+    _inputBindings[GLFW_KEY_A] = InputAction::CAMERA_MOVE_L;
+    _inputBindings[GLFW_KEY_D] = InputAction::CAMERA_MOVE_R;
+    _inputBindings[GLFW_KEY_Q] = InputAction::CAMERA_MOVE_U;
+    _inputBindings[GLFW_KEY_Z] = InputAction::CAMERA_MOVE_D;
+
+    glfwSetKeyCallback(window, _keyCallback);
+}
+
+void InputManager::_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    InputManager* manager = (InputManager*)glfwGetWindowUserPointer(window);
+    
+    if (manager->_inputBindings.contains(key)) {
+        auto _action = manager->_inputBindings[key];
+        manager->executeAction(_action);
+    }
+}
+
+void InputManager::executeAction(InputAction _action) {
+
+    std::cout << "Action called: " << _action << std::endl;
+}
+
+void InputManager::_setBinding(int key, InputAction action) {
+    _inputBindings[key] = action;
 }
     
 } // namespace ale
