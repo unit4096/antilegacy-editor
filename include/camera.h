@@ -37,9 +37,9 @@ public:
     CameraData getData();
     void toggleMode();
     void setData(CameraData _data);
+    void movePosLocal(const glm::vec3 movementVector, const float speed);
+    void movePosGlobal(const glm::vec3 movementVector, const float speed);
 }; // class Camera
-
-
 
 Camera::Camera() {
     CameraData _data;
@@ -80,6 +80,14 @@ CameraData Camera::getData() {
 
 void Camera::setData(CameraData _data) {
     data = _data;
+}
+
+void Camera::movePosLocal(const glm::vec3 movementVector, const float speed) {
+    std::cout << "ALE: Local movement not implemented! \n";    
+}
+
+void Camera::movePosGlobal(const glm::vec3 movementVector, const float speed) {
+    this->data.position = this->data.position + (movementVector * speed);
 }
 
 } // namespace ale
