@@ -44,8 +44,6 @@
 
 #endif //IMGUI
 
-namespace ale {};
-using namespace ale;
 
 namespace ale {
 
