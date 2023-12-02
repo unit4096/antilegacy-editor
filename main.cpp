@@ -72,10 +72,6 @@ int main() {
         while (!renderer.shouldClose()) {
             // polling events, callbacks fired
             glfwPollEvents();
-
-            //Add input handling here
-            // {{{ }}}
-
             // Drawing the results of the input   
             renderer.drawFrame();
         }
