@@ -147,19 +147,6 @@ public:
         initImGUI();
     }
 
-    void initCamera() {
-        CameraData _data;
-        _data.fov = 45.0f;
-        _data.farPlane = 10000.0f;
-        _data.nearPlane = 0.001f;
-        _data.up = glm::vec3(0,1,0);
-        _data.front = glm::vec3(1,0,0);
-        _data.position = glm::vec3(0.0f,0.0f,1.0f);
-        _data.pitch = 0;
-        _data.yaw = 0;
-        mainCamera.setData(_data);
-    }
-
     void setCamera() {
         // NOTE: for now the "up" axis is Y
 

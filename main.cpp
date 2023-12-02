@@ -56,11 +56,16 @@ int main() {
     try {
         renderer.initWindow();
         input.init(renderer.getWindow());
-        renderer.initCamera();
-        renderer.initRenderer();
+        renderer.initRenderer();        
         
         while (!renderer.shouldClose()) {
-            glfwPollEvents();    
+            // polling events, callbacks fired
+            glfwPollEvents();
+
+            //Add input handling here
+            // {{{ }}}
+
+            // Drawing the results of the input   
             renderer.drawFrame();
         }
         renderer.cleanup();
