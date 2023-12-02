@@ -1,5 +1,5 @@
-#ifndef ALE_INPUT
-#define ALE_INPUT
+#ifndef ALE_INPUT_MANAGER
+#define ALE_INPUT_MANAGER
 
 
 // ext
@@ -90,4 +90,4 @@ void InputManager::bindFunction(InputAction _action, std::function<void()> _func
     
 } // namespace ale
 
-#endif //ALE_INPUT
+#endif //ALE_INPUT_MANAGER
