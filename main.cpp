@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdexcept>
+#include <memory>
 
 #ifndef GLFW
 #define GLFW
@@ -12,6 +13,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
 #include <input_manager.h>
+#include <camera.h>
+#include <renderer.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -19,7 +22,6 @@
 
 #include "model_loader/model_loader.h"
 
-import renderer;
 
 
 int main() {
@@ -52,11 +54,20 @@ int main() {
 
     ale::Renderer renderer(io,model,image);
     ale::InputManager input;
+    // A camera object that will be passed to the renderer
+    std::shared_ptr<ale::Camera> currentCamera = std::make_shared<ale::Camera>();
 
     try {
+        // TODO: possibly move window management outside the renderer
         renderer.initWindow();
         input.init(renderer.getWindow());
-        renderer.initRenderer();        
+        auto moveForward = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(1,0,0), 1);
+        };
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveForward);
+        // Bind global camera to the inner camera object 
+        renderer.bindCamera(currentCamera);
+        renderer.initRenderer();
         
         while (!renderer.shouldClose()) {
             // polling events, callbacks fired

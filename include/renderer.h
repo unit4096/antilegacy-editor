@@ -1,5 +1,4 @@
-module;
-
+#pragma once
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -31,6 +30,7 @@ module;
 #include <optional>
 #include <set>
 #include <unordered_map>
+#include <memory>
 
 #include <primitives.h>
 #include <camera.h>
@@ -46,10 +46,6 @@ module;
 
 namespace ale {};
 using namespace ale;
-
-export module renderer;
-
-export {
 
 namespace ale {
 
@@ -147,10 +143,14 @@ public:
         initImGUI();
     }
 
+    void bindCamera(std::shared_ptr<Camera> cam) {
+        this->mainCamera = cam;
+    }
+
     void setCamera() {
         // NOTE: for now the "up" axis is Y
 
-        CameraData data = mainCamera.getData();
+        CameraData data = mainCamera->getData();
 
         // TODO: get this data from the node transform matrix
         // FIXME: remove the rotation offset from the model
@@ -160,7 +160,7 @@ public:
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
         // View matrix
-        if (mainCamera.mode == CameraMode::FREE) { 
+        if (mainCamera->mode == CameraMode::FREE) { 
             glm::mat4x4 viewMatrix(1.0f);
             
             float yawAng = glm::radians(data.yaw);
@@ -178,7 +178,7 @@ public:
 
             ubo.view = viewMatrix;
         } else {
-            ubo.view = glm::lookAt(data.position, mainCamera.targetPos, data.up);
+            ubo.view = glm::lookAt(data.position, mainCamera->targetPos, data.up);
         }
 
 
@@ -337,7 +337,7 @@ public:
 private:
     GLFWwindow* window;
 
-    Camera mainCamera = Camera();
+    std::shared_ptr<Camera> mainCamera = std::make_shared<Camera>();
 
     UniformBufferObject ubo{};
 
@@ -1557,7 +1557,7 @@ private:
 
         // ImGui::ShowDemoWindow();
 
-        CameraData camData = mainCamera.getData();
+        CameraData camData = mainCamera->getData();
         
         {
             ImGui::Begin("Basic configs");
@@ -1571,9 +1571,9 @@ private:
             ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
 
             if (ImGui::Button("Toggle Camera mode"))
-                mainCamera.toggleMode();
+                mainCamera->toggleMode();
 
-            std::string mode_name = mainCamera.mode==CameraMode::ARCBALL
+            std::string mode_name = mainCamera->mode==CameraMode::ARCBALL
                                     ?"ARCBALL"
                                     :"FREE";
             ImGui::SameLine();
@@ -1584,7 +1584,7 @@ private:
             ImGui::End();
         }
 
-        mainCamera.setData(camData);
+        mainCamera->setData(camData);
 
         ImGui::Render();
     }
@@ -1797,5 +1797,3 @@ private:
 };
 
 } // namespace ale
-
-} // export module
