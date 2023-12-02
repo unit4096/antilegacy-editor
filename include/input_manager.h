@@ -8,8 +8,6 @@
 #include <functional>
 #include <map>
 
-// int
-
 #ifndef GLFW
 #define GLFW
 #define GLFW_INCLUDE_VULKAN
@@ -32,9 +30,9 @@ private:
     // map of bindigns to actions (not an unordered_map for better traversal)
     std::map<int, InputAction> _inputBindings; 
     std::map<InputAction, std::function<void()> > _functionBindings;
-    void _setBinding(int key, InputAction action);
+    void _bindKey(int key, InputAction action);
     static void _keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
-    void executeAction(InputAction _action);
+    void _executeAction(InputAction _action);
 
     
 
@@ -54,12 +52,12 @@ void InputManager::init(GLFWwindow* window) {
     std::cout << "INIT INPUT MANAGER"<< std::endl;
 
     // TODO: load config from a TOML file, add wrappers for raw GLFW macros
-    _inputBindings[GLFW_KEY_W] = InputAction::CAMERA_MOVE_F;
-    _inputBindings[GLFW_KEY_S] = InputAction::CAMERA_MOVE_B;
-    _inputBindings[GLFW_KEY_A] = InputAction::CAMERA_MOVE_L;
-    _inputBindings[GLFW_KEY_D] = InputAction::CAMERA_MOVE_R;
-    _inputBindings[GLFW_KEY_Q] = InputAction::CAMERA_MOVE_U;
-    _inputBindings[GLFW_KEY_Z] = InputAction::CAMERA_MOVE_D;
+	_bindKey(GLFW_KEY_W,InputAction::CAMERA_MOVE_F);
+	_bindKey(GLFW_KEY_S,InputAction::CAMERA_MOVE_B);
+	_bindKey(GLFW_KEY_A,InputAction::CAMERA_MOVE_L);
+	_bindKey(GLFW_KEY_D,InputAction::CAMERA_MOVE_R);
+	_bindKey(GLFW_KEY_Q,InputAction::CAMERA_MOVE_U);
+	_bindKey(GLFW_KEY_Z,InputAction::CAMERA_MOVE_D);
 
     glfwSetKeyCallback(window, _keyCallback);
 }
@@ -69,11 +67,11 @@ void InputManager::_keyCallback(GLFWwindow* window, int key, int scancode, int a
     
     if (manager->_inputBindings.contains(key)) {
         auto _action = manager->_inputBindings[key];
-        manager->executeAction(_action);
+        manager->_executeAction(_action);
     }
 }
 
-void InputManager::executeAction(InputAction _action) {
+void InputManager::_executeAction(InputAction _action) {
     if (_functionBindings.contains(_action)) {
 		_functionBindings[_action]();
     } else {
@@ -82,12 +80,12 @@ void InputManager::executeAction(InputAction _action) {
     std::cout << "Action called: " << _action << "\n";
 }
 
-void InputManager::bindFunction(InputAction _action, std::function<void()> _function) {
-    _functionBindings[_action] = _function;    
+void InputManager::_bindKey(int key, InputAction action) {
+    _inputBindings[key] = action;
 }
 
-void InputManager::_setBinding(int key, InputAction action) {
-    _inputBindings[key] = action;
+void InputManager::bindFunction(InputAction _action, std::function<void()> _function) {
+    _functionBindings[_action] = _function;    
 }
     
 } // namespace ale
