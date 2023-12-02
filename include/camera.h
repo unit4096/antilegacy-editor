@@ -46,10 +46,12 @@ Camera::Camera() {
     _data.fov = 45.0f;
     _data.farPlane = 10000.0f;
     _data.nearPlane = 0.001f;
-    _data.up = glm::vec3(0,0,1);
+    _data.up = glm::vec3(0,1,0);
     _data.front = glm::vec3(1,0,0);
-    _data.position = glm::vec3(2.0f,2.0f,3.0f);
-    data = _data;
+    _data.position = glm::vec3(0.0f,0.0f,1.0f);
+    _data.pitch = 0;
+    _data.yaw = 0;
+    this->data = _data;
 
     mode = CameraMode::ARCBALL;
     targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
