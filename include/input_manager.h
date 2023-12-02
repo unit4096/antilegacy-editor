@@ -5,6 +5,7 @@
 // ext
 #pragma once
 #include <iostream>
+#include <functional>
 #include <map>
 
 // int
@@ -30,14 +31,18 @@ class InputManager {
 private:
     // map of bindigns to actions (not an unordered_map for better traversal)
     std::map<int, InputAction> _inputBindings; 
+    std::map<InputAction, std::function<void()> > _functionBindings;
     void _setBinding(int key, InputAction action);
     static void _keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
     void executeAction(InputAction _action);
+
+    
 
 public:
     InputManager();
     ~InputManager();
     void init(GLFWwindow *window);   
+    void bindFunction(InputAction _action, std::function<void()> _function);
 };
 
 InputManager::InputManager() {}
@@ -69,8 +74,16 @@ void InputManager::_keyCallback(GLFWwindow* window, int key, int scancode, int a
 }
 
 void InputManager::executeAction(InputAction _action) {
+    if (_functionBindings.contains(_action)) {
+		_functionBindings[_action]();
+    } else {
+		std::cout << "ALE: Function not found for action!\n";
+	}
+    std::cout << "Action called: " << _action << "\n";
+}
 
-    std::cout << "Action called: " << _action << std::endl;
+void InputManager::bindFunction(InputAction _action, std::function<void()> _function) {
+    _functionBindings[_action] = _function;    
 }
 
 void InputManager::_setBinding(int key, InputAction action) {
