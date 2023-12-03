@@ -1,3 +1,10 @@
+/* 
+This is a Vulkan renderer. This code is mostly salvaged from vulkan-tutorial.com
+and adapted to my needs. Since for now [03.12.2023] the editor is still in
+development, renederer code still somewhat resembles the original tutorial code.
+*/
+
+
 #pragma once
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
