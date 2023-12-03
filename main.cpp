@@ -61,17 +61,20 @@ int main() {
         // TODO: possibly move window management outside the renderer
         renderer.initWindow();
         input.init(renderer.getWindow());
+        
+        // Make the default mode to be FREE
+        mainCam->toggleMode();
 
         // Further code tests movement along 3 global axis
         // TODO: move this code from the main file, provide better handling for bindings
         float dummy_speed = 0.001f;
 
-        auto moveX = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), dummy_speed);};
-        auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), dummy_speed);};
+        auto moveX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,1), dummy_speed);};
+        auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), dummy_speed);};
         auto moveY = [&]() {mainCam->movePosGlobal(glm::vec3(0,1,0), dummy_speed);};
         auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), dummy_speed);};
-        auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,1), dummy_speed);};
-        auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), dummy_speed);};
+        auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), dummy_speed);};
+        auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), dummy_speed);};
 
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveX, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveNX, true);
