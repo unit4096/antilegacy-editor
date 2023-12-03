@@ -1,3 +1,4 @@
+// out
 #include <iostream>
 #include <stdexcept>
 #include <memory>
@@ -12,6 +13,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
 
+// inn
 #include <input_manager.h>
 #include <camera.h>
 #include <renderer.h>
@@ -92,7 +94,7 @@ int main() {
             glfwPollEvents();
             
             // Getting input
-            // FIXME: now it executes every frame, meaning that the camera spead
+            // FIXME: now it executes every frame, meaning that the camera speed
             // is now bound to FPS. Move input to a separate thread and use 
             // delta as quickly as possible
             input.executeActiveActions();
