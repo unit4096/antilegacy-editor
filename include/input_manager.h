@@ -65,7 +65,7 @@ void InputManager::init(GLFWwindow* window) {
 void InputManager::_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     InputManager* manager = (InputManager*)glfwGetWindowUserPointer(window);
     
-    if (manager->_inputBindings.contains(key)) {
+    if (manager->_inputBindings.contains(key) && action == GLFW_PRESS) {
         auto _action = manager->_inputBindings[key];
         manager->_executeAction(_action);
     }
@@ -77,7 +77,7 @@ void InputManager::_executeAction(InputAction _action) {
     } else {
 		std::cout << "ALE: Function not found for action!\n";
 	}
-    std::cout << "Action called: " << _action << "\n";
+    // std::cout << "Action called: " << _action << "\n";
 }
 
 void InputManager::_bindKey(int key, InputAction action) {
