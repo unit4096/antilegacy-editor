@@ -64,8 +64,7 @@ int main() {
 
         // Further code tests movement along 3 global axis
         // TODO: move this code from the main file, provide better handling for bindings
-        
-        int dummy_camera_speed = 1.0f;
+        float dummy_camera_speed = 0.001f;
 
         auto moveX = [&]() {
             currentCamera->movePosGlobal(glm::vec3(1,0,0), dummy_camera_speed);
@@ -85,20 +84,28 @@ int main() {
         auto moveNZ = [&]() {
             currentCamera->movePosGlobal(glm::vec3(0,0,-1), dummy_camera_speed);
         };
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveX);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveNX);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveZ);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_R,moveNZ);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_U,moveY);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveX, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveNX, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveZ, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_R,moveNZ, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_U,moveY, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
         
         // Bind global camera to the inner camera object 
         renderer.bindCamera(currentCamera);
         renderer.initRenderer();
         
         while (!renderer.shouldClose()) {
-            // polling events, callbacks fired
+            // polling events, callbacks fired            
             glfwPollEvents();
+            
+            // Getting input
+            // FIXME: now it executes every frame, meaning that the camera spead
+            // is now bound to FPS. Move input to a separate thread and use 
+            // delta as quickly as possible
+            
+            input.executeActiveActions();
+            
             // Drawing the results of the input   
             renderer.drawFrame();
         }
