@@ -55,7 +55,7 @@ int main() {
     ale::Renderer renderer(io,model,image);
     ale::InputManager input;
     // A camera object that will be passed to the renderer
-    std::shared_ptr<ale::Camera> currentCamera = std::make_shared<ale::Camera>();
+    std::shared_ptr<ale::Camera> mainCam = std::make_shared<ale::Camera>();
 
     try {
         // TODO: possibly move window management outside the renderer
@@ -64,26 +64,15 @@ int main() {
 
         // Further code tests movement along 3 global axis
         // TODO: move this code from the main file, provide better handling for bindings
-        float dummy_camera_speed = 0.001f;
+        float dummy_speed = 0.001f;
 
-        auto moveX = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(1,0,0), dummy_camera_speed);
-        };
-        auto moveNX = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(-1,0,0), dummy_camera_speed);
-        };
-        auto moveY = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(0,1,0), dummy_camera_speed);
-        };
-        auto moveNY = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(0,-1,0), dummy_camera_speed);
-        };
-        auto moveZ = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(0,0,1), dummy_camera_speed);
-        };
-        auto moveNZ = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(0,0,-1), dummy_camera_speed);
-        };
+        auto moveX = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), dummy_speed);};
+        auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), dummy_speed);};
+        auto moveY = [&]() {mainCam->movePosGlobal(glm::vec3(0,1,0), dummy_speed);};
+        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), dummy_speed);};
+        auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,1), dummy_speed);};
+        auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), dummy_speed);};
+
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveX, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveNX, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveZ, true);
@@ -92,7 +81,7 @@ int main() {
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
         
         // Bind global camera to the inner camera object 
-        renderer.bindCamera(currentCamera);
+        renderer.bindCamera(mainCam);
         renderer.initRenderer();
         
         while (!renderer.shouldClose()) {
@@ -103,7 +92,6 @@ int main() {
             // FIXME: now it executes every frame, meaning that the camera spead
             // is now bound to FPS. Move input to a separate thread and use 
             // delta as quickly as possible
-            
             input.executeActiveActions();
             
             // Drawing the results of the input   
