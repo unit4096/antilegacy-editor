@@ -155,6 +155,8 @@ public:
     void setCamera() {
         // NOTE: for now the "up" axis is Y
 
+        const glm::vec3 global_up = glm::vec3(0,1,0);
+
         CameraData data = mainCamera->getData();
 
         // TODO: get this data from the node transform matrix
@@ -175,7 +177,7 @@ public:
             float pitchAng = glm::radians(data.pitch);
             
             // Apply yaw rotation            
-            viewMatrix = glm::rotate(viewMatrix, yawAng, data.up);
+            viewMatrix = glm::rotate(viewMatrix, yawAng, global_up);
             // Apply pitch rotation
             viewMatrix = glm::rotate(viewMatrix, pitchAng, pitchVec);
             // Apply translation
@@ -183,7 +185,7 @@ public:
 
             ubo.view = viewMatrix;
         } else {
-            ubo.view = glm::lookAt(data.position, mainCamera->targetPos, data.up);
+            ubo.view = glm::lookAt(data.position, mainCamera->targetPos, global_up);
         }
 
 
@@ -1586,6 +1588,7 @@ private:
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                                  1000.0f / io.Framerate, io.Framerate);
+            ImGui::Text("FPS CAP ENABLED");
             ImGui::End();
         }
 
