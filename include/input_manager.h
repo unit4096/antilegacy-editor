@@ -27,20 +27,30 @@ enum InputAction {
 
 class InputManager {
 private:
-    // map of bindigns to actions (not an unordered_map for better traversal)
-    std::map<int, InputAction> _inputBindings; 
-    std::map<InputAction, std::function<void()> > _functionBindings;
+
+    // A map of (KEY,ACTION) bindings (not an unordered_map for better traversal)
+    std::map<int, InputAction> _inputBindings;
+    // A map for key shortcuts and text inputs (uses callbacks)
+    std::map<InputAction, std::function<void()> > _callbackBindings;
+    // A map for continuous input (uses runtime checks)
+    std::map<InputAction, std::function<void()> > _functionContBindings;
+    
+    GLFWwindow* window_p;
+    
     void _bindKey(int key, InputAction action);
     static void _keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
     void _executeAction(InputAction _action);
-
+    bool _isKeyPressed(GLFWwindow *window, int key);
     
 
 public:
     InputManager();
     ~InputManager();
-    void init(GLFWwindow *window);   
-    void bindFunction(InputAction _action, std::function<void()> _function);
+    void init(GLFWwindow *window);
+    bool executeActiveActions();
+    void bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous = false);
+
+    bool isActionActive(InputAction _action);
 };
 
 InputManager::InputManager() {}
@@ -48,6 +58,7 @@ InputManager::InputManager() {}
 InputManager::~InputManager() {}
 
 void InputManager::init(GLFWwindow* window) {
+    window_p = window;
     glfwSetWindowUserPointer(window, this);
     std::cout << "INIT INPUT MANAGER"<< std::endl;
 
@@ -72,20 +83,44 @@ void InputManager::_keyCallback(GLFWwindow* window, int key, int scancode, int a
 }
 
 void InputManager::_executeAction(InputAction _action) {
-    if (_functionBindings.contains(_action)) {
-		_functionBindings[_action]();
-    } else {
-		std::cout << "ALE: Function not found for action!\n";
-	}
-    // std::cout << "Action called: " << _action << "\n";
+    if (_callbackBindings.contains(_action)) {
+		_callbackBindings[_action]();
+    }
 }
 
 void InputManager::_bindKey(int key, InputAction action) {
     _inputBindings[key] = action;
 }
 
-void InputManager::bindFunction(InputAction _action, std::function<void()> _function) {
-    _functionBindings[_action] = _function;    
+// TODO: implement a more verboose distinction between input methods
+void InputManager::bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous) {    
+    if (isContinuous) {
+        _functionContBindings[_action] = _function;
+    } else {
+        _callbackBindings[_action] = _function;        
+    }
+}
+
+bool InputManager::_isKeyPressed(GLFWwindow* window, int key){
+    return glfwGetKey(window, key);
+} 
+
+bool InputManager::isActionActive(InputAction _action){
+    return false;
+} 
+
+//allows to execute active continuous actions (like camera controls)
+bool InputManager::executeActiveActions() {
+    for (auto binding:_inputBindings) {
+        if (_isKeyPressed(window_p, binding.first)) {
+            if (_functionContBindings[binding.second]) {
+                _functionContBindings[binding.second]();
+            } else {
+                return false;
+            }
+        }
+    }
+    return true;
 }
     
 } // namespace ale
