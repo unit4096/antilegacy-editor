@@ -2,6 +2,8 @@
 #include <iostream>
 #include <stdexcept>
 #include <memory>
+#include <chrono>
+#include <thread>
 
 #ifndef GLFW
 #define GLFW
@@ -27,6 +29,10 @@
 
 
 int main() {
+
+    // FPS cap in 8 milliseconds -> 120 FPS
+    const std::chrono::duration<double, std::milli> fps_cap(8);
+    auto lastFrame = std::chrono::steady_clock::now();
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -90,6 +96,12 @@ int main() {
         renderer.initRenderer();
         
         while (!renderer.shouldClose()) {
+            // Time point to the frame start
+            auto thisFrame = std::chrono::steady_clock::now();
+            // Delta time for editor calculations
+            auto deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
+            lastFrame = thisFrame;
+
             // polling events, callbacks fired            
             glfwPollEvents();
             
@@ -101,6 +113,13 @@ int main() {
             
             // Drawing the results of the input   
             renderer.drawFrame();
+
+            
+            auto thisFrameEnd = std::chrono::steady_clock::now();
+            auto frameDuration = duration_cast<std::chrono::duration<double>>(thisFrameEnd - thisFrame);
+            // Sleep for = cap time - frame duration (to avoid FPS spikes)
+            const std::chrono::duration<double, std::milli> elapsed = fps_cap - frameDuration;
+            std::this_thread::sleep_for(elapsed);
         }
         renderer.cleanup();
         
