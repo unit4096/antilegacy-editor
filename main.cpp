@@ -61,10 +61,37 @@ int main() {
         // TODO: possibly move window management outside the renderer
         renderer.initWindow();
         input.init(renderer.getWindow());
-        auto moveForward = [&]() {
-            currentCamera->movePosGlobal(glm::vec3(1,0,0), 1);
+
+        // Further code tests movement along 3 global axis
+        // TODO: move this code from the main file, provide better handling for bindings
+        
+        int dummy_camera_speed = 1.0f;
+
+        auto moveX = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(1,0,0), dummy_camera_speed);
         };
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveForward);
+        auto moveNX = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(-1,0,0), dummy_camera_speed);
+        };
+        auto moveY = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(0,1,0), dummy_camera_speed);
+        };
+        auto moveNY = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(0,-1,0), dummy_camera_speed);
+        };
+        auto moveZ = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(0,0,1), dummy_camera_speed);
+        };
+        auto moveNZ = [&]() {
+            currentCamera->movePosGlobal(glm::vec3(0,0,-1), dummy_camera_speed);
+        };
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveX);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveNX);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveZ);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_R,moveNZ);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_U,moveY);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY);
+        
         // Bind global camera to the inner camera object 
         renderer.bindCamera(currentCamera);
         renderer.initRenderer();
