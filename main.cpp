@@ -75,19 +75,20 @@ int main() {
 
         // Further code tests movement along 3 global axis
         // TODO: move this code from the main file, provide better handling for bindings
-        float dummy_speed = 0.001f;
+        float cameraSpeed = 0.005f;
+        float mouseSensitivity = 0.06f;
 
-        auto moveX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,1), dummy_speed);};
-        auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), dummy_speed);};
-        auto moveY = [&]() {mainCam->movePosGlobal(glm::vec3(0,1,0), dummy_speed);};
-        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), dummy_speed);};
-        auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), dummy_speed);};
-        auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), dummy_speed);};
+        auto moveX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,1), cameraSpeed);};
+        auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), cameraSpeed);};
+        auto moveY = [&]() {mainCam->movePosGlobal(glm::vec3(0,1,0), cameraSpeed);};
+        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeed);};
+        auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), cameraSpeed);};
+        auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), cameraSpeed);};
 
-        auto moveF = [&]() {mainCam->moveForwardLocal(dummy_speed);};
-        auto moveB = [&]() {mainCam->moveBackwardLocal(dummy_speed);};
-        auto moveL = [&]() {mainCam->moveLeftLocal(dummy_speed);};
-        auto moveR = [&]() {mainCam->moveRightLocal(dummy_speed);};
+        auto moveF = [&]() {mainCam->moveForwardLocal(cameraSpeed);};
+        auto moveB = [&]() {mainCam->moveBackwardLocal(cameraSpeed);};
+        auto moveL = [&]() {mainCam->moveLeftLocal(cameraSpeed);};
+        auto moveR = [&]() {mainCam->moveRightLocal(cameraSpeed);};
 
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveF, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveB, true);
@@ -110,16 +111,21 @@ int main() {
             // polling events, callbacks fired            
             glfwPollEvents();
             
-            // Getting input
-            // FIXME: now it executes every frame, meaning that the camera speed
-            // is now bound to FPS. Move input to a separate thread and use 
-            // delta as quickly as possible
-            input.executeActiveActions();
-            
+            // Key camera input
+            input.executeActiveKeyActions();
+
+            // Mouse camera input
+            input.executeActiveMouseAcitons();            
+            v2d mouseMovement = input.getLastDeltaMouseOffset();            
+            v2f camYawPitch = mainCam->getYawPitch();
+            camYawPitch.x-= mouseMovement.x * mouseSensitivity;
+            camYawPitch.y-= mouseMovement.y * mouseSensitivity;
+            mainCam->setYawPitch(camYawPitch.x,camYawPitch.y);
+
             // Drawing the results of the input   
             renderer.drawFrame();
-
             
+            // Smooth framerate
             auto thisFrameEnd = std::chrono::steady_clock::now();
             auto frameDuration = duration_cast<std::chrono::duration<double>>(thisFrameEnd - thisFrame);
             // Sleep for = cap time - frame duration (to avoid FPS spikes)
