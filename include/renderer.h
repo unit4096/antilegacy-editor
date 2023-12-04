@@ -152,6 +152,8 @@ public:
         this->mainCamera = cam;
     }
 
+
+    // TODO: this whole function should go to the camera class
     void setCamera() {
         // NOTE: for now the "up" axis is Y
 
@@ -166,6 +168,7 @@ public:
                                 glm::radians(-90.0f),
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
+        mainCamera->setForwardOrientation(data.yaw, data.pitch);
         // View matrix
         if (mainCamera->mode == CameraMode::FREE) { 
             glm::mat4x4 viewMatrix(1.0f);
