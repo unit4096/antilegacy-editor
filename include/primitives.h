@@ -12,6 +12,7 @@
 #include <functional>
 #include <glm/gtx/hash.hpp>
 
+// A vertex with a position, a vertex color, and UV coordinates
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
@@ -22,12 +23,25 @@ struct Vertex {
     }
 };
 
-
+// A model struct. Stores mesh data
 struct Model {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 };
 
+// Basic 2D vector from 2 floats. Can be used as a vector implementation wrapper
+struct v2f {
+    float x,y;
+    v2f(float _x, float _y):x(_x), y(_y){}
+};
+
+// Basic 2D vector from 2 doubles. Can be used as a vector implementation wrapper
+struct v2d {
+    double x,y;
+    v2d(double _x, double _y):x(_x), y(_y){}
+};
+
+// An image struct with img. parameters and a raw pointer to data. Used for stbi
 struct Image {
     int w;
     int h;
@@ -36,7 +50,7 @@ struct Image {
     unsigned char* data;
 };
 
-// TODO: this is a temporary solution, some aspects may be redundant
+// A hash funciton to compare vertices. For removing duplicates in unordered_map
 namespace std {
     template<> struct hash<Vertex> {
         size_t operator()(Vertex const& vertex) const {
@@ -47,13 +61,5 @@ namespace std {
         }
     };
 }
-
-
-// Uses equality operator of 
-struct VertexEquals {
-    bool operator()(const Vertex& a, const Vertex& b) const {
-        return a==b;
-    }
-};
 
 #endif // PRIMITIVES
