@@ -37,7 +37,13 @@ public:
     CameraData getData();
     void toggleMode();
     void setData(CameraData _data);
-    void movePosLocal(const glm::vec3 movementVector, const float speed);
+    glm::vec3 getForwardOrientation();
+    void setForwardOrientation(float yaw, float pitch);
+    void setForwardOrientation(glm::vec3 _front);
+    void moveForwardLocal(const float speed);
+    void moveBackwardLocal(const float speed);
+    void moveLeftLocal(const float speed);
+    void moveRightLocal(const float speed);
     void movePosGlobal(const glm::vec3 movementVector, const float speed);
 }; // class Camera
 
@@ -82,8 +88,50 @@ void Camera::setData(CameraData _data) {
     data = _data;
 }
 
-void Camera::movePosLocal(const glm::vec3 movementVector, const float speed) {
-    std::cout << "ALE: Local movement not implemented! \n";    
+glm::vec3 Camera::getForwardOrientation() {
+    return this->data.front;
+}
+
+// Sets the orientation vector of the camera by yaw and pitch (in degrees)
+void Camera::setForwardOrientation(float yaw, float pitch) {
+
+    float cosYawRad = std::cos(glm::radians(yaw));
+    float sinYawRad = std::sin(glm::radians(yaw));
+    float cosPitchRad = std::cos(glm::radians(pitch));
+    float sinPitchRad = std::sin(glm::radians(pitch));
+
+    glm::vec3 forwardVector;
+    forwardVector.x = cosPitchRad * sinYawRad;
+    forwardVector.y = sinPitchRad;
+    forwardVector.z = cosPitchRad * cosYawRad;
+
+    this->data.front = glm::normalize(forwardVector);
+}
+
+void Camera::setForwardOrientation(glm::vec3 _front) {
+    this->data.front = _front;
+}
+
+void Camera::moveForwardLocal(const float speed) {
+    glm::vec3 _forward = this->data.front;
+    _forward.x = -_forward.x;
+    this->data.position +=  _forward * -speed;
+}
+
+void Camera::moveBackwardLocal(const float speed) {
+    moveForwardLocal(-speed);
+}
+
+void Camera::moveLeftLocal(const float speed) {
+    glm::vec3 _forward = this->data.front;
+    _forward.x = -_forward.x;
+    this->data.position += speed * glm::normalize(glm::cross(_forward, this->data.up));
+}
+
+void Camera::moveRightLocal(const float speed) {
+    glm::vec3 _forward = this->data.front;
+    _forward.x = -_forward.x;
+    this->data.position += speed * -glm::normalize(glm::cross(_forward, this->data.up));
 }
 
 void Camera::movePosGlobal(const glm::vec3 movementVector, const float speed) {
