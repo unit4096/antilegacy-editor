@@ -84,10 +84,15 @@ int main() {
         auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), dummy_speed);};
         auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), dummy_speed);};
 
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveX, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveNX, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveZ, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_R,moveNZ, true);
+        auto moveF = [&]() {mainCam->moveForwardLocal(dummy_speed);};
+        auto moveB = [&]() {mainCam->moveBackwardLocal(dummy_speed);};
+        auto moveL = [&]() {mainCam->moveLeftLocal(dummy_speed);};
+        auto moveR = [&]() {mainCam->moveRightLocal(dummy_speed);};
+
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveF, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveB, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveL, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_R,moveR, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_U,moveY, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
         
