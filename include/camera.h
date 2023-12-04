@@ -1,3 +1,8 @@
+#ifndef ALE_CAMERA
+#define ALE_CAMERA
+
+
+// ext
 #ifndef GLM
 #define GLM
 
@@ -5,8 +10,8 @@
 
 #endif // GLM
 
-#ifndef ALE_CAMERA
-#define ALE_CAMERA
+// int
+#include <primitives.h>
 
 
 namespace ale {
@@ -25,6 +30,10 @@ struct CameraData {
     float nearPlane, farPlane;
 };
 
+
+// FIXME: this class needs heavy refactoring. Make yaw and pitch functions that
+// return and set camera orientation. No reason to keep two data structures 
+// for the same thing
 class Camera {
 private:
     CameraData data;
@@ -34,8 +43,10 @@ public:
     glm::vec3 targetPos;
     Camera();
     ~Camera();
-    CameraData getData();
     void toggleMode();
+    CameraData getData();
+    v2f getYawPitch();
+    void setYawPitch(float yaw, float pitch);
     void setData(CameraData _data);
     glm::vec3 getForwardOrientation();
     void setForwardOrientation(float yaw, float pitch);
@@ -86,6 +97,17 @@ CameraData Camera::getData() {
 
 void Camera::setData(CameraData _data) {
     data = _data;
+}
+
+// X for yaw, Y for pitch
+v2f Camera::getYawPitch() {
+    return v2f(this->data.yaw,this->data.pitch);
+}
+
+void Camera::setYawPitch(float _yaw, float _pitch) {
+    this->data.yaw = _yaw;
+    this->data.pitch = _pitch;
+    this->setForwardOrientation(_yaw, _pitch);
 }
 
 glm::vec3 Camera::getForwardOrientation() {
