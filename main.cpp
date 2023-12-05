@@ -52,9 +52,9 @@ int main() {
     // loader.loadModelGLTF(model_cube_path, model, image);
     
 
-    // Load dummy model (should always work)
+    // Load default .obj model (should always work)
     loader.loadModelOBJ(dummy_model_path.data(), model);
-    // Load dummy texture (should always work)
+    // Load default texture (should always work)
     loader.loadTexture(dummy_texture_path.data(), image);
     
     // Load this texture to check UV layout
@@ -73,28 +73,30 @@ int main() {
         // Make the default mode to be FREE
         mainCam->toggleMode();
 
-        // Further code tests movement along 3 global axis
+        // Further code tests camera movement
         // TODO: move this code from the main file, provide better handling for bindings
         float cameraSpeed = 0.005f;
         float mouseSensitivity = 0.06f;
 
-        auto moveX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,1), cameraSpeed);};
+		// Movement along global XYZ aixs
+        auto moveX  = [&]() {mainCam->movePosGlobal( glm::vec3(0,0,1), cameraSpeed);};
         auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), cameraSpeed);};
-        auto moveY = [&]() {mainCam->movePosGlobal(glm::vec3(0,1,0), cameraSpeed);};
+        auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0), cameraSpeed);};
         auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeed);};
-        auto moveZ = [&]() {mainCam->movePosGlobal(glm::vec3(1,0,0), cameraSpeed);};
+        auto moveZ  = [&]() {mainCam->movePosGlobal( glm::vec3(1,0,0), cameraSpeed);};
         auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), cameraSpeed);};
 
-        auto moveF = [&]() {mainCam->moveForwardLocal(cameraSpeed);};
+		// WASD free camera movement
+        auto moveF = [&]() { mainCam->moveForwardLocal(cameraSpeed);};
         auto moveB = [&]() {mainCam->moveBackwardLocal(cameraSpeed);};
-        auto moveL = [&]() {mainCam->moveLeftLocal(cameraSpeed);};
-        auto moveR = [&]() {mainCam->moveRightLocal(cameraSpeed);};
+        auto moveL = [&]() {    mainCam->moveLeftLocal(cameraSpeed);};
+        auto moveR = [&]() {   mainCam->moveRightLocal(cameraSpeed);};
 
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_F,moveF, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_B,moveB, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_L,moveL, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_R,moveR, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_U,moveY, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_F, moveF, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_B, moveB, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_L, moveL, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_R, moveR, true);
+        input.bindFunction(ale::InputAction::CAMERA_MOVE_U, moveY, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
         
         // Bind global camera to the inner camera object 
