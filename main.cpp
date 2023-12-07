@@ -19,6 +19,7 @@
 #include <input_manager.h>
 #include <camera.h>
 #include <renderer.h>
+#include <tracer.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -34,12 +35,22 @@ int main() {
     const std::chrono::duration<double, std::milli> fps_cap(8);
     auto lastFrame = std::chrono::steady_clock::now();
 
+    std::vector<ale::Tracer::LogLevel> logLevels = {
+        ale::Tracer::LogLevel::DEBUG,
+        ale::Tracer::LogLevel::INFO,
+    };
+    ale::Tracer::SetLogLevels(logLevels);
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO(); (void)io;
     ale::Loader loader;
     Model model;
     Image image;
+
+
+    ale::Tracer::log("Test debug message!", ale::Tracer::LogLevel::DEBUG);
+    ale::Tracer::logRaw("Raw debug message! \n");
 
 
     std::string model_cube_path = "./models/cube/Cube.gltf";
