@@ -33,7 +33,7 @@ static void SetLogLevel(LogLevel lvl, bool isEnabled);
 static void SetLogLevels(std::vector<LogLevel> lvls);
 
 
-// Prints passed source_location object
+// Prints passed std::source_location object
 static std::string _getLocation(const std::source_location loc) {
     std::string result = " [Location: ";
     result.append(loc.file_name());
@@ -46,7 +46,7 @@ static std::string _getLocation(const std::source_location loc) {
 }
 
 
-// A switch statement dispatch for ale::LogLevel
+// A switch statement dispatch for an ale::Tracer::LogLevel enum
 static std::string _LogLevelToString(LogLevel lvl) {
      switch (lvl) {
         case LogLevel::DEBUG: return "DEBUG";
@@ -57,7 +57,7 @@ static std::string _LogLevelToString(LogLevel lvl) {
     }
 }
 
-
+// Outputs a log with a certain LogLevel and a trace of where it was invoked
 static void log(const std::string_view msg, LogLevel lvl,
                  const std::source_location loc) {
 
@@ -73,7 +73,7 @@ static void log(const std::string_view msg, LogLevel lvl,
 }
 
 
-//Prints input string without a newline
+// Prints input string without a newline
 static void logRaw(const std::string_view msg) {
     std::cout << msg;
 }
@@ -89,7 +89,7 @@ static void SetLogLevel(LogLevel lvl, bool isEnabled) {
     globalLogLevels[lvl] = isEnabled;
 }
 
-
+// Sets a list of used LogLevel's 
 static void SetLogLevels(std::vector<LogLevel> lvls) {
     globalLogLevels.resize(LogLevel::LogLevel_MAX);
     for (auto lvl: globalLogLevels) {
