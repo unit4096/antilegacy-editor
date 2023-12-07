@@ -4,7 +4,6 @@
 
 // ext
 #pragma once
-#include <iostream>
 #include <functional>
 #include <map>
 
@@ -17,6 +16,9 @@
 // int
 
 #include <primitives.h>
+#include <tracer.h>
+
+namespace trc = ale::Tracer;
 
 namespace ale {
 
@@ -76,7 +78,7 @@ InputManager::~InputManager() {}
 void InputManager::init(GLFWwindow* window) {
     window_p = window;
     glfwSetWindowUserPointer(window, this);
-    std::cout << "INIT INPUT MANAGER"<< std::endl;
+    trc::log("INIT INPUT MANAGER", trc::LogLevel::INFO);
 
     // TODO: load config from a TOML file, add wrappers for raw GLFW macros
 	_bindKey(GLFW_KEY_W,InputAction::CAMERA_MOVE_F);
