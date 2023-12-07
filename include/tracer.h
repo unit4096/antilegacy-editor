@@ -28,7 +28,7 @@ static std::string _LogLevelToString(LogLevel lvl);
 
 static std::vector<bool> globalLogLevels = {true, true, true, true, true};
 static void log(const std::string_view msg, LogLevel lvl = LogLevel::DEBUG, const std::source_location loc = std::source_location::current());
-static void LogRaw(const std::string_view msg);
+static void logRaw(const std::string_view msg);
 static void SetLogLevel(LogLevel lvl, bool isEnabled);
 static void SetLogLevels(std::vector<LogLevel> lvls);
 
@@ -76,7 +76,7 @@ static void log(const std::string_view msg, LogLevel lvl,
 
 
 //Prints input string without a newline
-static void LogRaw(const std::string_view msg) {
+static void logRaw(const std::string_view msg) {
     std::cout << msg;
 }
 
