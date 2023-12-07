@@ -40,7 +40,7 @@ static std::string _getLocation(const std::source_location loc) {
     result.append(":" + std::to_string(loc.line()) + ":"
                   + std::to_string(loc.column()) + " ");
     result.append(loc.function_name());
-    result.append("] \n");
+    result.append("]");
 
     return result;
 }
@@ -60,8 +60,6 @@ static std::string _LogLevelToString(LogLevel lvl) {
 
 static void log(const std::string_view msg, LogLevel lvl,
                  const std::source_location loc) {
-
-    std::cout << globalLogLevels[lvl] << std::endl;
 
     // Checks if the level is enabled
     if (!globalLogLevels[lvl]) {
