@@ -1,4 +1,3 @@
-#include <unordered_map>
 #include "model_loader.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -11,11 +10,13 @@
 
 using namespace ale;
 
+namespace trc = ale::Tracer;
+
 Loader::Loader() { }   
 
 Loader::~Loader() { }
 
-
+// Load an .obj model using a path relative to the project root
 void Loader::loadModelOBJ(char *model_path, Model& _model) {
 
     tinyobj::attrib_t attrib;
@@ -82,19 +83,29 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         return -1;
     }
     
+    trc::log("This GLTF Model is valid");
+    
     if (gltfModel.textures.size() > 0) {
+        trc::log("Found textures");
         tinygltf::Texture &tex = gltfModel.textures[0];
         
         if (tex.source > -1) {
+            trc::log("Loading texture");
             tinygltf::Image &image = gltfModel.images[tex.source];
             
             _image.data = &image.image.at(0);
             _image.w = image.width;
             _image.h = image.height;            
+        } else {
+            trc::log("Cannot load texture");
         }
         
+        
 
-    }    
+    } else {
+        trc::log("Textures not found");
+    }
+    
 
     // TODO: implement loading multiple nodes
     tinygltf::Mesh mesh = gltfModel.meshes[0];    
@@ -143,7 +154,7 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
     return 0;
 }
 
-
+// Load an image using a path relative to the project root
 bool Loader::loadTexture(const char* path, Image& img) {
     
     unsigned char* _data = stbi_load(path, &img.w, &img.h, &img.channels, STBI_rgb_alpha);
@@ -157,7 +168,7 @@ bool Loader::loadTexture(const char* path, Image& img) {
     return 0;
 }
 
-
+// Just a wrapper for a wrapper for <cstdlib> free()
 void Loader::unloadBuffer(unsigned char* _pixels){
     if (_pixels) {
         stbi_image_free(_pixels);        

@@ -1,11 +1,16 @@
 #ifndef ALE_LOADER
 #define ALE_LOADER
 
+// ext
 #pragma once
 #include <vector>
 #include <functional>   
-#include <primitives.h>
 #include <string>
+#include <unordered_map>
+
+// int
+#include <primitives.h>
+#include <tracer.h>
 
 namespace ale {
     class Loader {
