@@ -26,7 +26,7 @@ enum LogLevel {
 static std::string _getLocation(const std::source_location loc);
 static std::string _LogLevelToString(LogLevel lvl);
 
-static std::vector<bool> globalLogLevels;
+static std::vector<bool> globalLogLevels = {true, true, true, true, true};
 static void log(const std::string_view msg, LogLevel lvl = LogLevel::DEBUG, const std::source_location loc = std::source_location::current());
 static void LogRaw(const std::string_view msg);
 static void SetLogLevel(LogLevel lvl, bool isEnabled);
