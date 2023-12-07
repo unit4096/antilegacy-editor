@@ -1,4 +1,4 @@
-// out
+// ext
 #include <stdexcept>
 #include <memory>
 #include <chrono>
@@ -14,7 +14,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
 
-// inn
+// int
 #include <input_manager.h>
 #include <camera.h>
 #include <renderer.h>

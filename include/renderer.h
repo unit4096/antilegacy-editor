@@ -4,7 +4,7 @@ and adapted to my needs. Since for now [03.12.2023] the editor is still in
 development, renederer code still somewhat resembles the original tutorial code.
 */
 
-
+// ext
 #pragma once
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -39,6 +39,8 @@ development, renederer code still somewhat resembles the original tutorial code.
 #include <unordered_map>
 #include <memory>
 
+
+// int
 #include <primitives.h>
 #include <camera.h>
 
