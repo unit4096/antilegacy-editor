@@ -1035,6 +1035,7 @@ private:
         VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 
+        // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER VK_SAMPLER_ADDRESS_MODE_REPEAT
         auto sampler_mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
 
         VkSamplerCreateInfo samplerInfo{};
