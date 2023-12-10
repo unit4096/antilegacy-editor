@@ -1,34 +1,62 @@
+# Include directories
 INCLUDE_PATH := ./include/
-LOADER_INCLUDE_PATH:= ./model_loader/
 IMGUI_INCLUDE_PATH:= ./include/imgui/
 
-CFLAGS:= -std=c++20 -O2 -Wall -g
+# Compiler flags
+CXX = clang++
+CXXFLAGS = -std=c++20 -O2 -Wall -g
+
+# Library dependencies
 LDFLAGS:= -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
-.PHONY: test clean shaders run
+# Source directories
+SRC_DIR = .
+IMGUI_SRC_DIR = include/imgui
 
-editor: build/imgui/imgui_impl_glfw.o build/imgui/imgui_impl_vulkan.o build/loader.o 
-	clang++ $(CFLAGS) build/imgui/imgui*.o main.cpp \
-	build/loader.o -o build/editor -I$(INCLUDE_PATH) -I$(LOADER_INCLUDE_PATH)  $(LDFLAGS)
+OBJ_DIR = obj
+IMGUI_OBJ_DIR = obj/imgui
 
-loader: model_loader/model_loader.cpp
-	clang++ -c $(CFLAGS) model_loader/model_loader.cpp -I$(INCLUDE_PATH) -o build/loader.o 
+BIN_DIR = build
 
-imgui: 
-	cd build/imgui/ &&\
-	clang++ $(CFLAGS) -c ../../include/imgui/imgui*.cpp -I$(INCLUDE_PATH) &&\
-	cd ../..
+# All include directories
+INCLUDE_ALL := -I$(INCLUDE_PATH) -I$(IMGUI_INCLUDE_PATH)
 
+# Source files
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+IMGUI_SRCS = $(wildcard $(IMGUI_SRC_DIR)/*.cpp)
 
-test: editor
-	./build/editor
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
+IMGUI_OBJS = $(patsubst $(IMGUI_SRC_DIR)/%.cpp, $(IMGUI_OBJ_DIR)/%.o, $(IMGUI_SRCS))
 
-run:
-	./build/editor
+# Executable file
+MAIN = $(BIN_DIR)/editor
 
+.PHONY: all clean test
+# Targets
+
+test: all
+	./$(MAIN)
+
+all: $(MAIN)
+
+# Main target
+$(MAIN): $(OBJS) $(IMGUI_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDE_ALL) $(LDFLAGS)
+
+# Object files
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(INCLUDE_ALL)
+
+# Imgui object files. I build them separately
+$(IMGUI_OBJ_DIR)/%.o: $(IMGUI_SRC_DIR)/%.cpp
+	@mkdir -p $(IMGUI_OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@ $(IMGUI_INCLUDE_PATH)
+
+# Include dependency files
+-include $(OBJS:.o=.d)
+
+# Clean target
 clean:
-	rm -f ./build/editor &\
-	rm *.o
-
-shaders:
-	glslc shaders/shader.vert -o shaders/vert.spv & glslc shaders/shader.frag -o shaders/frag.spv
+	rm -rf $(OBJ_DIR) $(BIN_DIR)

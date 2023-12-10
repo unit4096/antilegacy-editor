@@ -20,11 +20,17 @@
 #include <renderer.h>
 #include <tracer.h>
 
+#ifndef IMGUI
+#define IMGUI
+
+
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
 
-#include "model_loader/model_loader.h"
+#endif //IMGUI
+
+#include <model_loader.h>
 
 
 

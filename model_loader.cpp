@@ -43,7 +43,7 @@ void Loader::loadModelOBJ(char *model_path, Model& _model) {
             vertex.texCoord = {
                 attrib.texcoords[2 * index.texcoord_index + 0],
                 1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
+            };            
 
             vertex.color = {1.0f, 1.0f, 1.0f};
 
@@ -92,7 +92,6 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         if (tex.source > -1) {
             trc::log("Loading texture");
             tinygltf::Image &image = gltfModel.images[tex.source];
-            
             _image.data = &image.image.at(0);
             _image.w = image.width;
             _image.h = image.height;            
@@ -124,20 +123,15 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         
         const float* positions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + posAccessor.byteOffset]);
         const float* uvPositions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + UVAccessor.byteOffset]);
-        
+        Vertex vertex{};
+
         for (size_t i = 0; i < posAccessor.count; ++i) {
-            Vertex vertex{};
 
             vertex.pos = {
                 positions[i * 3 + 0],
                 positions[i * 3 + 1],
                 positions[i * 3 + 2],
-            };
-            
-            // FIXME: the UV layout is completely wrong
-            vertex.texCoord = {
-                uvPositions[i * 2 + 0],
-                1.0f - uvPositions[i * 2 + 1],
+                
             };
             vertex.color = {1.0f, 1.0f, 1.0f};                        
 
@@ -149,6 +143,20 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
 
             _model.indices.push_back(uniqueVertices[vertex]);
         }
+
+        for (size_t i = 0; i < UVAccessor.count; i++) {
+            // FIXME: the UV layout is completely wrong
+            vertex.texCoord = {
+                uvPositions[i * 2 + 0],
+                1.0f - uvPositions[i * 2 + 1],
+            };
+
+        }
+
+
+        
+        
+        
     }
     
     return 0;
