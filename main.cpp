@@ -49,7 +49,7 @@ int main() {
 
 
     ale::Tracer::log("Test debug message!", ale::Tracer::LogLevel::DEBUG);
-    ale::Tracer::logRaw("Raw debug message! \n");
+    ale::Tracer::raw << "Raw debug message! \n";
 
 
     std::string model_cube_path = "./models/cube/Cube.gltf";

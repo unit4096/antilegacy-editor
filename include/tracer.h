@@ -28,7 +28,6 @@ static std::string _LogLevelToString(LogLevel lvl);
 
 static std::vector<bool> globalLogLevels = {true, true, true, true, true};
 static void log(const std::string_view msg, LogLevel lvl = LogLevel::DEBUG, const std::source_location loc = std::source_location::current());
-static void logRaw(const std::string_view msg);
 static void SetLogLevel(LogLevel lvl, bool isEnabled);
 static void SetLogLevels(std::vector<LogLevel> lvls);
 
@@ -72,10 +71,15 @@ static void log(const std::string_view msg, LogLevel lvl,
     
 }
 
+// This struct replaces std::cout functionality. You can add checks and formatting
+struct Raw {};
 
-// Prints input string without a newline
-static void logRaw(const std::string_view msg) {
-    std::cout << msg;
+extern Raw raw;
+
+template <typename T>
+Raw& operator<< (Raw &s, const T &x) {
+  std::cout << x;
+  return s;
 }
 
 // Set bool value for a log level (enabled when `true`)
