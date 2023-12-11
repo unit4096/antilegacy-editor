@@ -59,22 +59,23 @@ int main() {
 
 
     std::string model_cube_path = "./models/cube/Cube.gltf";
+    std::string model_fox_path = "./models/fox/Fox.gltf";
     std::string dummy_model_path = "models/viking_room.obj";
     std::string dummy_texture_path = "textures/viking_room.png";
     const std::string uv_checker_path = "textures/tex_uv_checker.jpg";
     
     
     // Load GLTF models
-    // loader.loadModelGLTF(model_cube_path, model, image);
+    loader.loadModelGLTF(model_cube_path, model, image);
     
 
-    // Load default .obj model (should always work)
-    loader.loadModelOBJ(dummy_model_path.data(), model);
-    // Load default texture (should always work)
-    loader.loadTexture(dummy_texture_path.data(), image);
+    // // Load default .obj model (should always work)
+    // loader.loadModelOBJ(dummy_model_path.data(), model);
+    // // Load default texture (should always work)
+    // loader.loadTexture(dummy_texture_path.data(), image);
     
     // Load this texture to check UV layout
-    // loader.loadTexture(uv_checker_path.data(), image);
+    loader.loadTexture(uv_checker_path.data(), image);
 
     ale::Renderer renderer(io,model,image);
     ale::InputManager input;
@@ -91,16 +92,16 @@ int main() {
 
         // Further code tests camera movement
         // TODO: move this code from the main file, provide better handling for bindings
-        float cameraSpeed = 0.005f;
+        float cameraSpeed = 0.1f;
         float mouseSensitivity = 0.06f;
 
 		// Movement along global XYZ aixs
-        auto moveX  = [&]() {mainCam->movePosGlobal( glm::vec3(0,0,1), cameraSpeed);};
-        auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), cameraSpeed);};
+        // auto moveX  = [&]() {mainCam->movePosGlobal( glm::vec3(0,0,1), cameraSpeed);};
+        // auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), cameraSpeed);};
         auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0), cameraSpeed);};
         auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeed);};
-        auto moveZ  = [&]() {mainCam->movePosGlobal( glm::vec3(1,0,0), cameraSpeed);};
-        auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), cameraSpeed);};
+        // auto moveZ  = [&]() {mainCam->movePosGlobal( glm::vec3(1,0,0), cameraSpeed);};
+        // auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), cameraSpeed);};
 
 		// WASD free camera movement
         auto moveF = [&]() { mainCam->moveForwardLocal(cameraSpeed);};
