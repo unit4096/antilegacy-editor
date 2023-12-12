@@ -109,20 +109,27 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
     // TODO: implement loading multiple nodes
     tinygltf::Mesh mesh = gltfModel.meshes[0];    
 
-    for (auto primitive : mesh.primitives) {
+    for (auto primitive : mesh.primitives) {    
 
-        std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+        // List model attributes for Debug
+        for (auto attr: primitive.attributes) {
+            trc::log("This model has " + attr.first);
+        }
         
+        std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+
         // TOOD: implement generic attribute deduction
         const tinygltf::Accessor& posAccessor = gltfModel.accessors[primitive.attributes["POSITION"]];
         const tinygltf::Accessor& UVAccessor = gltfModel.accessors[primitive.attributes["TEXCOORD_0"]];
-        const tinygltf::BufferView& bufferView = gltfModel.bufferViews[posAccessor.bufferView];
+        const tinygltf::BufferView& posBufferView = gltfModel.bufferViews[posAccessor.bufferView];
+        const tinygltf::BufferView& uvBufferView = gltfModel.bufferViews[UVAccessor.bufferView];
 
-        const tinygltf::Buffer& buffer = gltfModel.buffers[bufferView.buffer];
+        const tinygltf::Buffer& posBuffer = gltfModel.buffers[posBufferView.buffer];
+        const tinygltf::Buffer& uvBuffer = gltfModel.buffers[uvBufferView.buffer];
         
         
-        const float* positions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + posAccessor.byteOffset]);
-        const float* uvPositions = reinterpret_cast<const float*>(&buffer.data[bufferView.byteOffset + UVAccessor.byteOffset]);
+        const float* positions = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset]);
+        const float* uvPositions = reinterpret_cast<const float*>(&uvBuffer.data[uvBufferView.byteOffset + UVAccessor.byteOffset]);
         Vertex vertex{};
 
         for (size_t i = 0; i < posAccessor.count; ++i) {
@@ -133,32 +140,46 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
                 positions[i * 3 + 2],
                 
             };
-            vertex.color = {1.0f, 1.0f, 1.0f};                        
+            vertex.color = {1.0f, 1.0f, 1.0f};
+
+			float u_raw = uvPositions[i * 2 + 0];
+			float v_raw = uvPositions[i * 2 + 0];
+            float u, v;                   
+
+            // Check if there are min and max UV values and normalize it
+            // FIXME: it is possible that the model does not use the entire UV 
+            // space of the texture. Normalization code will not work in this case
+            if (UVAccessor.minValues.size() > 1 && UVAccessor.maxValues.size() > 1) {
+                // Normalize if possible
+                float min_u = static_cast<float>(UVAccessor.minValues[0]);
+                float min_v = static_cast<float>(UVAccessor.minValues[1]);
+                
+                float max_u = static_cast<float>(UVAccessor.maxValues[0]);
+                float max_v = static_cast<float>(UVAccessor.maxValues[1]);
 
 
+                u = (u_raw - min_u) / (max_u - min_u);
+                v = (v_raw + min_v) / (max_v - min_v);
+            } else {
+                // Use raw values if normalization is impossible
+                u = u_raw;
+                v = v_raw;
+            }
+
+            v = 1.0f - v;
+            vertex.texCoord = {
+                u,
+				v,		
+            };
+                    
             if (uniqueVertices.count(vertex) == 0) {
                 uniqueVertices[vertex] = static_cast<u_int32_t>(_model.vertices.size());
                 _model.vertices.push_back(vertex);
             }
-
             _model.indices.push_back(uniqueVertices[vertex]);
         }
-
-        for (size_t i = 0; i < UVAccessor.count; i++) {
-            // FIXME: the UV layout is completely wrong
-            vertex.texCoord = {
-                uvPositions[i * 2 + 0],
-                1.0f - uvPositions[i * 2 + 1],
-            };
-
-        }
-
-
-        
-        
-        
     }
-    
+    trc::log("Finished loading model");
     return 0;
 }
 
