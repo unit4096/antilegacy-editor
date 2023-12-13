@@ -119,8 +119,8 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         // TOOD: implement generic attribute deduction
 
         // NOTE: in tinyGLTF an index acessor is a separate accessor
-        // As for now is not used
-        tinygltf::Accessor indexAccessor = gltfModel.accessors[primitive.indices];
+        // As for now is not used (for a reason)
+        // tinygltf::Accessor indexAccessor = gltfModel.accessors[primitive.indices];
 
         int posAttributeIdx = primitive.attributes["POSITION"];
         int uvAttributeIdx = primitive.attributes["TEXCOORD_0"];
