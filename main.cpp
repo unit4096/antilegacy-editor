@@ -62,7 +62,7 @@ int main() {
     std::string model_fox_path = "./models/fox/Fox.gltf";
     std::string dummy_model_path = "models/viking_room.obj";
     std::string dummy_texture_path = "textures/viking_room.png";
-    const std::string uv_checker_path = "textures/tex_uv_checker.jpg";
+    const std::string uv_checker_path = "textures/tex_uv_checker.png";
     
     
     // Load GLTF models
