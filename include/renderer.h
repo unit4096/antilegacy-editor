@@ -130,9 +130,10 @@ public:
     // FIXME: find a way to not include ImGuiIO in the constructor
     // separate model loading and vulkan init
     Renderer(ImGuiIO& _io, Model _model, Image _image)
-                                                :io(_io), 
-                                                model(_model), 
-                                                image(_image){};
+                                                :model(_model), 
+                                                image(_image),
+                                                io(_io){};
+                                                
     
 
     void initWindow() {
@@ -1036,7 +1037,7 @@ private:
         vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 
         // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER VK_SAMPLER_ADDRESS_MODE_REPEAT
-        auto sampler_mode = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
+        auto sampler_mode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
