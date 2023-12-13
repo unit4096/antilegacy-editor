@@ -1,5 +1,13 @@
 #include "model_loader.h"
 
+// ext
+
+/* 
+TinyOBJLoader and TinyGLTF must be included in a .cpp file. Thus, I use helper 
+functions as non-class members that do not expose TinyOBJLoader and TinyGLTF
+to the header.
+*/
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tol/tiny_obj_loader.h>
 
@@ -11,6 +19,14 @@
 using namespace ale;
 
 namespace trc = ale::Tracer;
+
+/* 
+Declarations for the helper functions. I use the notation for private members to 
+distinguish them from functions in the header.
+*/
+
+const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, tinygltf::Model& model);
+int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
 
 Loader::Loader() { }   
 
@@ -62,28 +78,8 @@ void Loader::loadModelOBJ(char *model_path, Model& _model) {
 int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _image) {
 
     tinygltf::Model gltfModel;
-    tinygltf::TinyGLTF loader;
-    std::string err;
-    std::string warn;
 
-    // TODO: implement model type deduction, test with .glb models
-    bool ret = loader.LoadASCIIFromFile(&gltfModel, &err, &warn, filename);
-    //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, filename); // for binary glTF(.glb)
-
-    if (!warn.empty()) {
-        throw std::runtime_error(warn);
-    }
-
-    if (!err.empty()) {
-        throw std::runtime_error(err);
-    }
-
-    if (!ret) {
-        throw std::runtime_error("Could not parse a GLTF model!");
-        return -1;
-    }
-    
-    trc::log("This GLTF Model is valid");
+    _loadTinyGLTFModel(gltfModel, filename);
     
     if (gltfModel.textures.size() > 0) {
         trc::log("Found textures");
@@ -92,19 +88,21 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         if (tex.source > -1) {
             trc::log("Loading texture");
             tinygltf::Image &image = gltfModel.images[tex.source];
+
+            // image.component; // Defines the dimensions of each texel
+            // image.bits // Defines the number of bits in each dimension
+
             _image.data = &image.image.at(0);
             _image.w = image.width;
             _image.h = image.height;            
         } else {
             trc::log("Cannot load texture");
         }
-        
-        
 
     } else {
         trc::log("Textures not found");
     }
-    
+
 
     // TODO: implement loading multiple nodes
     tinygltf::Mesh mesh = gltfModel.meshes[0];    
@@ -119,17 +117,20 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         std::unordered_map<Vertex, unsigned int> uniqueVertices{};
 
         // TOOD: implement generic attribute deduction
-        const tinygltf::Accessor& posAccessor = gltfModel.accessors[primitive.attributes["POSITION"]];
-        const tinygltf::Accessor& UVAccessor = gltfModel.accessors[primitive.attributes["TEXCOORD_0"]];
-        const tinygltf::BufferView& posBufferView = gltfModel.bufferViews[posAccessor.bufferView];
-        const tinygltf::BufferView& uvBufferView = gltfModel.bufferViews[UVAccessor.bufferView];
 
-        const tinygltf::Buffer& posBuffer = gltfModel.buffers[posBufferView.buffer];
-        const tinygltf::Buffer& uvBuffer = gltfModel.buffers[uvBufferView.buffer];
+        // NOTE: in tinyGLTF an index acessor is a separate accessor
+        // As for now is not used
+        tinygltf::Accessor indexAccessor = gltfModel.accessors[primitive.indices];
+
+        int posAttributeIdx = primitive.attributes["POSITION"];
+        int uvAttributeIdx = primitive.attributes["TEXCOORD_0"];
         
+        const tinygltf::Accessor& posAccessor = gltfModel.accessors[posAttributeIdx];
+        const tinygltf::Accessor& UVAccessor = gltfModel.accessors[uvAttributeIdx];
+
+        const float* positions = reinterpret_cast<const float*>(_getDataByAccessor(posAccessor, gltfModel));
+        const float* uvPositions = reinterpret_cast<const float*>(_getDataByAccessor(UVAccessor, gltfModel));
         
-        const float* positions = reinterpret_cast<const float*>(&posBuffer.data[posBufferView.byteOffset + posAccessor.byteOffset]);
-        const float* uvPositions = reinterpret_cast<const float*>(&uvBuffer.data[uvBufferView.byteOffset + UVAccessor.byteOffset]);
         Vertex vertex{};
 
         for (size_t i = 0; i < posAccessor.count; ++i) {
@@ -202,4 +203,44 @@ void Loader::unloadBuffer(unsigned char* _pixels){
     if (_pixels) {
         stbi_image_free(_pixels);        
     }
+}
+
+
+// A helper function to populate a tinygltf::Model object
+int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename) {
+    tinygltf::TinyGLTF loader;
+    std::string err;
+    std::string warn;
+
+    // TODO: implement model type deduction, test with .glb models
+    bool ret = loader.LoadASCIIFromFile(&gltfModel, &err, &warn, filename);
+    //bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, filename); // for binary glTF(.glb)
+
+    if (!warn.empty()) {
+        throw std::runtime_error(warn);
+        return -1;
+    }
+
+    if (!err.empty()) {
+        throw std::runtime_error(err);
+        return -1;
+    }
+
+    if (!ret) {
+        throw std::runtime_error("Could not parse a GLTF model!");
+        return -1;
+    }
+    
+    trc::log("This GLTF Model is valid");
+    return 0;
+}
+
+// Load raw data from buffer by accessor
+const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, 
+                                                tinygltf::Model& model) {
+
+    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
+    const tinygltf::Buffer& posBuffer = model.buffers[bufferView.buffer];
+
+	return &posBuffer.data[bufferView.byteOffset + accessor.byteOffset];
 }
