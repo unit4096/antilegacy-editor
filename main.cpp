@@ -70,12 +70,12 @@ int main() {
     
 
     // // Load default .obj model (should always work)
-    // loader.loadModelOBJ(dummy_model_path.data(), model);
+    loader.loadModelOBJ(dummy_model_path.data(), model);
     // // Load default texture (should always work)
-    // loader.loadTexture(dummy_texture_path.data(), image);
+    loader.loadTexture(dummy_texture_path.data(), image);
     
     // Load this texture to check UV layout
-    loader.loadTexture(uv_checker_path.data(), image);
+    // loader.loadTexture(uv_checker_path.data(), image);
 
     ale::Renderer renderer(io,model,image);
     ale::InputManager input;
