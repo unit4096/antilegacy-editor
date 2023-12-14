@@ -145,7 +145,7 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
             vertex.color = {1.0f, 1.0f, 1.0f};
 
 			float u_raw = uvPositions[i * 2 + 0];
-			float v_raw = uvPositions[i * 2 + 0];
+			float v_raw = uvPositions[i * 2 + 1];
             float u, v;                   
 
             // Check if there are min and max UV values and normalize it
@@ -168,7 +168,7 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
                 v = v_raw;
             }
 
-            v = 1.0f - v;
+
             vertex.texCoord = {
                 u,
 				v,		
