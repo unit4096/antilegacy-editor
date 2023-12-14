@@ -128,8 +128,10 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
         const tinygltf::Accessor& posAccessor = gltfModel.accessors[posAttributeIdx];
         const tinygltf::Accessor& UVAccessor = gltfModel.accessors[uvAttributeIdx];
 
-        const float* positions = reinterpret_cast<const float*>(_getDataByAccessor(posAccessor, gltfModel));
-        const float* uvPositions = reinterpret_cast<const float*>(_getDataByAccessor(UVAccessor, gltfModel));
+        const float* positions = reinterpret_cast<const float*>(
+                                    _getDataByAccessor(posAccessor, gltfModel));
+        const float* uvPositions = reinterpret_cast<const float*>(
+                                    _getDataByAccessor(UVAccessor, gltfModel));
         
         Vertex vertex{};
 
@@ -138,8 +140,7 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
             vertex.pos = {
                 positions[i * 3 + 0],
                 positions[i * 3 + 1],
-                positions[i * 3 + 2],
-                
+                positions[i * 3 + 2],                
             };
             vertex.color = {1.0f, 1.0f, 1.0f};
 
