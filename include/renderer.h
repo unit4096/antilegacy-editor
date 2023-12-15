@@ -165,10 +165,9 @@ public:
         CameraData data = mainCamera->getData();
 
         // TODO: get this data from the node transform matrix
-        // FIXME: remove the rotation offset from the model
         // Model matrix
         ubo.model = glm::rotate(glm::mat4(1.0f),
-                                glm::radians(-90.0f),
+                                glm::radians(0.0f),
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
         mainCamera->setForwardOrientation(data.yaw, data.pitch);
