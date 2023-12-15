@@ -101,6 +101,8 @@ int main(int argc, char const *argv[]) {
         
         // Make the default mode to be FREE
         mainCam->toggleMode();
+        // Set initial camera position
+        mainCam->setPosition(glm::vec3(0, 50, 150));
 
         // Further code tests camera movement
         // TODO: move this code from the main file, provide better handling for bindings
