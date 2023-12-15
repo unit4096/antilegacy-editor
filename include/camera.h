@@ -38,7 +38,7 @@ struct CameraData {
 // for the same thing
 class Camera {
 private:
-    CameraData data;
+    CameraData _data;
 public:
     CameraMode mode;
     
@@ -49,10 +49,11 @@ public:
     CameraData getData();
     v2f getYawPitch();
     void setYawPitch(float yaw, float pitch);
-    void setData(CameraData _data);
+    void setData(CameraData data);
     glm::vec3 getForwardOrientation();
     void setForwardOrientation(float yaw, float pitch);
-    void setForwardOrientation(glm::vec3 _front);
+    void setForwardOrientation(glm::vec3 front);
+    void setPosition(glm::vec3 newPos);
     void moveForwardLocal(const float speed);
     void moveBackwardLocal(const float speed);
     void moveLeftLocal(const float speed);
@@ -70,7 +71,7 @@ Camera::Camera() {
     _data.position = glm::vec3(0.0f,0.0f,1.0f);
     _data.pitch = 0;
     _data.yaw = 0;
-    this->data = _data;
+    this->_data = _data;
 
     mode = CameraMode::ARCBALL;
     targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -96,29 +97,29 @@ void Camera::toggleMode() {
 
 // Get camera data struct
 CameraData Camera::getData() {
-    return data;
+    return _data;
 }
 
 // Set camera data struct
-void Camera::setData(CameraData _data) {
-    data = _data;
+void Camera::setData(CameraData data) {
+    this->_data = data;
 }
 
 // Get yaw and pitch in degrees. X for yaw, Y for pitch
 v2f Camera::getYawPitch() {
-    return v2f(this->data.yaw,this->data.pitch);
+    return v2f(this->_data.yaw,this->_data.pitch);
 }
 
 // Set the orientation vector using yaw and pitch variables in degrees
-void Camera::setYawPitch(float _yaw, float _pitch) {
-    this->data.yaw = _yaw;
-    this->data.pitch = _pitch;
-    this->setForwardOrientation(_yaw, _pitch);
+void Camera::setYawPitch(float yaw, float pitch) {
+    this->_data.yaw = yaw;
+    this->_data.pitch = pitch;
+    this->setForwardOrientation(yaw, pitch);
 }
 
 // Get the orientation (forward) vector 
 glm::vec3 Camera::getForwardOrientation() {
-    return this->data.front;
+    return this->_data.front;
 }
 
 // Sets the orientation vector of the camera by yaw and pitch (in degrees)
@@ -134,20 +135,23 @@ void Camera::setForwardOrientation(float yaw, float pitch) {
     forwardVector.y = sinPitchRad;
     forwardVector.z = cosPitchRad * cosYawRad;
 
-    this->data.front = glm::normalize(forwardVector);
+    this->_data.front = glm::normalize(forwardVector);
 }
 
 // Sets the orientation vector of the camera by a 3D vector
-void Camera::setForwardOrientation(glm::vec3 _front) {
-    this->data.front = _front;
+void Camera::setForwardOrientation(glm::vec3 front) {
+    this->_data.front = front;
 }
 
+void Camera::setPosition(glm::vec3 newPos) {
+    this->_data.position = newPos;    
+}
 
 // Moves the camera in the direction of the forward orientation vector
 void Camera::moveForwardLocal(const float speed) {
-    glm::vec3 _forward = this->data.front;
+    glm::vec3 _forward = this->_data.front;
     _forward.x = -_forward.x;
-    this->data.position +=  _forward * -speed;
+    this->_data.position +=  _forward * -speed;
 }
 
 // Moves the camera in the direction opposite to the forward orientation vector
@@ -157,21 +161,21 @@ void Camera::moveBackwardLocal(const float speed) {
 
 // Moves the camera left from the forward direction
 void Camera::moveLeftLocal(const float speed) {
-    glm::vec3 _forward = this->data.front;
+    glm::vec3 _forward = this->_data.front;
     _forward.x = -_forward.x;
-    this->data.position += speed * glm::normalize(glm::cross(_forward, this->data.up));
+    this->_data.position += speed * glm::normalize(glm::cross(_forward, this->_data.up));
 }
 
 // Moves the camera right from the forward direction
 void Camera::moveRightLocal(const float speed) {
-    glm::vec3 _forward = this->data.front;
+    glm::vec3 _forward = this->_data.front;
     _forward.x = -_forward.x;
-    this->data.position += speed * -glm::normalize(glm::cross(_forward, this->data.up));
+    this->_data.position += speed * -glm::normalize(glm::cross(_forward, this->_data.up));
 }
 
 // Moves the camera in the direction of the specified vector
 void Camera::movePosGlobal(const glm::vec3 movementVector, const float speed) {
-    this->data.position = this->data.position + (movementVector * speed);
+    this->_data.position = this->_data.position + (movementVector * speed);
 }
 
 } // namespace ale
