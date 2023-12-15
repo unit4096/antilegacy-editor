@@ -34,52 +34,64 @@
 
 
 
-int main() {
+int main(int argc, char const *argv[]) {
 
+
+    // Time management for framerate control
     // FPS cap in 8 milliseconds -> 120 FPS
     const std::chrono::duration<double, std::milli> fps_cap(8);
     auto lastFrame = std::chrono::steady_clock::now();
 
+
+    // Set up logging
     std::vector<ale::Tracer::LogLevel> logLevels = {
         ale::Tracer::LogLevel::DEBUG,
         ale::Tracer::LogLevel::INFO,
-    };
+    };    
     ale::Tracer::SetLogLevels(logLevels);
 
+    // Set up ImGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO(); (void)io;
     ale::Loader loader;
+
+    // Main mesh object
     Model model;
+    // Main texture object
     Image image;
 
-
-    ale::Tracer::log("Test debug message!", ale::Tracer::LogLevel::DEBUG);
-    ale::Tracer::raw << "Raw debug message! \n";
-
-
-    std::string model_cube_path = "./models/cube/Cube.gltf";
+    // Model paths
+    // std::string model_cube_path = "./models/cube/Cube.gltf";
     std::string model_fox_path = "./models/fox/Fox.gltf";
+
+    // This .obj model should always load
     std::string dummy_model_path = "models/viking_room.obj";
     std::string dummy_texture_path = "textures/viking_room.png";
+    // UV checker texture
     const std::string uv_checker_path = "textures/tex_uv_checker.png";
     
     
     // Load GLTF models
-    loader.loadModelGLTF(model_cube_path, model, image);
+    loader.loadModelGLTF(model_fox_path, model, image);
     
 
     // // Load default .obj model (should always work)
-    loader.loadModelOBJ(dummy_model_path.data(), model);
+    // loader.loadModelOBJ(dummy_model_path.data(), model);
     // // Load default texture (should always work)
-    loader.loadTexture(dummy_texture_path.data(), image);
+    // loader.loadTexture(dummy_texture_path.data(), image);
     
     // Load this texture to check UV layout
     // loader.loadTexture(uv_checker_path.data(), image);
 
+
+    // Create Vulkan renderer object
     ale::Renderer renderer(io,model,image);
+
+    // Create input manager object
     ale::InputManager input;
-    // A camera object that will be passed to the renderer
+
+    // Create a camera object that will be passed to the renderer
     std::shared_ptr<ale::Camera> mainCam = std::make_shared<ale::Camera>();
 
     try {
@@ -109,6 +121,7 @@ int main() {
         auto moveL = [&]() {    mainCam->moveLeftLocal(cameraSpeed);};
         auto moveR = [&]() {   mainCam->moveRightLocal(cameraSpeed);};
 
+        // Bind lambda functions to keyboard actions
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F, moveF, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_B, moveB, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_L, moveL, true);
@@ -147,6 +160,7 @@ int main() {
             // Smooth framerate
             auto thisFrameEnd = std::chrono::steady_clock::now();
             auto frameDuration = duration_cast<std::chrono::duration<double>>(thisFrameEnd - thisFrame);
+
             // Sleep for = cap time - frame duration (to avoid FPS spikes)
             const std::chrono::duration<double, std::milli> elapsed = fps_cap - frameDuration;
             std::this_thread::sleep_for(elapsed);
