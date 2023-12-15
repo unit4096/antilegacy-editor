@@ -92,7 +92,9 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
             // image.component; // Defines the dimensions of each texel
             // image.bits // Defines the number of bits in each dimension
 
-            _image.data = &image.image.at(0);
+            // This copies data to the Image struct directly to keep control
+            // over image data
+            _image.data = image.image;
             _image.w = image.width;
             _image.h = image.height;            
         } else {
@@ -194,7 +196,7 @@ bool Loader::loadTexture(const char* path, Image& img) {
         return 1;
     }
     
-    img.data = _data;
+    img.data_ptr = _data;
     
     return 0;
 }

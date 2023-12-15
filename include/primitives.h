@@ -47,7 +47,9 @@ struct Image {
     int h;
     int channels;
     // TODO: rewrite using smart pointers
-    unsigned char* data;
+    unsigned char* data_ptr;
+    std::vector<unsigned char> data;
+
 };
 
 // A hash funciton to compare vertices. For removing duplicates in unordered_map

@@ -1010,9 +1010,10 @@ private:
         VkDeviceMemory stagingBufferMemory;
         createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
+        // TODO: store this pointer for later use
         void* data;
-        vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-            memcpy(data, image.data, static_cast<size_t>(imageSize));
+        vkMapMemory(device, stagingBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+            memcpy(data, &image.data.at(0), static_cast<size_t>(imageSize));
         vkUnmapMemory(device, stagingBufferMemory);
         
         // TODO: rewrite example code using smart pointers
