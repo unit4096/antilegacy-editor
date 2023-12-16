@@ -14,15 +14,8 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
 
-// int
-#include <input_manager.h>
-#include <camera.h>
-#include <renderer.h>
-#include <tracer.h>
-
 #ifndef IMGUI
 #define IMGUI
-
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -30,6 +23,11 @@
 
 #endif //IMGUI
 
+// int
+#include <input_manager.h>
+#include <camera.h>
+#include <renderer.h>
+#include <tracer.h>
 #include <model_loader.h>
 
 
