@@ -24,7 +24,7 @@ struct Vertex {
 };
 
 // A model struct. Stores mesh data
-struct Model {
+struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 };

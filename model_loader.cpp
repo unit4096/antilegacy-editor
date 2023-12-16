@@ -33,7 +33,7 @@ Loader::Loader() { }
 Loader::~Loader() { }
 
 // Load an .obj model using a path relative to the project root
-void Loader::loadModelOBJ(char *model_path, Model& _model) {
+void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -64,18 +64,18 @@ void Loader::loadModelOBJ(char *model_path, Model& _model) {
             vertex.color = {1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<u_int32_t>(_model.vertices.size());
-                _model.vertices.push_back(vertex);
+                uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
+                _mesh.vertices.push_back(vertex);
             }
 
-            _model.indices.push_back(uniqueVertices[vertex]);
+            _mesh.indices.push_back(uniqueVertices[vertex]);
         }
     }
 }
 
 // TODO: Add loading full GLTF scenes
 // Now loads one mesh and one texture from the .gltf file
-int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _image) {
+int Loader::loadModelGLTF(const std::string filename, Mesh& _mesh, Image& _image) {
 
     tinygltf::Model gltfModel;
 
@@ -177,10 +177,10 @@ int Loader::loadModelGLTF(const std::string filename, Model& _model, Image& _ima
             };
                     
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<u_int32_t>(_model.vertices.size());
-                _model.vertices.push_back(vertex);
+                uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
+                _mesh.vertices.push_back(vertex);
             }
-            _model.indices.push_back(uniqueVertices[vertex]);
+            _mesh.indices.push_back(uniqueVertices[vertex]);
         }
     }
     trc::log("Finished loading model");

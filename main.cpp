@@ -54,7 +54,7 @@ int main(int argc, char const *argv[]) {
         ale::Loader loader;
 
         // Main mesh object
-        Model model;
+        Mesh mesh;
         // Main texture object
         Image image;
 
@@ -70,11 +70,11 @@ int main(int argc, char const *argv[]) {
         
         
         // Load GLTF models
-        loader.loadModelGLTF(model_fox_path, model, image);
+        loader.loadModelGLTF(model_fox_path, mesh, image);
         
 
         // // Load default .obj model (should always work)
-        // loader.loadModelOBJ(dummy_model_path.data(), model);
+        // loader.loadModelOBJ(dummy_model_path.data(), mesh);
         // // Load default texture (should always work)
         // loader.loadTexture(dummy_texture_path.data(), image);
         
@@ -83,7 +83,7 @@ int main(int argc, char const *argv[]) {
 
 
         // Create Vulkan renderer object
-        ale::Renderer renderer(model,image);
+        ale::Renderer renderer(mesh,image);
 
         // Create input manager object
         ale::InputManager input;
