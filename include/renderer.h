@@ -129,10 +129,11 @@ class Renderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
     // separate model loading and vulkan init
-    Renderer(ImGuiIO& _io, Model _model, Image _image)
-                                                :model(_model), 
-                                                image(_image),
-                                                io(_io){};
+    Renderer(Model _model, Image _image):model(_model), image(_image){
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+        this->io = std::make_shared<ImGuiIO>(ImGui::GetIO());
+    };
                                                 
     
 
@@ -404,8 +405,8 @@ private:
     int chainImageCount;
     int chainMinImageCount;
 
-    // Variables for ImGUI
-    ImGuiIO& io;
+    // Shared pointer to ImGui IO
+    std::shared_ptr<ImGuiIO> io;
 
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -1515,7 +1516,7 @@ private:
     }
 
     void initImGUI(){
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 
         // Set up style
         ImGui::StyleColorsDark();
@@ -1596,7 +1597,7 @@ private:
             ImGui::Text("%s",mode_name.data());
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                                 1000.0f / io.Framerate, io.Framerate);
+                                 1000.0f / io->Framerate, io->Framerate);
             ImGui::Text("FPS CAP ENABLED");
             ImGui::End();
         }

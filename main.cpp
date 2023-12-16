@@ -50,10 +50,6 @@ int main(int argc, char const *argv[]) {
     };    
     ale::Tracer::SetLogLevels(logLevels);
 
-    // Set up ImGUI
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO(); (void)io;
     ale::Loader loader;
 
     // Main mesh object
@@ -86,7 +82,7 @@ int main(int argc, char const *argv[]) {
 
 
     // Create Vulkan renderer object
-    ale::Renderer renderer(io,model,image);
+    ale::Renderer renderer(model,image);
 
     // Create input manager object
     ale::InputManager input;
