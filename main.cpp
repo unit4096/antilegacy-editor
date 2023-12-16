@@ -36,61 +36,61 @@
 
 int main(int argc, char const *argv[]) {
 
-
-    // Time management for framerate control
-    // FPS cap in 8 milliseconds -> 120 FPS
-    const std::chrono::duration<double, std::milli> fps_cap(8);
-    auto lastFrame = std::chrono::steady_clock::now();
-
-
-    // Set up logging
-    std::vector<ale::Tracer::LogLevel> logLevels = {
-        ale::Tracer::LogLevel::DEBUG,
-        ale::Tracer::LogLevel::INFO,
-    };    
-    ale::Tracer::SetLogLevels(logLevels);
-
-    ale::Loader loader;
-
-    // Main mesh object
-    Model model;
-    // Main texture object
-    Image image;
-
-    // Model paths
-    // std::string model_cube_path = "./models/cube/Cube.gltf";
-    std::string model_fox_path = "./models/fox/Fox.gltf";
-
-    // This .obj model should always load
-    std::string dummy_model_path = "models/viking_room.obj";
-    std::string dummy_texture_path = "textures/viking_room.png";
-    // UV checker texture
-    const std::string uv_checker_path = "textures/tex_uv_checker.png";
-    
-    
-    // Load GLTF models
-    loader.loadModelGLTF(model_fox_path, model, image);
-    
-
-    // // Load default .obj model (should always work)
-    // loader.loadModelOBJ(dummy_model_path.data(), model);
-    // // Load default texture (should always work)
-    // loader.loadTexture(dummy_texture_path.data(), image);
-    
-    // Load this texture to check UV layout
-    // loader.loadTexture(uv_checker_path.data(), image);
-
-
-    // Create Vulkan renderer object
-    ale::Renderer renderer(model,image);
-
-    // Create input manager object
-    ale::InputManager input;
-
-    // Create a camera object that will be passed to the renderer
-    std::shared_ptr<ale::Camera> mainCam = std::make_shared<ale::Camera>();
-
     try {
+
+        // Time management for framerate control
+        // FPS cap in 8 milliseconds -> 120 FPS
+        const std::chrono::duration<double, std::milli> fps_cap(8);
+        auto lastFrame = std::chrono::steady_clock::now();
+
+
+        // Set up logging
+        std::vector<ale::Tracer::LogLevel> logLevels = {
+            ale::Tracer::LogLevel::DEBUG,
+            ale::Tracer::LogLevel::INFO,
+        };    
+        ale::Tracer::SetLogLevels(logLevels);
+
+        ale::Loader loader;
+
+        // Main mesh object
+        Model model;
+        // Main texture object
+        Image image;
+
+        // Model paths
+        // std::string model_cube_path = "./models/cube/Cube.gltf";
+        std::string model_fox_path = "./models/fox/Fox.gltf";
+
+        // This .obj model should always load
+        std::string dummy_model_path = "models/viking_room.obj";
+        std::string dummy_texture_path = "textures/viking_room.png";
+        // UV checker texture
+        const std::string uv_checker_path = "textures/tex_uv_checker.png";
+        
+        
+        // Load GLTF models
+        loader.loadModelGLTF(model_fox_path, model, image);
+        
+
+        // // Load default .obj model (should always work)
+        // loader.loadModelOBJ(dummy_model_path.data(), model);
+        // // Load default texture (should always work)
+        // loader.loadTexture(dummy_texture_path.data(), image);
+        
+        // Load this texture to check UV layout
+        // loader.loadTexture(uv_checker_path.data(), image);
+
+
+        // Create Vulkan renderer object
+        ale::Renderer renderer(model,image);
+
+        // Create input manager object
+        ale::InputManager input;
+
+        // Create a camera object that will be passed to the renderer
+        std::shared_ptr<ale::Camera> mainCam = std::make_shared<ale::Camera>();
+
         // TODO: possibly move window management outside the renderer
         renderer.initWindow();
         input.init(renderer.getWindow());
