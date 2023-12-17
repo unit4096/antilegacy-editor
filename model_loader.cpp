@@ -213,17 +213,8 @@ bool Loader::loadTexture(const char* path, Image& img) {
     for (unsigned char* i = _data; i != _end; i++) {
         img.data.push_back(*i);
     }
-    this->unloadBuffer(_data);
     return 0;
 }
-
-// Just a wrapper for a wrapper for <cstdlib> free()
-void Loader::unloadBuffer(unsigned char* _pixels){
-    if (_pixels) {
-        stbi_image_free(_pixels);        
-    }
-}
-
 
 // A helper function to populate a tinygltf::Model object
 int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename) {
