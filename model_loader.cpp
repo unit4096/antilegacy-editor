@@ -194,7 +194,6 @@ bool Loader::loadTexture(const char* path, Image& img) {
     img.w = 0;
     img.channels = 0;
     img.data.resize(0);
-    img.data_ptr = nullptr;
     
 
     // Load the image using stbi

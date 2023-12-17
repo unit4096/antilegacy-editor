@@ -28,8 +28,6 @@ struct Image {
     int w;
     int h;
     int channels;
-    // TODO: rewrite using smart pointers
-    unsigned char* data_ptr;
     std::vector<unsigned char> data;
 
 };
