@@ -189,15 +189,32 @@ int Loader::loadModelGLTF(const std::string filename, Mesh& _mesh, Image& _image
 
 // Load an image using a path relative to the project root
 bool Loader::loadTexture(const char* path, Image& img) {
+    // Clear image data before writing
+    img.h = 0;
+    img.w = 0;
+    img.channels = 0;
+    img.data.resize(0);
+    img.data_ptr = nullptr;
     
+
+    // Load the image using stbi
     unsigned char* _data = stbi_load(path, &img.w, &img.h, &img.channels, STBI_rgb_alpha);
 
     if (!_data) {        
         return 1;
     }
+    // STBI_rgb_alpha forces the images to be loaded with an alpha channel. 
+    // Hence, the in-line int 4
+    size_t size = img.w * img.h * 4;
     
-    img.data_ptr = _data;
-    
+    // A byte after the last byte in the array
+    const unsigned char* _end = _data + size;
+
+    // Write image data
+    for (unsigned char* i = _data; i != _end; i++) {
+        img.data.push_back(*i);
+    }
+    this->unloadBuffer(_data);
     return 0;
 }
 
