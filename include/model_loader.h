@@ -21,7 +21,6 @@ namespace ale {
         void loadModelOBJ(char *model_path, Mesh &_model);
         int loadModelGLTF(const std::string filename, Mesh &_model, Image &_image);
         bool loadTexture(const char* path, Image& img);
-        void unloadBuffer(unsigned char *_pixels);
     };
 
 } // namespace loader

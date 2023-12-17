@@ -213,6 +213,7 @@ bool Loader::loadTexture(const char* path, Image& img) {
     for (unsigned char* i = _data; i != _end; i++) {
         img.data.push_back(*i);
     }
+    free(_data);
     return 0;
 }
 
