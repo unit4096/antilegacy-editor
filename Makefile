@@ -35,7 +35,7 @@ MAIN = $(BIN_DIR)/editor
 # Targets
 
 test: all
-	./$(MAIN)
+	./$(MAIN) -f ./models/fox/Fox.gltf
 
 all: $(MAIN)
 
