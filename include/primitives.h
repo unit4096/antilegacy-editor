@@ -23,11 +23,32 @@ struct Vertex {
     }
 };
 
-// A model struct. Stores mesh data
+// An image struct with img. parameters and a raw pointer to data. Used for stbi
+struct Image {
+    int w;
+    int h;
+    int channels;
+    // TODO: rewrite using smart pointers
+    unsigned char* data_ptr;
+    std::vector<unsigned char> data;
+
+};
+
 struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 };
+
+struct Model {
+    glm::mat4 transform;
+    std::vector<Mesh> meshes;
+    std::vector<Image> textures;
+};
+
+struct Scene {
+    std::vector<Model> models;
+};
+
 
 // Basic 2D vector from 2 floats. Can be used as a vector implementation wrapper
 struct v2f {
@@ -41,16 +62,7 @@ struct v2d {
     v2d(double _x, double _y):x(_x), y(_y){}
 };
 
-// An image struct with img. parameters and a raw pointer to data. Used for stbi
-struct Image {
-    int w;
-    int h;
-    int channels;
-    // TODO: rewrite using smart pointers
-    unsigned char* data_ptr;
-    std::vector<unsigned char> data;
 
-};
 
 // A hash funciton to compare vertices. For removing duplicates in unordered_map
 namespace std {
