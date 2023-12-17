@@ -32,7 +32,7 @@
 
 
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char **argv) {
 
     try {
 
@@ -43,13 +43,32 @@ int main(int argc, char const *argv[]) {
 
 
         // Set up logging
-        std::vector<ale::Tracer::LogLevel> logLevels = {
-            ale::Tracer::LogLevel::DEBUG,
-            ale::Tracer::LogLevel::INFO,
+        std::vector<trc::LogLevel> logLevels = {
+            trc::LogLevel::DEBUG,
+            trc::LogLevel::INFO,
+            trc::LogLevel::WARNING,
+            trc::LogLevel::ERROR,
         };    
-        ale::Tracer::SetLogLevels(logLevels);
+        trc::SetLogLevels(logLevels);
 
+        std::string model_path = "./models/fox/Fox.gltf";
         ale::Loader loader;
+        
+        loader.recordCommandLineArguments(argc, argv);
+        
+        if (loader.cmdOptionExists("-f")) {
+            std::string file = loader.getCmdOption("-f");   
+            trc::log("Loaded argument: " + file);         
+            if (loader.isFileValid(file)) {
+                model_path = file;
+                trc::log("File can be loaded: " + file);
+            } else {
+                trc::log("File path is not valid, falling back to defaults!", trc::WARNING);
+            }
+        }
+
+        
+        
 
         // Main mesh object
         Mesh mesh;
@@ -58,25 +77,27 @@ int main(int argc, char const *argv[]) {
 
         // Model paths
         // std::string model_cube_path = "./models/cube/Cube.gltf";
-        std::string model_fox_path = "./models/fox/Fox.gltf";
+        // std::string model_fox_path = "./models/fox/Fox.gltf";
 
         // This .obj model should always load
-        std::string dummy_model_path = "models/viking_room.obj";
-        std::string dummy_texture_path = "textures/viking_room.png";
+        // std::string dummy_model_path = "models/viking_room.obj";
+        // std::string dummy_texture_path = "textures/viking_room.png";
         // UV checker texture
-        const std::string uv_checker_path = "textures/tex_uv_checker.png";
+        // const std::string uv_checker_path = "textures/tex_uv_checker.png";
         
         
         // Load GLTF models
-        loader.loadModelGLTF(model_fox_path, mesh, image);
-        
+        if (loader.loadModelGLTF(model_path, mesh, image)) {
+            trc::log("Cannot load model by path: " + model_path, trc::ERROR);
+            return 1;
+        }
 
         // // Load default .obj model (should always work)
         // loader.loadModelOBJ(dummy_model_path.data(), mesh);
         // // Load default texture (should always work)
         // loader.loadTexture(dummy_texture_path.data(), image);
         
-        // Load this texture to check UV layout
+        // Load this texture to check UV layout        
         // loader.loadTexture(uv_checker_path.data(), image);
 
 
