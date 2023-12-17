@@ -7,6 +7,7 @@
 #include <functional>   
 #include <string>
 #include <unordered_map>
+#include <filesystem>
 
 // int
 #include <primitives.h>
@@ -14,13 +15,20 @@
 
 namespace ale {
     class Loader {
+    private:
+        std::vector<std::string> commandLineTokens;
         
+        bool _canReadFile(std::filesystem::path p);
     public: 
         Loader();
         ~Loader();
         void loadModelOBJ(char *model_path, Mesh &_model);
         int loadModelGLTF(const std::string filename, Mesh &_model, Image &_image);
         bool loadTexture(const char* path, Image& img);
+        void recordCommandLineArguments(int & argc, char ** argv);
+        const std::string &getCmdOption(const std::string &option) const;
+        bool cmdOptionExists(const std::string &option) const;
+        bool isFileValid(std::string file_path);
     };
 
 } // namespace loader

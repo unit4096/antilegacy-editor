@@ -33,7 +33,14 @@ Loader::Loader() { }
 Loader::~Loader() { }
 
 // Load an .obj model using a path relative to the project root
+// FIXME: this function does not return any status
 void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
+    std::string _path = model_path;
+
+    if (!isFileValid(_path)) {
+        trc::log("Input file is not valid!", ale::Tracer::ERROR);
+        return;
+    }
 
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -73,13 +80,21 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     }
 }
 
-// TODO: Add loading full GLTF scenes
+
 // Now loads one mesh and one texture from the .gltf file
-int Loader::loadModelGLTF(const std::string filename, Mesh& _mesh, Image& _image) {
+// FIXME: better use bool as status and give std errors if something goes wrong
+// TODO: Add loading full GLTF scenes
+int Loader::loadModelGLTF(const std::string model_path, Mesh& _mesh, Image& _image) {
+
+
+    if (!isFileValid(model_path)) {
+        trc::log("Input file is not valid!", ale::Tracer::ERROR);
+        return 1;
+    }
 
     tinygltf::Model gltfModel;
 
-    _loadTinyGLTFModel(gltfModel, filename);
+    _loadTinyGLTFModel(gltfModel, model_path);
     
     if (gltfModel.textures.size() > 0) {
         trc::log("Found textures");
@@ -193,13 +208,13 @@ bool Loader::loadTexture(const char* path, Image& img) {
     img.h = 0;
     img.w = 0;
     img.channels = 0;
-    img.data.resize(0);
-    
+    img.data.resize(0);    
 
     // Load the image using stbi
     unsigned char* _data = stbi_load(path, &img.w, &img.h, &img.channels, STBI_rgb_alpha);
 
-    if (!_data) {        
+    if (!_data) {
+        trc::log("Cannot get texture!", ale::Tracer::ERROR);
         return 1;
     }
     // STBI_rgb_alpha forces the images to be loaded with an alpha channel. 
@@ -244,6 +259,60 @@ int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename) 
     
     trc::log("This GLTF Model is valid");
     return 0;
+}
+
+void Loader::recordCommandLineArguments(int &argc, char **argv) {
+    for (int i=1; i < argc; ++i) {
+        this->commandLineTokens.push_back(std::string(argv[i]));
+    }
+}
+
+// I borrowed this code from here: 
+// https://stackoverflow.com/questions/865668/parsing-command-line-arguments-in-c
+// Command line input is used only for debugging now. If this changes, I will
+// use or implement a proper library
+
+const std::string& Loader::getCmdOption(const std::string &option) const{
+
+    std::vector<std::string>::const_iterator itr;
+    itr =  std::find(this->commandLineTokens.begin(), this->commandLineTokens.end(), option);
+    if (itr != this->commandLineTokens.end() && ++itr != this->commandLineTokens.end()){
+            return *itr;
+    }
+    static const std::string empty_string("");
+    return empty_string;
+}
+
+bool  Loader::cmdOptionExists(const std::string &option) const{
+
+    return std::find(this->commandLineTokens.begin(), this->commandLineTokens.end(), option)
+            != this->commandLineTokens.end();
+}
+
+
+
+bool Loader::isFileValid(std::string file_path) {
+    std::filesystem::path filePath(file_path);
+
+    if (std::filesystem::exists(filePath)) {
+        if (_canReadFile(filePath)) {
+            return true;    
+        }
+    }
+    return false;
+    
+}
+
+bool Loader::_canReadFile(std::filesystem::path p) {
+    std::error_code ec;
+    auto perms = std::filesystem::status(p, ec).permissions();
+    if ((perms & std::filesystem::perms::owner_read) != std::filesystem::perms::none &&
+        (perms & std::filesystem::perms::group_read) != std::filesystem::perms::none &&
+        (perms & std::filesystem::perms::others_read) != std::filesystem::perms::none
+        ) {
+        return true;
+    }
+    return false;
 }
 
 // Load raw data from buffer by accessor
