@@ -51,11 +51,11 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
         throw std::runtime_error(warn + err);
     }
 
-    std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+    std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
     for (const auto& shape : shapes) {
         for (const auto& index : shape.mesh.indices) {
-            Vertex vertex{};
+            ale::Vertex vertex{};
 
             vertex.pos = {
                 attrib.vertices[3 * index.vertex_index + 0],
@@ -80,12 +80,61 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     }
 }
 
+// Populates half-edges of the model, allowing for easier mesh manipulation
+// FIXME: this function does not work yet
+int Loader::populateHalfEdges(ale::Model &_model) {
+
+    // TODO: add more checks for mesh orientation and manifolddness 
+    if (_model.meshes.size() < 1) {
+        trc::log("Cannot populate half-edges for a model: mesh not found!", trc::ERROR);
+        return 1;
+    }
+    
+
+    // Mesh current_mesh = _model.meshes[0];
+
+    // for (size_t i = 0; i < current_mesh.indices.size(); i += 3) {
+    //     Face face;
+    //     std::vector<std::shared_ptr<HalfEdge>> faceEdges;
+
+    //     std::vector<std::shared_ptr<HalfEdge>> vertexOutgoingEdges(current_mesh.vertices.size(), nullptr);
+
+    //     for (size_t j = 0; j < 3; ++j) {
+    //         HalfEdge edge;
+    //         edge.vertex = std::make_shared<ale::Vertex>(&current_mesh.vertices[current_mesh.indices[i + j]]);
+
+    //         edge.vertex->halfEdge = std::make_shared<HalfEdge>(&edge);
+
+    //         faceEdges.push_back(std::make_shared<HalfEdge>(&edge));
+    //         current_mesh.halfEdges.push_back(edge);
+
+    //         if (!vertexOutgoingEdges[current_mesh.indices[i + j]]) {
+    //             vertexOutgoingEdges[current_mesh.indices[i + j]] = std::make_shared<HalfEdge> (&edge);
+    //         }
+    //     }
+
+    //     for (size_t j = 0; j < 3; ++j) {
+    //         faceEdges[j]->next = std::make_shared<HalfEdge>(faceEdges[(j + 1) % 3]);
+    //         faceEdges[j]->twin = std::make_shared<HalfEdge> (faceEdges[j]->vertex->halfEdge);
+    //         faceEdges[j]->face = std::make_shared<Face>(&face);
+    //     }
+
+    //     face.halfEdge = std::make_shared<HalfEdge>(faceEdges[0]);
+    //     current_mesh.faces.push_back(face);
+    // }
+
+    // return 0;
+
+
+    trc::log("This function is not implemented!", trc::ERROR);    
+    return 1;
+    
+}
 
 // Now loads one mesh and one texture from the .gltf file
 // FIXME: better use bool as status and give std errors if something goes wrong
 // TODO: Add loading full GLTF scenes
-int Loader::loadModelGLTF(const std::string model_path, Mesh& _mesh, Image& _image) {
-
+int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::Image& _image) { 
 
     if (!isFileValid(model_path)) {
         trc::log("Input file is not valid!", ale::Tracer::ERROR);
@@ -122,8 +171,7 @@ int Loader::loadModelGLTF(const std::string model_path, Mesh& _mesh, Image& _ima
 
 
     // TODO: implement loading multiple nodes
-    tinygltf::Mesh mesh = gltfModel.meshes[0];    
-
+    tinygltf::Mesh mesh = gltfModel.meshes[0];
     for (auto primitive : mesh.primitives) {    
 
         // List model attributes for Debug
@@ -131,7 +179,7 @@ int Loader::loadModelGLTF(const std::string model_path, Mesh& _mesh, Image& _ima
             trc::log("This model has " + attr.first);
         }
         
-        std::unordered_map<Vertex, unsigned int> uniqueVertices{};
+        std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
         // TOOD: implement generic attribute deduction
 

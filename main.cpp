@@ -71,9 +71,9 @@ int main(int argc, char **argv) {
         
 
         // Main mesh object
-        Mesh mesh;
+        ale::Mesh mesh;
         // Main texture object
-        Image image;
+        ale::Image image;
 
         // Model paths
         // std::string model_cube_path = "./models/cube/Cube.gltf";
@@ -165,8 +165,8 @@ int main(int argc, char **argv) {
 
             // Mouse camera input
             input.executeActiveMouseAcitons();            
-            v2d mouseMovement = input.getLastDeltaMouseOffset();            
-            v2f camYawPitch = mainCam->getYawPitch();
+            ale::v2d mouseMovement = input.getLastDeltaMouseOffset();            
+            ale::v2f camYawPitch = mainCam->getYawPitch();
             camYawPitch.x-= mouseMovement.x * mouseSensitivity;
             camYawPitch.y-= mouseMovement.y * mouseSensitivity;
             mainCam->setYawPitch(camYawPitch.x,camYawPitch.y);

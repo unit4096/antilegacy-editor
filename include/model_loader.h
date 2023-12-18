@@ -23,6 +23,7 @@ namespace ale {
         Loader();
         ~Loader();
         void loadModelOBJ(char *model_path, Mesh &_model);
+        int populateHalfEdges(ale::Model &_model);
         int loadModelGLTF(const std::string filename, Mesh &_model, Image &_image);
         bool loadTexture(const char* path, Image& img);
         void recordCommandLineArguments(int & argc, char ** argv);
