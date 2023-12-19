@@ -27,6 +27,7 @@ distinguish them from functions in the header.
 
 const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, tinygltf::Model& model);
 int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
+const int _getNumEdgesInMesh(const Mesh &_mesh);
 
 Loader::Loader() { }   
 
@@ -81,53 +82,60 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 }
 
 // Populates half-edges of the model, allowing for easier mesh manipulation
-// FIXME: this function does not work yet
+// FIXME: this function has not been tested. 
 int Loader::populateHalfEdges(ale::Model &_model) {
+
+    
 
     // TODO: add more checks for mesh orientation and manifolddness 
     if (_model.meshes.size() < 1) {
         trc::log("Cannot populate half-edges for a model: mesh not found!", trc::ERROR);
         return 1;
     }
-    
 
-    // Mesh current_mesh = _model.meshes[0];
+    trc::log("This function is not implemented!", trc::ERROR);    
+    return 1;
 
-    // for (size_t i = 0; i < current_mesh.indices.size(); i += 3) {
+
+    // Mesh currentMesh = _model.meshes[0];
+
+    // // FIXME: this function does not work and does not perform any checks
+    // for (size_t i = 0; i < currentMesh.indices.size(); i += 3) {
     //     Face face;
     //     std::vector<std::shared_ptr<HalfEdge>> faceEdges;
 
-    //     std::vector<std::shared_ptr<HalfEdge>> vertexOutgoingEdges(current_mesh.vertices.size(), nullptr);
+    //     std::vector<std::shared_ptr<HalfEdge>> vertexOutgoingEdges(currentMesh.vertices.size(), nullptr);
 
     //     for (size_t j = 0; j < 3; ++j) {
     //         HalfEdge edge;
-    //         edge.vertex = std::make_shared<ale::Vertex>(&current_mesh.vertices[current_mesh.indices[i + j]]);
+    //         std::shared_ptr<HalfEdge> edgePtr = std::make_shared<HalfEdge>(edge);
 
-    //         edge.vertex->halfEdge = std::make_shared<HalfEdge>(&edge);
+    //         auto currentVertex  = currentMesh.vertices[currentMesh.indices[i + j]];
+    //         edge.vertex = std::make_shared<ale::Vertex>(currentVertex);
 
-    //         faceEdges.push_back(std::make_shared<HalfEdge>(&edge));
-    //         current_mesh.halfEdges.push_back(edge);
+    //         edge.vertex->halfEdge = edgePtr;
 
-    //         if (!vertexOutgoingEdges[current_mesh.indices[i + j]]) {
-    //             vertexOutgoingEdges[current_mesh.indices[i + j]] = std::make_shared<HalfEdge> (&edge);
+    //         faceEdges.push_back(edgePtr);
+    //         currentMesh.halfEdges.push_back(edge);
+
+    //         if (!vertexOutgoingEdges[currentMesh.indices[i + j]]) {
+    //             vertexOutgoingEdges[currentMesh.indices[i + j]] = edgePtr;
     //         }
     //     }
 
     //     for (size_t j = 0; j < 3; ++j) {
     //         faceEdges[j]->next = std::make_shared<HalfEdge>(faceEdges[(j + 1) % 3]);
     //         faceEdges[j]->twin = std::make_shared<HalfEdge> (faceEdges[j]->vertex->halfEdge);
-    //         faceEdges[j]->face = std::make_shared<Face>(&face);
+    //         faceEdges[j]->face = std::make_shared<Face>(face);
     //     }
 
     //     face.halfEdge = std::make_shared<HalfEdge>(faceEdges[0]);
-    //     current_mesh.faces.push_back(face);
+    //     currentMesh.faces.push_back(face);
     // }
 
+    // _model.meshes[0] = currentMesh;
+
     // return 0;
-
-
-    trc::log("This function is not implemented!", trc::ERROR);    
-    return 1;
     
 }
 
@@ -246,6 +254,22 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
             _mesh.indices.push_back(uniqueVertices[vertex]);
         }
     }
+    
+    // int edgesCount = _getNumEdgesInMesh(_mesh);
+    // trc::raw << "edges: " << edgesCount << "\n"
+    //          << "idx: " << _mesh.indices.size() << "\n"
+    //          << "vertices: " << _mesh.vertices.size() << "\n"
+    //          << "faces: " << _mesh.indices.size() / 3 << "\n\n";
+
+    // trc::raw << "Euler-poincare characteristic: " 
+    //          <<  _mesh.indices.size()  + (_mesh.indices.size() / 3) - 
+    //              edgesCount  << "\n";
+    
+    // ale::Model newModel;
+    // newModel.meshes.push_back(_mesh);
+    // newModel.textures.push_back(_image);
+    // this->populateHalfEdges(newModel);
+    
     trc::log("Finished loading model");
     return 0;
 }
@@ -372,3 +396,28 @@ const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor,
 
 	return &posBuffer.data[bufferView.byteOffset + accessor.byteOffset];
 }
+
+
+// Returns a number of ints 
+const int _getNumEdgesInMesh(const Mesh &_mesh) {
+    std::set<std::pair<int,int>> uniqueEdges;
+
+    auto sortedPair = [](int first, int second ) {
+        if (first > second) {
+            return std::pair<int,int>(second,first);
+        } else {
+            return std::pair<int,int>(first,second);
+        }
+    };
+
+    for (size_t i = 0; i < _mesh.indices.size(); i += 3) {
+        std::pair<int,int> a = sortedPair(i + 0, i + 1);
+        std::pair<int,int> b = sortedPair(i + 1, i + 2);
+        std::pair<int,int> c = sortedPair(i + 0, i + 2);
+        uniqueEdges.insert(a);
+        uniqueEdges.insert(b);
+        uniqueEdges.insert(c);
+    }
+
+    return uniqueEdges.size();
+} 
