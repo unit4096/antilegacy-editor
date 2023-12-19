@@ -1509,6 +1509,11 @@ private:
         style.ScrollbarSize        = 12.0f;
         style.ScrollbarRounding    = 16.0f;        
         style.ScaleAllSizes(4);
+        
+        float size_pixels = 20;        
+        ImFontConfig config;
+        io->Fonts->Clear();
+        ImFont* font =  io->Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
     }
 
     void initImGUI(){
@@ -1569,6 +1574,19 @@ private:
         ImGui::NewFrame();
 
         // ImGui::ShowDemoWindow();
+
+        if (ImGui::BeginMainMenuBar()) {
+            if (ImGui::BeginMenu("File")) {
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Edit")) {
+                if (ImGui::MenuItem("Test Item", "TEST*BINDING")) {}
+                ImGui::Separator();
+                if (ImGui::MenuItem("Test Item 2", "TEST+BINDING+2")) {}                
+                ImGui::EndMenu();
+            }
+            ImGui::EndMainMenuBar();
+        }        
 
         CameraData camData = mainCamera->getData();
         
