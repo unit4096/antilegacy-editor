@@ -1495,7 +1495,7 @@ private:
         
         
         style.WindowMinSize        = ImVec2( 160, 20 );
-        style.FramePadding         = ImVec2( 2, 1 );
+        // style.FramePadding         = ImVec2( 2, 1 );
         style.ItemSpacing          = ImVec2( 6, 2 );
         // style.ItemInnerSpacing     = ImVec2( 6, 4 );
         style.Alpha                = 0.95f;
