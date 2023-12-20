@@ -78,7 +78,7 @@ InputManager::~InputManager() {}
 void InputManager::init(GLFWwindow* window) {
     window_p = window;
     glfwSetWindowUserPointer(window, this);
-    trc::log("INIT INPUT MANAGER", trc::LogLevel::INFO);
+    trc::log("Init input manager", trc::LogLevel::INFO);
 
     // TODO: load config from a TOML file, add wrappers for raw GLFW macros
 	_bindKey(GLFW_KEY_W,InputAction::CAMERA_MOVE_F);
