@@ -20,6 +20,8 @@ using namespace ale;
 
 namespace trc = ale::Tracer;
 
+const bool COMPRESS_VERTEX_DUPLICATES = true;
+
 /* 
 Declarations for the helper functions. I use the notation for private members to 
 distinguish them from functions in the header.
@@ -80,6 +82,14 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
         }
     }
 }
+
+
+/* 
+NOTE [20.12.2023]
+I am not sure if HEDS is what I want for Ale, I don't want my models to be limited
+to 2-manifolds, and for smaller projects -- those that could gain the most from 
+my editor -- non-manifold topologies are powerful and laconic instruments.
+*/
 
 // Populates half-edges of the model, allowing for easier mesh manipulation
 // FIXME: this function has not been tested. 
@@ -246,12 +256,20 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
                 u,
 				v,		
             };
-                    
-            if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
+                                
+            // Checks whether the loader should remove vertex duplicates. Needed
+            // for debug. Hopefully the compiler will optimize away this check
+            // since the flag's value is const
+            if (COMPRESS_VERTEX_DUPLICATES) {
+                if (uniqueVertices.count(vertex) == 0) {
+                    uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
+                    _mesh.vertices.push_back(vertex);
+                }
+                _mesh.indices.push_back(uniqueVertices[vertex]);    
+            } else {
                 _mesh.vertices.push_back(vertex);
+                _mesh.indices.push_back(i);
             }
-            _mesh.indices.push_back(uniqueVertices[vertex]);
         }
     }
     
