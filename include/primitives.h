@@ -8,6 +8,8 @@
 #ifndef PRIMITIVES
 #define PRIMITIVES
 
+#pragma once
+#include <memory>
 #include <vector>
 #include <functional>
 #include <glm/gtx/hash.hpp>
@@ -19,7 +21,6 @@ using namespace ale;
 
 // TOOD: add namespace 
 namespace ale {
-
 struct HalfEdge;
 struct Face;
 struct Model;
