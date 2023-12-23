@@ -91,63 +91,6 @@ to 2-manifolds, and for smaller projects -- those that could gain the most from
 my editor -- non-manifold topologies are powerful and laconic instruments.
 */
 
-// Populates half-edges of the model, allowing for easier mesh manipulation
-// FIXME: this function has not been tested. 
-int Loader::populateHalfEdges(ale::Model &_model) {
-
-    
-
-    // TODO: add more checks for mesh orientation and manifolddness 
-    if (_model.meshes.size() < 1) {
-        trc::log("Cannot populate half-edges for a model: mesh not found!", trc::ERROR);
-        return 1;
-    }
-
-    trc::log("This function is not implemented!", trc::ERROR);    
-    return 1;
-
-
-    // Mesh currentMesh = _model.meshes[0];
-
-    // // FIXME: this function does not work and does not perform any checks
-    // for (size_t i = 0; i < currentMesh.indices.size(); i += 3) {
-    //     Face face;
-    //     std::vector<std::shared_ptr<HalfEdge>> faceEdges;
-
-    //     std::vector<std::shared_ptr<HalfEdge>> vertexOutgoingEdges(currentMesh.vertices.size(), nullptr);
-
-    //     for (size_t j = 0; j < 3; ++j) {
-    //         HalfEdge edge;
-    //         std::shared_ptr<HalfEdge> edgePtr = std::make_shared<HalfEdge>(edge);
-
-    //         auto currentVertex  = currentMesh.vertices[currentMesh.indices[i + j]];
-    //         edge.vertex = std::make_shared<ale::Vertex>(currentVertex);
-
-    //         edge.vertex->halfEdge = edgePtr;
-
-    //         faceEdges.push_back(edgePtr);
-    //         currentMesh.halfEdges.push_back(edge);
-
-    //         if (!vertexOutgoingEdges[currentMesh.indices[i + j]]) {
-    //             vertexOutgoingEdges[currentMesh.indices[i + j]] = edgePtr;
-    //         }
-    //     }
-
-    //     for (size_t j = 0; j < 3; ++j) {
-    //         faceEdges[j]->next = std::make_shared<HalfEdge>(faceEdges[(j + 1) % 3]);
-    //         faceEdges[j]->twin = std::make_shared<HalfEdge> (faceEdges[j]->vertex->halfEdge);
-    //         faceEdges[j]->face = std::make_shared<Face>(face);
-    //     }
-
-    //     face.halfEdge = std::make_shared<HalfEdge>(faceEdges[0]);
-    //     currentMesh.faces.push_back(face);
-    // }
-
-    // _model.meshes[0] = currentMesh;
-
-    // return 0;
-    
-}
 
 // Now loads one mesh and one texture from the .gltf file
 // FIXME: better use bool as status and give std errors if something goes wrong
@@ -286,7 +229,6 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
     // ale::Model newModel;
     // newModel.meshes.push_back(_mesh);
     // newModel.textures.push_back(_image);
-    // this->populateHalfEdges(newModel);
     
     trc::log("Finished loading model");
     return 0;
