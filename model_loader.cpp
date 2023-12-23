@@ -18,6 +18,8 @@ to the header.
 
 using namespace ale;
 
+namespace geo = ale::geo;
+
 namespace trc = ale::Tracer;
 
 const bool COMPRESS_VERTEX_DUPLICATES = true;
@@ -233,6 +235,120 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
     trc::log("Finished loading model");
     return 0;
 }
+
+/* 
+    Populates a geo::Mesh object using default view mesh. Assumes that the mesh 
+    is triangular and that each 3 indices form a face
+*/
+bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
+
+    trc::log("Not implemented!", trc::ERROR);
+    return -1;
+
+    // Helper funcitons to make the code DRY
+
+    auto bindVert = [&](std::shared_ptr<geo::Vertex> v, unsigned int i){
+        v->pos = _inpMesh.vertices[i].pos;
+        v->color = _inpMesh.vertices[i].color;
+        v->texCoord = _inpMesh.vertices[i].texCoord;    
+    };    
+
+    auto bindEdge = [&](std::shared_ptr<geo::Edge>& e, 
+                        std::shared_ptr<geo::Vertex>& first, 
+                        std::shared_ptr<geo::Vertex>& second,
+                        std::shared_ptr<geo::Loop>& l ){
+
+        e->v1 = first;
+        e->v2 = second;
+        e->loop = l;
+        first->edge = e;
+    };
+
+    auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
+                        std::shared_ptr<geo::Vertex>& v,                
+                        std::shared_ptr<geo::Edge>& e ){
+        l->v = v;
+        l->e = e; 
+        l->radial_next = l;
+        l->radial_prev = l;
+        
+    };
+
+    // Iterate over each face
+    for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
+
+        int i1 = i + 0;
+        int i2 = i + 2;
+        int i3 = i + 3;
+
+        // FIXME: Compare vertices only by their position
+
+        // Create vertices
+        std::shared_ptr v1 = std::make_shared<geo::Vertex>();
+        std::shared_ptr v2 = std::make_shared<geo::Vertex>();
+        std::shared_ptr v3 = std::make_shared<geo::Vertex>();
+        bindVert(v1, i1);
+        bindVert(v2, i2);
+        bindVert(v3, i3);
+
+        // Create edges and loops for each pair of vertices
+        // order: 1,2 2,3 3,1
+
+        // 1,2
+        std::shared_ptr e1 = std::make_shared<geo::Edge>();
+        std::shared_ptr l1 = std::make_shared<geo::Loop>();
+
+        bindEdge(e1, v1, v2, l1);
+        bindLoop(l1, v1, e1);        
+
+        // 2,3
+        std::shared_ptr e2 = std::make_shared<geo::Edge>();
+        std::shared_ptr l2 = std::make_shared<geo::Loop>();
+        
+        bindEdge(e2, v2,v3,l2);
+        bindLoop(l2, v2, e2);
+
+        // 3,1
+        std::shared_ptr e3 = std::make_shared<geo::Edge>();
+        std::shared_ptr l3 = std::make_shared<geo::Loop>();
+        
+        bindEdge(e3, v3,v1,l3);
+        bindLoop(l3, v3, e3);
+
+        // Create face
+        std::shared_ptr f = std::make_shared<geo::Face>();
+        f->loop = l1;
+
+        l1->prev = l3;
+        l2->prev = l1;
+        l3->prev = l2;
+
+        l1->next = l2;
+        l2->next = l3;
+        l3->next = l1;
+
+
+        l1->f = f;
+        l2->f = f;
+        l3->f = f;
+
+
+        // TODO: Add new edges to disk loops and radial edge loops as they 
+        // appear. Implement checking for adjacent edges. Without this, 
+        // adjacency relations would not be full
+        
+        // Populate disks for each vertex
+        
+        std::shared_ptr d1 = std::make_shared<geo::DiskLink>();
+
+        std::shared_ptr d2 = std::make_shared<geo::DiskLink>();
+
+        std::shared_ptr d3 = std::make_shared<geo::DiskLink>();
+
+    }
+    
+}
+
 
 // Load an image using a path relative to the project root
 bool Loader::loadTexture(const char* path, Image& img) {

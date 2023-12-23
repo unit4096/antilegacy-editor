@@ -13,6 +13,7 @@
 
 // int
 #include <primitives.h>
+#include <re_mesh.h>
 #include <tracer.h>
 
 namespace ale {
