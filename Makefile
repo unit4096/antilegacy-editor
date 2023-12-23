@@ -31,7 +31,7 @@ IMGUI_OBJS = $(patsubst $(IMGUI_SRC_DIR)/%.cpp, $(IMGUI_OBJ_DIR)/%.o, $(IMGUI_SR
 # Executable file
 MAIN = $(BIN_DIR)/editor
 
-.PHONY: all clean test
+.PHONY: all clean test shaders
 # Targets
 
 test: all
@@ -60,3 +60,6 @@ $(IMGUI_OBJ_DIR)/%.o: $(IMGUI_SRC_DIR)/%.cpp
 # Clean target
 clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
+
+shaders:
+	glslc shaders/shader.vert -o shaders/vert.spv & glslc shaders/shader.frag -o shaders/frag.spv
