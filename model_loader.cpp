@@ -22,7 +22,7 @@ namespace geo = ale::geo;
 
 namespace trc = ale::Tracer;
 
-const bool COMPRESS_VERTEX_DUPLICATES = true;
+const bool COMPRESS_VERTEX_DUPLICATES = false;
 
 /* 
 Declarations for the helper functions. I use the notation for private members to 
@@ -32,6 +32,7 @@ distinguish them from functions in the header.
 const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, tinygltf::Model& model);
 int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
 const int _getNumEdgesInMesh(const Mesh &_mesh);
+bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh );
 
 Loader::Loader() { }   
 
@@ -85,13 +86,6 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     }
 }
 
-
-/* 
-NOTE [20.12.2023]
-I am not sure if HEDS is what I want for Ale, I don't want my models to be limited
-to 2-manifolds, and for smaller projects -- those that could gain the most from 
-my editor -- non-manifold topologies are powerful and laconic instruments.
-*/
 
 
 // Now loads one mesh and one texture from the .gltf file
@@ -206,7 +200,7 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
             // for debug. Hopefully the compiler will optimize away this check
             // since the flag's value is const
             if (COMPRESS_VERTEX_DUPLICATES) {
-                if (uniqueVertices.count(vertex) == 0) {
+            if (uniqueVertices.count(vertex) == 0) {
                     uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
                     _mesh.vertices.push_back(vertex);
                 }
@@ -228,29 +222,37 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
     //          <<  _mesh.indices.size()  + (_mesh.indices.size() / 3) - 
     //              edgesCount  << "\n";
     
-    // ale::Model newModel;
-    // newModel.meshes.push_back(_mesh);
-    // newModel.textures.push_back(_image);
+    ale::Model newModel;
+    newModel.meshes.push_back(_mesh);
+    newModel.textures.push_back(_image);
+
+    geo::REMesh reMesh;
+
+    _populateREMesh(_mesh, reMesh);
     
     trc::log("Finished loading model");
     return 0;
 }
 
 /* 
+    WORK IN PROGRESS
     Populates a geo::Mesh object using default view mesh. Assumes that the mesh 
     is triangular and that each 3 indices form a face
 */
 bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     trc::log("Not implemented!", trc::ERROR);
-    return -1;
+    return 1;
+
+    // std::unordered_map<ale::geo::Vertex, unsigned int> uniqueVertices;
 
     // Helper funcitons to make the code DRY
 
-    auto bindVert = [&](std::shared_ptr<geo::Vertex> v, unsigned int i){
-        v->pos = _inpMesh.vertices[i].pos;
-        v->color = _inpMesh.vertices[i].color;
-        v->texCoord = _inpMesh.vertices[i].texCoord;    
+    auto bindVert = [&](std::shared_ptr<geo::Vertex> v, unsigned int i){        
+        Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
+        v->pos = _v.pos;
+        v->color = _v.color;
+        v->texCoord = _v.texCoord;    
     };    
 
     auto bindEdge = [&](std::shared_ptr<geo::Edge>& e, 
@@ -278,8 +280,8 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
 
         int i1 = i + 0;
-        int i2 = i + 2;
-        int i3 = i + 3;
+        int i2 = i + 1;
+        int i3 = i + 2;
 
         // FIXME: Compare vertices only by their position
 
@@ -333,20 +335,62 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         l3->f = f;
 
 
-        // TODO: Add new edges to disk loops and radial edge loops as they 
-        // appear. Implement checking for adjacent edges. Without this, 
-        // adjacency relations would not be full
+        /*
+            TODO: Add new edges to disk loops and radial edge loops as they 
+            appear. Implement checking for adjacent edges. Without this, 
+            adjacency relations would not be full
+            Clockwise order
+        */
         
         // Populate disks for each vertex
         
-        std::shared_ptr d1 = std::make_shared<geo::DiskLink>();
+        // auto appendDisk = [](std::shared_ptr<geo::Edge> e1, 
+        //                      std::shared_ptr<geo::Edge> e2){
+        //     std::shared_ptr d = std::make_shared<geo::DiskLink>();
+        //     e1->v1_disk = d;
+        //     e2->v2_disk = d;
+        //     d->prev = e2;
+        //     d->next = e2;
+        // };
 
-        std::shared_ptr d2 = std::make_shared<geo::DiskLink>();
+        // // v1
+        // std::shared_ptr d1 = std::make_shared<geo::DiskLink>();
 
-        std::shared_ptr d3 = std::make_shared<geo::DiskLink>();
+        // d1->prev = e3;
+        // d1->next = e1;
+        // e1->v1_disk = d1;
 
+        // // v2
+        // std::shared_ptr d2 = std::make_shared<geo::DiskLink>();
+        // d2->prev = e3;
+        // d2->next = e1;
+        // e2->v1_disk = d2;
+
+        // // v3
+        // std::shared_ptr d3 = std::make_shared<geo::DiskLink>();
+        // d2->prev = e3;
+        // d2->next = e1;
+        // e3->v1_disk = d3;
+
+        // FIXME: these vectors contain duplicates for obvious reasons. Implement
+        // hash tables
+
+        _outMesh.edges.push_back(e1);
+        _outMesh.edges.push_back(e2);
+        _outMesh.edges.push_back(e3);
+
+        _outMesh.loops.push_back(l1);
+        _outMesh.loops.push_back(l2);
+        _outMesh.loops.push_back(l3);
+
+        _outMesh.vertices.push_back(v1);
+        _outMesh.vertices.push_back(v2);
+        _outMesh.vertices.push_back(v3);
+
+        _outMesh.faces.push_back(f);
     }
-    
+
+    return 0;    
 }
 
 
