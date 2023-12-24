@@ -32,13 +32,7 @@ namespace ale {
 // geo namespace defines geometry primitives
 namespace geo {
 
-// TODO: this is a boilerplate mesh class, it must be extended
-class REMesh {    
-public:
-    std::vector<Face> faces;
-    std::vector<Edge> edges;
-    std::vector<Vertex> vertices;
-};
+
 
 struct Vertex;
 struct Edge;
@@ -46,12 +40,26 @@ struct Loop;
 struct DiskLink;
 struct Face;
 
+// TODO: this is a boilerplate mesh class, it must be extended
+class REMesh {    
+public:
+    std::vector<std::shared_ptr<Face>> faces;
+    std::vector<std::shared_ptr<Edge>> edges;
+    std::vector<std::shared_ptr<Loop>> loops;
+    std::vector<std::shared_ptr<Vertex>> vertices;
+};
+
 struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
     // An edge in the disk loop
     std::shared_ptr<Edge> edge;
+    
+    // Compares vertices. Only position is important for RE Vertices
+    bool operator==(const Vertex& other) const {
+        return pos == other.pos;
+    }
 };
 
 struct Edge {
@@ -59,6 +67,20 @@ struct Edge {
     std::shared_ptr<Vertex> v1, v2;
     std::shared_ptr<Loop> loop;
     std::shared_ptr<DiskLink> v1_disk, v2_disk;
+
+    /* 
+        Compares edges. It is impossible for edges to share the same vertices, 
+        since edges have no winding by themseves.
+    */
+    bool operator==(const Edge& other) const {
+        return (
+                   (v1.get() == other.v1.get()  &&
+                    v2.get() == other.v2.get()) || 
+                   (v1.get() == other.v2.get()  &&
+                    v2.get() == other.v1.get())
+                );
+    }
+
 };
 
 
@@ -88,5 +110,17 @@ struct Face {
 
 } // namespace geo
 } // namespace ale
+
+
+namespace std {
+    template<> struct hash<ale::geo::Vertex> {
+        size_t operator()(ale::geo::Vertex const& vertex) const {            
+            return (
+            (hash<glm::vec3>()(vertex.pos) ^
+            (hash<glm::vec3>()(vertex.color) << 1)) >> 1)^
+            (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
 
 #endif // ALE_REMESH
