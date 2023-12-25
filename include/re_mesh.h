@@ -113,14 +113,27 @@ struct Face {
 
 
 namespace std {
+    // A hash function for a geometry vertex. So far only the geometry matters
     template<> struct hash<ale::geo::Vertex> {
         size_t operator()(ale::geo::Vertex const& vertex) const {            
-            return (
-            (hash<glm::vec3>()(vertex.pos) ^
-            (hash<glm::vec3>()(vertex.color) << 1)) >> 1)^
-            (hash<glm::vec2>()(vertex.texCoord) << 1);
+            return hash<glm::vec3>()(vertex.pos);
         }
     };
 }
+
+
+namespace std {
+    // A hash function for an edge. There are should not exist edges that share
+    // the same vertices. Note that this DOES NOT check for null pointers
+    template<> struct hash<ale::geo::Edge> {
+        size_t operator()(ale::geo::Edge const& edge) const {
+            // Quick and dirty way to hash two pointers. Should be stable enough
+            // to work with 3D meshes and given that pointers are at least unique.
+            return  (size_t)edge.v1.get() + ((size_t)edge.v1.get() << 3);
+        }
+    };
+}
+
+
 
 #endif // ALE_REMESH
