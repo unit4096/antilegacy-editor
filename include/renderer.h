@@ -114,14 +114,6 @@ struct UniformBufferObject {
     alignas(4) glm::vec4 light = glm::vec4(100.0, 40.0, 5.0, 1.0);
 };
 
-// struct CameraData {
-//     glm::vec3 position;
-//     glm::vec3 front;
-//     glm::vec3 worldUp;
-//     float fov;
-//     float yaw, pitch;
-//     float nearPlane, farPlane;
-// };
 
 class Renderer {
 public:
