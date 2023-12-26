@@ -21,7 +21,6 @@ using namespace ale;
 
 // TOOD: add namespace 
 namespace ale {
-struct HalfEdge;
 struct Face;
 struct Model;
 struct Mesh;
@@ -34,7 +33,6 @@ struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
-    std::shared_ptr<HalfEdge> halfEdge;
 
     bool operator==(const ale::Vertex& other) const {
         return pos == other.pos && color == other.color && texCoord == other.texCoord;
@@ -57,12 +55,9 @@ struct Image {
 
 
 // Basic mesh, contains arrays of indices and vertices
-// TODO: Implement a half-edge data structure for mesh manipulation
 struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
-    std::vector<HalfEdge> halfEdges;
-    std::vector<Face> faces;
 };
 
 struct Model {
@@ -76,20 +71,10 @@ struct Scene {
 };
 
 struct Edge {
-    std::shared_ptr<HalfEdge> halfEdge;
+    
 };
 
 struct Face {
-    std::shared_ptr<HalfEdge> halfEdge;
-    std::array<int, 3> indices;
-};
-
-struct HalfEdge {
-    std::shared_ptr<HalfEdge> next;
-    std::shared_ptr<HalfEdge> twin;
-    std::shared_ptr<Vertex> vertex;
-    std::shared_ptr<Face> face;
-
 };
 
 
