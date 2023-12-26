@@ -33,6 +33,7 @@ const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, tinygltf::M
 int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
 const int _getNumEdgesInMesh(const Mesh &_mesh);
 bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh );
+void _generateVertexNormals(ale::Mesh &_mesh);
 
 Loader::Loader() { }   
 
@@ -227,6 +228,12 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
                 _mesh.indices.push_back(i);
             }
         }
+
+        if (!normals) {
+            trc::log("Normals not found in the model! Generating vertex normals", trc::WARNING);
+            _generateVertexNormals(_mesh);
+        }
+        
     }
     
     // int edgesCount = _getNumEdgesInMesh(_mesh);
@@ -545,6 +552,33 @@ const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor,
     const tinygltf::Buffer& posBuffer = model.buffers[bufferView.buffer];
 
 	return &posBuffer.data[bufferView.byteOffset + accessor.byteOffset];
+}
+
+void _generateVertexNormals(ale::Mesh &_mesh) {
+    
+    if (_mesh.indices.size() % 3 != 0) {
+        trc::log("Cannot calculate normals, input mesh is not manifold!", trc::ERROR);
+        return;
+    }
+
+    for (size_t i = 0; i < _mesh.indices.size(); i+=3) {
+        int i1 = _mesh.indices[i + 0];
+        int i2 = _mesh.indices[i + 1];
+        int i3 = _mesh.indices[i + 2];
+        
+        glm::vec3 pos1 = _mesh.vertices[i1].pos;
+        glm::vec3 pos2 = _mesh.vertices[i2].pos;
+        glm::vec3 pos3 = _mesh.vertices[i3].pos;
+
+        glm::vec3 v1 = pos2 - pos1;
+        glm::vec3 v2 = pos3 - pos1;        
+
+        glm::vec3 normal = glm::normalize(glm::cross(v1,v2));
+
+        _mesh.vertices[i1].normal = normal;
+        _mesh.vertices[i2].normal = normal;
+        _mesh.vertices[i3].normal = normal;
+    }
 }
 
 
