@@ -111,6 +111,7 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
+    alignas(4) glm::vec4 light = glm::vec4(100.0, 40.0, 5.0, 1.0);
 };
 
 // struct CameraData {
@@ -430,8 +431,8 @@ private:
         return bindingDescription;
     }
 
-    static std::array<VkVertexInputAttributeDescription, 3> getVertAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+    static std::array<VkVertexInputAttributeDescription, 4> getVertAttributeDescriptions() {
+        std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
 
         attributeDescriptions[0].binding = 0;
         attributeDescriptions[0].location = 0;
@@ -447,6 +448,11 @@ private:
         attributeDescriptions[2].location = 2;
         attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
         attributeDescriptions[2].offset = offsetof(ale::Vertex, texCoord);
+
+        attributeDescriptions[3].binding = 0;
+        attributeDescriptions[3].location = 3;
+        attributeDescriptions[3].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescriptions[3].offset = offsetof(ale::Vertex, normal);
 
         return attributeDescriptions;
     }

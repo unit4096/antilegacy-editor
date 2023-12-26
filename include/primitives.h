@@ -33,6 +33,7 @@ struct Vertex {
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
+    glm::vec3 normal = glm::vec3(0);
 
     bool operator==(const ale::Vertex& other) const {
         return pos == other.pos && color == other.color && texCoord == other.texCoord;

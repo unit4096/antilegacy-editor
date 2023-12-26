@@ -147,13 +147,22 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
         int posAttributeIdx = primitive.attributes["POSITION"];
         int uvAttributeIdx = primitive.attributes["TEXCOORD_0"];
         
-        const tinygltf::Accessor& posAccessor = gltfModel.accessors[posAttributeIdx];
-        const tinygltf::Accessor& UVAccessor = gltfModel.accessors[uvAttributeIdx];
+        const auto& posAccessor = gltfModel.accessors[posAttributeIdx];
+        const auto& UVAccessor = gltfModel.accessors[uvAttributeIdx];
 
         const float* positions = reinterpret_cast<const float*>(
                                     _getDataByAccessor(posAccessor, gltfModel));
         const float* uvPositions = reinterpret_cast<const float*>(
                                     _getDataByAccessor(UVAccessor, gltfModel));
+        
+        const float* normals = nullptr;
+        if (primitive.attributes.count("NORMAL") > 0) {
+            int normIdx = primitive.attributes["NORMAL"];
+            const auto& normAccessor = gltfModel.accessors[normIdx];
+            normals = reinterpret_cast<const float*>(
+                        _getDataByAccessor(normAccessor, gltfModel));
+        }
+
         
         Vertex vertex{};
 
@@ -195,6 +204,14 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
                 u,
 				v,		
             };
+
+            if (normals) {
+                vertex.normal = {
+                    normals[i * 3 + 0],
+                    normals[i * 3 + 1],
+                    normals[i * 3 + 2]
+                };
+            }
                                 
             // Checks whether the loader should remove vertex duplicates. Needed
             // for debug. Hopefully the compiler will optimize away this check
@@ -244,7 +261,9 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
     trc::log("Not implemented!", trc::ERROR);
     return 1;
 
-    // std::unordered_map<ale::geo::Vertex, unsigned int> uniqueVertices;
+    std::unordered_map<ale::geo::Vertex, std::shared_ptr<geo::Vertex>> uniqueVertices;
+    std::unordered_map<geo::Edge, std::shared_ptr<geo::Edge>> uniqueEdges;
+        
 
     // Helper funcitons to make the code DRY
 
@@ -255,15 +274,26 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         v->texCoord = _v.texCoord;    
     };    
 
-    auto bindEdge = [&](std::shared_ptr<geo::Edge>& e, 
+    auto bindEdge = [&](std::shared_ptr<geo::Edge> e, 
                         std::shared_ptr<geo::Vertex>& first, 
                         std::shared_ptr<geo::Vertex>& second,
                         std::shared_ptr<geo::Loop>& l ){
 
         e->v1 = first;
         e->v2 = second;
-        e->loop = l;
-        first->edge = e;
+
+        if (uniqueEdges.count(*e.get()) != 0) {
+            e = uniqueEdges[*e.get()];
+        } else {
+            uniqueEdges[*e.get()] = e;
+        }
+        
+        auto _l = e->loop;
+        while (_l != nullptr) {
+            _l = _l->radial_next;
+        }
+        _l->radial_next = l;
+        
     };
 
     auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
