@@ -59,9 +59,6 @@ namespace ale {
 const uint32_t WIDTH = 1600;
 const uint32_t HEIGHT = 1200;
 
-std::string dummy_model_path = "models/viking_room.obj";
-std::string dummy_texture_path = "textures/viking_room.png";
-
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 const std::vector<const char*> validationLayers = {
