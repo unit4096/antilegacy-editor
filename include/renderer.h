@@ -1629,7 +1629,8 @@ private:
         CameraData camData = mainCamera->getData();
         
         {
-            ImGui::Begin("View configs");
+
+             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
             ImGui::SliderFloat("X", &camData.position.x, -10.0f, 10.0f);
             ImGui::SliderFloat("Y", &camData.position.y, -10.0f, 10.0f);
@@ -1649,7 +1650,7 @@ private:
             ImGui::Text("%s",mode_name.data());
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                                 1000.0f / io->Framerate, io->Framerate);
+                                 1000.0f / _io.Framerate, _io.Framerate);
             ImGui::Text("FPS CAP ENABLED");
             ImGui::End();
         }
