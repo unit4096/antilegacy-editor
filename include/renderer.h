@@ -1600,9 +1600,7 @@ private:
                 }
             }
 
-            // ImGuizmo::DrawGrid(_view, _proj, _model, 50.0f);
             ImGuizmo::Manipulate(_view, _proj, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, _model);
-            // ImGuizmo::DrawCubes(_view,_proj,_model,1);
         }
 
         // ImGui::ShowDemoWindow();
@@ -1630,7 +1628,7 @@ private:
         
         {
 
-             ImGui::Begin("View configs");
+            ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
             ImGui::SliderFloat("X", &camData.position.x, -10.0f, 10.0f);
             ImGui::SliderFloat("Y", &camData.position.y, -10.0f, 10.0f);
