@@ -190,7 +190,7 @@ public:
         ubo.proj = glm::perspective(glm::radians(data.fov),
                         swapChainExtent.width / (float) swapChainExtent.height,
                         data.nearPlane, data.farPlane);
-        ubo.proj[1][1] *= -1;
+        ubo.proj[1][1] *= -1;                
     }
 
     void drawFrame() {
@@ -1614,6 +1614,12 @@ private:
                 if (ImGui::MenuItem("Test Item", "TEST*BINDING")) {}
                 ImGui::Separator();
                 if (ImGui::MenuItem("Test Item 2", "TEST+BINDING+2")) {}                
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("View")) {
+                ImGui::EndMenu();
+            }
+            if (ImGui::BeginMenu("Window")) {
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
