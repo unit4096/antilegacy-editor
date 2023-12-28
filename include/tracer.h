@@ -93,6 +93,43 @@ static void SetLogLevel(LogLevel lvl, bool isEnabled) {
     globalLogLevels[lvl] = isEnabled;
 }
 
+// Inner function for printing out matrices
+void _printMat(float* mat, unsigned int size) {
+    for (size_t i = 0; i < size; i++) {
+        for (size_t j = 0; j < size; j++) {
+            raw << mat[i * size + j] << "  ";
+        }
+        raw << "\n";
+    }
+    raw << "\n";
+}
+
+
+// Print a 4x4 matrix
+static void printMat4(float* mat, std::string msg) {
+    if (mat == nullptr) {
+        log("Incorrect matrix input! Aborting logging", LogLevel::ERROR);
+        return;
+    }
+    raw << msg << "\n";
+    _printMat(mat, 4);
+}
+
+// Print a 4x4 matrix
+// TODO: find a way to input glm matrices as templates for handling matrices of 
+// arbitrary sizes
+static void printMat4(const glm::mat4& mat, std::string msg) {
+    raw << msg << "\n";
+        for (size_t i = 0; i < 4; i++) {
+            for (size_t j = 0; j < 4; j++)
+            {
+                raw << mat[i][j]<< "  ";
+            }
+            raw << "\n";
+        }
+        raw << "\n";
+}
+
 // Sets a list of used LogLevel's 
 static void SetLogLevels(std::vector<LogLevel> lvls) {
     globalLogLevels.resize(LogLevel::LogLevel_MAX);
