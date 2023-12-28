@@ -44,14 +44,15 @@ development, renederer code still somewhat resembles the original tutorial code.
 #include <primitives.h>
 #include <camera.h>
 
-#ifndef IMGUI
-#define IMGUI
+#ifndef ALE_IMGUI
+#define ALE_IMGUI
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
+#include <imgui/ImGuizmo.h>
 
-#endif //IMGUI
+#endif //ALE_IMGUI
 
 
 namespace ale {
@@ -189,7 +190,7 @@ public:
         ubo.proj = glm::perspective(glm::radians(data.fov),
                         swapChainExtent.width / (float) swapChainExtent.height,
                         data.nearPlane, data.farPlane);
-        ubo.proj[1][1] *= -1;                
+        ubo.proj[1][1] *= -1;
     }
 
     void drawFrame() {
@@ -1567,6 +1568,41 @@ private:
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
+        ImGuiIO& _io = ImGui::GetIO();
+        
+        float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
+        ImGuizmo::SetRect(x, y, w, h);
+
+        {
+            float _view[16];
+            float _proj[16];
+            float _model[16];
+
+
+            // Model matrix for the grid
+            glm::mat4 gridModelMat = glm::mat4(1);
+
+            // Looks like ImGuizmo uses -y as up, so i need to flip the proj
+            glm::mat4 flippedProj = 
+                        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f))
+                        * ubo.proj;
+
+
+            // Convert glm::mat4 to float[16]
+            int idx = 0;
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++){
+                    _view[idx] = ubo.view[i][j];
+                    _proj[idx] = flippedProj[i][j];
+                    _model[idx] = gridModelMat[i][j];
+                    idx++;
+                }
+            }
+
+            ImGuizmo::DrawGrid(_view, _proj, _model, 50.0f);
+            ImGuizmo::DrawCubes(_view,_proj,_model,1);
+        }
 
         // ImGui::ShowDemoWindow();
 
