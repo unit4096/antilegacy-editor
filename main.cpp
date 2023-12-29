@@ -14,14 +14,11 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
 
-#ifndef ALE_IMGUI
-#define ALE_IMGUI
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
 
-#endif //ALE_IMGUI
 
 // int
 #include <input_manager.h>
