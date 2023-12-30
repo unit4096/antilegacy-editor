@@ -1,6 +1,6 @@
 # Antilegacy Editor
 
-<img src="./icon.png" alt="Axolotl siluette"  align="right" style="max-width: 128px">
+<img src="./icon.png" alt="Axolotl siluette"  align="right" style="max-width: 256px">
 
 This is an early prototype for a 3D editor written in modern C++ (C++20). Intended use: 3D modeling for games and animation. 
 
