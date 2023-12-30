@@ -10,7 +10,7 @@ CXXFLAGS = -std=c++20 -O2 -Wall -g -fsanitize=address
 LDFLAGS:= -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
 # Source directories
-SRC_DIR = .
+SRC_DIR = ./src
 IMGUI_SRC_DIR = include/imgui
 
 OBJ_DIR = obj
@@ -31,8 +31,11 @@ IMGUI_OBJS = $(patsubst $(IMGUI_SRC_DIR)/%.cpp, $(IMGUI_OBJ_DIR)/%.o, $(IMGUI_SR
 # Executable file
 MAIN = $(BIN_DIR)/editor
 
-.PHONY: all clean test shaders
+.PHONY: all clean test shaders clean_main
 # Targets
+
+clean_main:
+	rm $(MAIN)
 
 test: all
 	./$(MAIN) -f ./models/fox/Fox.gltf
@@ -40,7 +43,7 @@ test: all
 all: $(MAIN)
 
 # Main target
-$(MAIN): $(OBJS) $(IMGUI_OBJS)
+$(MAIN):  $(IMGUI_OBJS) $(OBJS) 
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDE_ALL) $(LDFLAGS)
 
