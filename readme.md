@@ -5,7 +5,7 @@
 This is an early prototype for a 3D editor written in modern C++ (C++20). Intended use: 3D modeling for games and animation. 
 
 
-[**What I mean by "Antilegacy"**](#what-is-antilegacy)
+[**What I mean by "antilegacy"**](#what-is-antilegacy)
 
 ## Features
 
@@ -102,5 +102,5 @@ Thats why I rely on decoupled modules that are incapsulated inside header files.
 
 This is an antilegacy manfesto. Perhaps this means it will never be finished and refined enough. And that is good.
 
-## About the Author
+## About the author
 I (@unit4096) am a software developer in the gaming industry, and a graphics programmer at heart. I work on this project in my free time and try to provide consistent updates.
