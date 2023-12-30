@@ -94,7 +94,7 @@ I have seen software that was in produciton for decades, and the only reason it 
 Thats why I don't care much about backward compatibility of compilers and libraries. I want my software to be able to support new systems to be, not to lag behind. I use a feature whenever it is released, because it too will become outdated one day and to be replaced by something else.
 
 ### The Ship of Theseus
-*Or why do I use so many headers instead of a "proper" architecture*
+*Or why do I use so many headers instead of a "proper" architecture*  
 Ideally, antilegacy software is a [ship of Theseus](https://en.wikipedia.org/wiki/Ship_of_Theseus) that can and should outlive all of its parts. Thus, its parts should be replaceable, and their replacing should not threaten the entire construction. 
 
 Thats why I rely on decoupled modules that are incapsulated inside header files. Ideally, you can replace one module with another without any dramatic changes in code. In a few years the disadvantages of my system will be gone with the new C++ module system, and my code will be ready for this.
