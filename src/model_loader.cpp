@@ -27,6 +27,9 @@ const bool COMPRESS_VERTEX_DUPLICATES = false;
 /* 
 Declarations for the helper functions. I use the notation for private members to 
 distinguish them from functions in the header.
+
+This "C style incapsulation" is a handy way to not include tiny_*.h directives
+inside the loader's header (since you cannot do it with these libraries)
 */
 
 const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, tinygltf::Model& model);
@@ -289,18 +292,26 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         e->v1 = first;
         e->v2 = second;
 
-        if (uniqueEdges.count(*e.get()) != 0) {
+        // Checks if there is an edge with this data in the hash table
+        // Either hashes the new edge it or assigns an existing pointer
+        if (uniqueEdges.count(*e.get()) != 0) {    
             e = uniqueEdges[*e.get()];
         } else {
             uniqueEdges[*e.get()] = e;
         }
         
-        auto _l = e->loop;
-        while (_l != nullptr) {
-            _l = _l->radial_next;
-        }
-        _l->radial_next = l;
+        //  /// TODO: here should go the code to load face loops to a radial 
+        //  /// disk data structure (note that the order of loops matters)
+
+
+        // auto _l = e->loop;
+
         
+        // while (_l != nullptr) {
+        //     _l = _l->radial_next;
+        // }
+
+        _l->radial_next = l;
     };
 
     auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
