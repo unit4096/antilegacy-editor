@@ -311,7 +311,7 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         //     _l = _l->radial_next;
         // }
 
-        _l->radial_next = l;
+        // _l->radial_next = l;
     };
 
     auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
