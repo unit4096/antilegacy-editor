@@ -105,6 +105,7 @@ struct Face {
     // A pointer to the first loop node
     std::shared_ptr<Loop> loop;    
     glm::vec3 nor;
+    unsigned int size;
 };
 
 
