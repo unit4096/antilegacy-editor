@@ -1,5 +1,6 @@
 # Antilegacy editor roadmap
-*This is a simple development roadmap for the antilegacy editor*
+**This is a simple development roadmap for the antilegacy editor**  
+It lists minimal editing functionality for the editor to be considered a finished project
 
 ## Global
 
