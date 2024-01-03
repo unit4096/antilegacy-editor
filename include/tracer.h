@@ -9,11 +9,17 @@
 #include <source_location>
 #include <string_view>
 
+#ifndef GLM
+#define GLM
+#include <glm/glm.hpp>
+#endif // GLM
+
 // int
 
 namespace ale {
 
 namespace Tracer {
+
 
 enum LogLevel {
     INFO,
@@ -93,16 +99,6 @@ static void SetLogLevel(LogLevel lvl, bool isEnabled) {
     globalLogLevels[lvl] = isEnabled;
 }
 
-// Inner function for printing out matrices
-void _printMat(float* mat, unsigned int size) {
-    for (size_t i = 0; i < size; i++) {
-        for (size_t j = 0; j < size; j++) {
-            raw << mat[i * size + j] << "  ";
-        }
-        raw << "\n";
-    }
-    raw << "\n";
-}
 
 
 // Print a 4x4 matrix
@@ -111,8 +107,16 @@ static void printMat4(float* mat, std::string msg) {
         log("Incorrect matrix input! Aborting logging", LogLevel::ERROR);
         return;
     }
+    unsigned int mat_size = 4;
     raw << msg << "\n";
-    _printMat(mat, 4);
+    for (size_t i = 0; i < mat_size; i++) {
+        for (size_t j = 0; j < mat_size; j++) {
+            raw << mat[i * mat_size + j] << "  ";
+        }
+        raw << "\n";
+    }
+    raw << "\n";
+
 }
 
 // Print a 4x4 matrix
