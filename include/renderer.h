@@ -528,7 +528,7 @@ private:
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "No Engine";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_0;
+        appInfo.apiVersion = VK_API_VERSION_1_3;
 
         VkInstanceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -594,12 +594,64 @@ private:
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-        for (const auto& device : devices) {
-            if (isDeviceSuitable(device)) {
-                physicalDevice = device;
-                break;
+        auto getPhysicalDeviceRating = [this](VkPhysicalDevice device){
+
+            if (!isDeviceSuitable(device)) {
+                return 0;
+            }            
+            
+            int rate = 1;
+
+            VkPhysicalDeviceProperties2 props;
+            props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+            vkGetPhysicalDeviceProperties2(device, &props);
+
+            auto type = props.properties.deviceType;
+            if (type == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){
+                rate += 1000;
+                
+                auto memoryProps = VkPhysicalDeviceMemoryProperties2{};
+                
+                vkGetPhysicalDeviceMemoryProperties2(device, &memoryProps);
+
+                auto heapsPointer = memoryProps.memoryProperties.memoryHeaps;
+                auto heaps = std::vector<VkMemoryHeap>(
+                                    heapsPointer, 
+                                    heapsPointer
+                                    + memoryProps.memoryProperties.memoryHeapCount);
+                
+                
+
+                for (const auto& heap : heaps) {
+                    if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
+                        VkDeviceSize size = heap.size;
+                        unsigned long mb  = size / 1000000;
+                        rate+= mb;
+                    }
+                }
+            }
+
+            return rate;
+        };
+
+        std::unordered_map<unsigned int, VkPhysicalDevice> deviceRatings;
+        unsigned int maxRating = 0;
+
+        for (const VkPhysicalDevice& device : devices) {
+            int rating = getPhysicalDeviceRating(device);
+
+            deviceRatings[rating] = device;
+            
+            if(rating > maxRating) {
+                maxRating = rating;
             }
         }
+
+        if(maxRating <= 0) {
+            throw std::runtime_error("failed to find a suitable GPU!");            
+        }
+
+        physicalDevice = deviceRatings[maxRating];
 
         if (physicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("failed to find a suitable GPU!");
@@ -1022,8 +1074,9 @@ private:
     }
 
     void createTextureSampler() {
-        VkPhysicalDeviceProperties properties{};
-        vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+        VkPhysicalDeviceProperties2 props{};
+        props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        vkGetPhysicalDeviceProperties2(physicalDevice, &props);
 
         // VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER VK_SAMPLER_ADDRESS_MODE_REPEAT
         auto sampler_mode = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -1036,7 +1089,7 @@ private:
         samplerInfo.addressModeV = sampler_mode;
         samplerInfo.addressModeW = sampler_mode;
         samplerInfo.anisotropyEnable = VK_TRUE;
-        samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+        samplerInfo.maxAnisotropy = props.properties.limits.maxSamplerAnisotropy;
         samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
         samplerInfo.unnormalizedCoordinates = VK_FALSE;
         samplerInfo.compareEnable = VK_FALSE;
