@@ -2,6 +2,10 @@
 This is a Vulkan renderer. This code is mostly salvaged from vulkan-tutorial.com
 and adapted to my needs. Since for now [03.12.2023] the editor is still in
 development, renederer code still somewhat resembles the original tutorial code.
+
+NOTE[04.01.2024]: I am currently in the procces of rewriting the entire rendering
+pipeline to the modern (1.3) Vulkan. Dramatic changes in this code happpen right
+now.
 */
 
 // ext
