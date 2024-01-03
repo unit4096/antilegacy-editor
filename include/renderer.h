@@ -581,8 +581,11 @@ private:
         }
     }
 
+    /* 
+    Picks a physical device according to its rating for the physicalDevice field.
+    TODO: Add overrides and handlers for manual device selection    
+    */
     void pickPhysicalDevice() {
-        // TODO: Implement device preference 
 
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
@@ -594,6 +597,10 @@ private:
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
+
+        // Inner function for device rating
+        // returns int: 0 - invalid, 1 - integrated,
+        // 100 + VRAM size (mb) - dedicated
         auto getPhysicalDeviceRating = [this](VkPhysicalDevice device){
 
             if (!isDeviceSuitable(device)) {
@@ -647,11 +654,12 @@ private:
             }
         }
 
+        // Means no devices found or no device is suitable
         if(maxRating <= 0) {
             throw std::runtime_error("failed to find a suitable GPU!");            
         }
 
-        physicalDevice = deviceRatings[maxRating];
+        this->physicalDevice = deviceRatings[maxRating];
 
         if (physicalDevice == VK_NULL_HANDLE) {
             throw std::runtime_error("failed to find a suitable GPU!");
