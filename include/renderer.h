@@ -47,13 +47,14 @@ now.
 // int
 #include <primitives.h>
 #include <camera.h>
+#include <tracer.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_vulkan.h>
 #include <imgui/ImGuizmo.h>
 
-
+namespace trc = ale::Tracer;
 
 namespace ale {
 
@@ -1839,10 +1840,16 @@ private:
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
+        std::optional<unsigned int> computeFamily;
+        
         int i = 0;
         for (const auto& queueFamily : queueFamilies) {
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
+            }
+
+            if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+                computeFamily = i;
             }
 
             VkBool32 presentSupport = false;
@@ -1859,6 +1866,10 @@ private:
             i++;
         }
 
+        if (!computeFamily.has_value()) {
+            trc::log("No support for compute shaders detected!", trc::WARNING);
+        }
+        
         return indices;
     }
 
