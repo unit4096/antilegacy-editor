@@ -614,7 +614,7 @@ private:
             
             int rate = 1;
 
-            VkPhysicalDeviceProperties2 props;
+            VkPhysicalDeviceProperties2 props = {};
             props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
             vkGetPhysicalDeviceProperties2(device, &props);
 
