@@ -618,7 +618,8 @@ private:
             props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
             vkGetPhysicalDeviceProperties2(device, &props);
 
-            auto type = props.properties.deviceType;
+            VkPhysicalDeviceType type = props.properties.deviceType;
+            
             if (type == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){
                 rate += 1000;
                 
