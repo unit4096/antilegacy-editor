@@ -27,6 +27,8 @@ now.
 
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "../src/VkBootstrap.h"
+
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -72,9 +74,9 @@ const std::vector<const char*> deviceExtensions = {
 };
 
 #ifdef NDEBUG
-const bool enableValidationLayers = false;
+const bool renderer_enableValidationLayers = false;
 #else
-const bool enableValidationLayers = true;
+const bool renderer_enableValidationLayers = true;
 #endif
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
@@ -319,12 +321,13 @@ public:
 
         vkDestroyDevice(device, nullptr);
 
-        if (enableValidationLayers) {
+        if (renderer_enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
         }
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
-        vkDestroyInstance(instance, nullptr);
+        vkb::destroy_instance(vkb_instance);
+        // vkDestroyInstance(instance, nullptr);
 
         glfwDestroyWindow(window);
 
@@ -349,6 +352,7 @@ private:
     // GLFW variables
 
     VkInstance instance;
+    vkb::Instance vkb_instance;
     VkDebugUtilsMessengerEXT debugMessenger;
     VkSurfaceKHR surface;
 
@@ -523,42 +527,60 @@ private:
     }
 
     void createInstance() {
-        if (enableValidationLayers && !checkValidationLayerSupport()) {
+
+        if (renderer_enableValidationLayers && !checkValidationLayerSupport()) {
             throw std::runtime_error("validation layers requested, but not available!");
         }
 
-        VkApplicationInfo appInfo{};
-        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "Antilegacy Editor";
-        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "No Engine";
-        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_3;
+        vkb::InstanceBuilder builder;
 
-        VkInstanceCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        createInfo.pApplicationInfo = &appInfo;
-
-        auto extensions = getRequiredExtensions();
-        createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
-        createInfo.ppEnabledExtensionNames = extensions.data();
-
-        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-        if (enableValidationLayers) {
-            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-            createInfo.ppEnabledLayerNames = validationLayers.data();
-
-            populateDebugMessengerCreateInfo(debugCreateInfo);
-            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
-        } else {
-            createInfo.enabledLayerCount = 0;
-
-            createInfo.pNext = nullptr;
+        builder.set_app_name("Antilegacy Editor")
+                               .use_default_debug_messenger()
+                               .set_engine_name("No engine")
+                               .require_api_version(1,3);
+                               
+        if (renderer_enableValidationLayers) {
+            builder.request_validation_layers();
         }
+        
+        auto instance_res = builder.build();
 
-        if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create instance!");
-        }
+        vkb_instance = instance_res.value();
+
+        instance = instance_res.value();
+
+        // VkApplicationInfo appInfo{};
+        // appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        // appInfo.pApplicationName = "Antilegacy Editor";
+        // appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        // appInfo.pEngineName = "No Engine";
+        // appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        // appInfo.apiVersion = VK_API_VERSION_1_3;
+
+        // VkInstanceCreateInfo createInfo{};
+        // createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        // createInfo.pApplicationInfo = &appInfo;
+
+        // auto extensions = getRequiredExtensions();
+        // createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+        // createInfo.ppEnabledExtensionNames = extensions.data();
+
+        // VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+        // if (renderer_enableValidationLayers) {
+        //     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        //     createInfo.ppEnabledLayerNames = validationLayers.data();
+
+        //     populateDebugMessengerCreateInfo(debugCreateInfo);
+        //     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*) &debugCreateInfo;
+        // } else {
+        //     createInfo.enabledLayerCount = 0;
+
+        //     createInfo.pNext = nullptr;
+        // }
+
+        // if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
+        //     throw std::runtime_error("failed to create instance!");
+        // }
     }
 
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
@@ -570,7 +592,7 @@ private:
     }
 
     void setupDebugMessenger() {
-        if (!enableValidationLayers) return;
+        if (!renderer_enableValidationLayers) return;
 
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         populateDebugMessengerCreateInfo(createInfo);
@@ -702,7 +724,7 @@ private:
         createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-        if (enableValidationLayers) {
+        if (renderer_enableValidationLayers) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
         } else {
@@ -1881,7 +1903,7 @@ private:
 
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        if (enableValidationLayers) {
+        if (renderer_enableValidationLayers) {
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
         }
 
