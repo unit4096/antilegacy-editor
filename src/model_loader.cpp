@@ -81,7 +81,7 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
             vertex.color = {1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
+                uniqueVertices[vertex] = static_cast<unsigned int>(_mesh.vertices.size());
                 _mesh.vertices.push_back(vertex);
             }
 
@@ -222,7 +222,7 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
             // since the flag's value is const
             if (COMPRESS_VERTEX_DUPLICATES) {
             if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<u_int32_t>(_mesh.vertices.size());
+                    uniqueVertices[vertex] = static_cast<unsigned int>(_mesh.vertices.size());
                     _mesh.vertices.push_back(vertex);
                 }
                 _mesh.indices.push_back(uniqueVertices[vertex]);    
