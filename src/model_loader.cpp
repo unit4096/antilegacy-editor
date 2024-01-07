@@ -48,7 +48,7 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     std::string _path = model_path;
 
     if (!isFileValid(_path)) {
-        trc::log("Input file is not valid!", ale::Tracer::ERROR);
+        trc::log("Input file is not valid!", trc::LogLevel::ERROR);
         return;
     }
 
@@ -98,7 +98,7 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::Image& _image) { 
 
     if (!isFileValid(model_path)) {
-        trc::log("Input file is not valid!", ale::Tracer::ERROR);
+        trc::log("Input file is not valid!", trc::LogLevel::ERROR);
         return 1;
     }
 
@@ -454,7 +454,7 @@ bool Loader::loadTexture(const char* path, Image& img) {
     unsigned char* _data = stbi_load(path, &img.w, &img.h, &img.channels, STBI_rgb_alpha);
 
     if (!_data) {
-        trc::log("Cannot get texture!", ale::Tracer::ERROR);
+        trc::log("Cannot get texture!", trc::LogLevel::ERROR);
         return 1;
     }
     // STBI_rgb_alpha forces the images to be loaded with an alpha channel. 
