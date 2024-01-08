@@ -71,8 +71,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>
-      </PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOGDI</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -98,8 +97,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>
-      </PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOGDI</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -130,8 +128,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>
-      </PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOGDI</PreprocessorDefinitions>
     </ClCompile>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -151,8 +148,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <PreprocessorDefinitions>
-      </PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOGDI</PreprocessorDefinitions>
     </ClCompile>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -175,8 +171,9 @@
     <ClCompile Include="include\imgui\imgui_impl_vulkan.cpp" />
     <ClCompile Include="include\imgui\imgui_tables.cpp" />
     <ClCompile Include="include\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="model_loader.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\model_loader.cpp" />
+    <ClCompile Include="src\VkBootstrap.cpp" />
     <ClCompile Include="visual_studio_dummy.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +198,8 @@
     <ClInclude Include="include\tinygltf\tiny_gltf.h" />
     <ClInclude Include="include\tol\tiny_obj_loader.h" />
     <ClInclude Include="include\tracer.h" />
+    <ClInclude Include="src\VkBootstrap.h" />
+    <ClInclude Include="src\VkBootstrapDispatch.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="models\cube\Cube.bin" />
