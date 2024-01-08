@@ -50,7 +50,7 @@ sudo pacman -S glm
 ``` makefile
 CXX = clang++
 ```
-to this
+with this
 ``` makefile
 CXX = g++
 ```
