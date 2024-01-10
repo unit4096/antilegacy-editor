@@ -109,7 +109,7 @@ struct UniformBufferObject {
     alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
-    alignas(4) glm::vec4 light = glm::vec4(30.0, 40.0, 100.0, 1.0);
+    alignas(4) glm::vec4 light;
 };
 
 
@@ -195,6 +195,8 @@ public:
                         swapChainExtent.width / (float) swapChainExtent.height,
                         data.nearPlane, data.farPlane);
         ubo.proj[1][1] *= -1;                
+
+        ubo.light = _lightPosition;
     }
 
     void drawFrame() {
@@ -348,12 +350,8 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger;
     VkSurfaceKHR surface;
 
-    // VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     vkb::PhysicalDevice vkb_physicalDevice;
     vkb::Device vkb_device;
-    // VkDevice device;
-    // vkb::Device vkb_device;
-
     
     VkQueue graphicsQueue;
     VkQueue presentQueue;
@@ -386,7 +384,7 @@ private:
     Mesh mesh;
     Image image;
 
-
+    glm::vec4 _lightPosition = glm::vec4(30.0, 40.0, 100.0, 1.0);
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -1660,6 +1658,17 @@ private:
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                                  1000.0f / _io.Framerate, _io.Framerate);
             ImGui::Text("FPS CAP ENABLED");
+            ImGui::End();
+
+            ImGui::Begin("Light Configs");
+            ImGui::Text("Light Position");
+
+            const float upLimit = 100.0f;
+            const float dnLimit = -100.0f;
+
+            ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
+            ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
+            ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
             ImGui::End();
         }
 
