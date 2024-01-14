@@ -37,7 +37,6 @@ namespace geo {
 struct Vertex;
 struct Edge;
 struct Loop;
-struct DiskLink;
 struct Face;
 
 // TODO: this is a boilerplate mesh class, it must be extended
@@ -65,8 +64,11 @@ struct Vertex {
 struct Edge {
     // Origin and destination vertices
     std::shared_ptr<Vertex> v1, v2;
-    std::shared_ptr<Loop> loop;
-    std::shared_ptr<DiskLink> v1_disk, v2_disk;
+    std::shared_ptr<Loop> loop; 
+    
+    // These four edges are links to vertex "disks". I deprecated DiskLink 
+    // structures as there is no visible need for them now
+    std::shared_ptr<Edge> v1_prev, v1_next, v2_prev, v2_next;
 
     /* 
         Compares edges. It is impossible for edges to share the same vertices, 
@@ -96,10 +98,6 @@ struct Loop {
     std::shared_ptr<Loop> prev, next;
 };
 
-// Node of a linked list that loops around edges
-struct DiskLink {
-    std::shared_ptr<Edge> prev, next;    
-};
 
 struct Face {    
     // A pointer to the first loop node

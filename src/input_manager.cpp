@@ -7,7 +7,7 @@ InputManager::~InputManager() {}
 
 // TODO: It is probably a good idea to move this to the constructor
 void InputManager::init(GLFWwindow* window) {
-    window_p = window;
+    _window_p = window;
     glfwSetWindowUserPointer(window, this);
     trc::log("Init input manager", trc::LogLevel::INFO);
 
@@ -65,7 +65,7 @@ bool InputManager::isActionActive(InputAction _action){
 // Should be called from the main loop/input thread
 bool InputManager::executeActiveKeyActions() {
     for (auto binding:_inputKeyBindings) {
-        if (_isKeyPressed(window_p, binding.first)) {
+        if (_isKeyPressed(_window_p, binding.first)) {
             if (_functionContBindings[binding.second]) {
                 _functionContBindings[binding.second]();
             } else {
@@ -88,14 +88,14 @@ v2d InputManager::getLastDeltaMouseOffset() {
 bool InputManager::executeActiveMouseAcitons() {
     double xpos, ypos;
     
-    int state = glfwGetMouseButton(window_p, GLFW_MOUSE_BUTTON_LEFT);
+    int state = glfwGetMouseButton(_window_p, GLFW_MOUSE_BUTTON_LEFT);
 
     _lastDeltaX = 0;
     _lastDeltaY = 0;
     
     // Calculates the delta offset for mouse movement
     if (state == GLFW_PRESS) {
-        glfwGetCursorPos(window_p, &xpos, &ypos);
+        glfwGetCursorPos(_window_p, &xpos, &ypos);
         if (_lastPosX != xpos || _lastPosY != ypos) {
             if (_isLastPressed){
                 _lastDeltaX = xpos - _lastPosX;
