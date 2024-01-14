@@ -52,7 +52,7 @@ private:
     bool _isLastPressed = false;
 
     // TODO: This is a raw pointer. Get rid of it later
-    GLFWwindow* window_p;
+    GLFWwindow* _window_p;
     
     void _bindKey(int key, InputAction action);
     static void _keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
