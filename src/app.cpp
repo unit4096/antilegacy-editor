@@ -6,6 +6,11 @@ App::App(AppConfigData config) {
 }
 
 
+/* 
+    Runs the editor. It connects every other class whether it is window creation
+    or input management. 
+    As of [14.01.2024] it is intentionally verboose for the ease of development
+*/
 int App::run() {
  
     try {
@@ -123,7 +128,9 @@ int App::run() {
         // Bind global camera to the inner camera object 
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
-        
+
+
+        // Main rendering loop. Queries the input and renders to a window
         while (!renderer.shouldClose()) {
             // Time point to the frame start
             auto thisFrame = std::chrono::steady_clock::now();
