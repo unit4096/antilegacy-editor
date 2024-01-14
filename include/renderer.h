@@ -27,8 +27,6 @@ initialization and switches to 1.3 structures whenever they are availible
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "../src/VkBootstrap.h"
-
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
@@ -48,6 +46,8 @@ initialization and switches to 1.3 structures whenever they are availible
 
 
 // int
+#include <vkbootstrap/VkBootstrap.h>
+
 #include <primitives.h>
 #include <camera.h>
 #include <tracer.h>
@@ -80,21 +80,6 @@ const bool renderer_enableValidationLayers = false;
 const bool renderer_enableValidationLayers = true;
 #endif
 
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
-    auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-    } else {
-        return VK_ERROR_EXTENSION_NOT_PRESENT;
-    }
-}
-
-void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
-    auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-    if (func != nullptr) {
-        func(instance, debugMessenger, pAllocator);
-    }
-}
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
@@ -414,6 +399,23 @@ private:
     uint32_t currentFrame = 0;
 
     bool framebufferResized = false;
+
+    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+        if (func != nullptr) {
+            return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+        } else {
+            return VK_ERROR_EXTENSION_NOT_PRESENT;
+        }
+    }
+
+    static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+        if (func != nullptr) {
+            func(instance, debugMessenger, pAllocator);
+        }
+    }
+
 
     static VkVertexInputBindingDescription getVertBindingDescription() {
         VkVertexInputBindingDescription bindingDescription{};
