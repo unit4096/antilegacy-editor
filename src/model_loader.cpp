@@ -300,12 +300,10 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
             uniqueEdges[*e.get()] = e;
         }
         
-        //  /// TODO: here should go the code to load face loops to a radial 
-        //  /// disk data structure (note that the order of loops matters)
-
+        /// TODO: here should go the code to load face loops to a radial 
+        /// disk data structure (note that the order of loops matters)
 
         // auto _l = e->loop;
-
         
         // while (_l != nullptr) {
         //     _l = _l->radial_next;
@@ -349,7 +347,7 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         std::shared_ptr l1 = std::make_shared<geo::Loop>();
 
         bindEdge(e1, v1, v2, l1);
-        bindLoop(l1, v1, e1);        
+        bindLoop(l1, v1, e1);
 
         // 2,3
         std::shared_ptr e2 = std::make_shared<geo::Edge>();
@@ -381,44 +379,6 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         l1->f = f;
         l2->f = f;
         l3->f = f;
-
-
-        /*
-            TODO: Add new edges to disk loops and radial edge loops as they 
-            appear. Implement checking for adjacent edges. Without this, 
-            adjacency relations would not be full
-            Clockwise order
-        */
-        
-        // Populate disks for each vertex
-        
-        // auto appendDisk = [](std::shared_ptr<geo::Edge> e1, 
-        //                      std::shared_ptr<geo::Edge> e2){
-        //     std::shared_ptr d = std::make_shared<geo::DiskLink>();
-        //     e1->v1_disk = d;
-        //     e2->v2_disk = d;
-        //     d->prev = e2;
-        //     d->next = e2;
-        // };
-
-        // // v1
-        // std::shared_ptr d1 = std::make_shared<geo::DiskLink>();
-
-        // d1->prev = e3;
-        // d1->next = e1;
-        // e1->v1_disk = d1;
-
-        // // v2
-        // std::shared_ptr d2 = std::make_shared<geo::DiskLink>();
-        // d2->prev = e3;
-        // d2->next = e1;
-        // e2->v1_disk = d2;
-
-        // // v3
-        // std::shared_ptr d3 = std::make_shared<geo::DiskLink>();
-        // d2->prev = e3;
-        // d2->next = e1;
-        // e3->v1_disk = d3;
 
         // FIXME: these vectors contain duplicates for obvious reasons. Implement
         // hash tables
