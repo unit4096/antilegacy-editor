@@ -71,8 +71,13 @@ struct Edge {
     std::shared_ptr<Edge> v1_prev, v1_next, v2_prev, v2_next;
 
     /* 
-        Compares edges. It is impossible for edges to share the same vertices, 
+        Compares edges. It is impossible for edges to share the same vertices,
         since edges have no winding by themseves.
+
+        FIXME: But what if we have two different pointers pointing to the same 
+        edge? Would it create false negatives then? I should eather use other
+        unique identifiers rather than data addressed (potentially slow) or use
+        some additional memory checks (potentially complex)
     */
     bool operator==(const Edge& other) const {
         return (
@@ -96,6 +101,22 @@ struct Loop {
     std::shared_ptr<Loop> radial_prev, radial_next;
     // Loops forming a face
     std::shared_ptr<Loop> prev, next;
+
+    bool operator==(const Loop& other) const {
+		Loop* p1 = prev == nullptr ? prev.get() : nullptr;
+		Loop* n1 = next == nullptr ? next.get() : nullptr;
+		Loop* p2 = other.prev == nullptr ? other.prev.get() : nullptr;
+		Loop* n2 = other.next ? other.next.get() : nullptr;
+
+		bool pair1 = !p1 && !p2;
+		bool pair2 = !n1 && !n2;
+
+		if (!pair1 && !pair2) {
+			return false;
+		}
+
+		return (p1 == p2) && (n1 == n2);
+    }
 };
 
 
@@ -104,12 +125,20 @@ struct Face {
     std::shared_ptr<Loop> loop;    
     glm::vec3 nor;
     unsigned int size;
+
+	bool operator==(const Face& other) const {
+        return (*loop->v.get() == *other.loop->v.get());
+    }
 };
 
 
 } // namespace geo
 } // namespace ale
 
+/* 
+	FIXME: Using pointers as hashes will cause collisions on memory reallocation.
+	Should investigate this as soon as possible.
+*/
 
 namespace std {
     // A hash function for a geometry vertex. So far only the geometry matters
@@ -120,19 +149,37 @@ namespace std {
     };
 }
 
-
 namespace std {
-    // A hash function for an edge. There are should not exist edges that share
+    // A hash function for an edge. There should not exist edges that share
     // the same vertices. Note that this DOES NOT check for null pointers
     template<> struct hash<ale::geo::Edge> {
         size_t operator()(ale::geo::Edge const& edge) const {
             // Quick and dirty way to hash two pointers. Should be stable enough
             // to work with 3D meshes and given that pointers are at least unique.
-            return  (size_t)edge.v1.get() + ((size_t)edge.v1.get() << 3);
+            return hash<ale::geo::Vertex>()(*edge.v1.get()) + 
+				  (hash<ale::geo::Vertex>()(*edge.v2.get()) << 3);
         }
     };
 }
 
+namespace std {
+    // A hash function for a loop. There should not exist loops that link 
+    // to the same loop nodes
+    template<> struct hash<ale::geo::Loop> {
+        size_t operator()(ale::geo::Loop const& loop) const {
+            return  (size_t)loop.prev.get() + ((size_t)loop.next.get() << 3);
+        }
+    };
+}
 
+namespace std {
+    // A hash function for a face. There should not exist faces with the same
+    // start loops
+    template<> struct hash<ale::geo::Face> {
+        size_t operator()(ale::geo::Face const& face) const {
+            return hash<size_t>()((size_t)face.loop.get());
+        }
+    };
+}
 
 #endif // ALE_REMESH
