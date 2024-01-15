@@ -271,45 +271,65 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
     trc::log("Not implemented!", trc::ERROR);
     return 1;
 
+	// Hash tables for the mesh. Needed for debug, will optimize later
     std::unordered_map<ale::geo::Vertex, std::shared_ptr<geo::Vertex>> uniqueVertices;
     std::unordered_map<geo::Edge, std::shared_ptr<geo::Edge>> uniqueEdges;
+	std::unordered_map<ale::geo::Loop, std::shared_ptr<geo::Loop>> uniqueLoops;
+    std::unordered_map<ale::geo::Face, std::shared_ptr<geo::Face>> uniqueFaces;
         
 
-    // Helper funcitons to make the code DRY
+    // Helper binding funcitons to make the code DRY
 
-    auto bindVert = [&](std::shared_ptr<geo::Vertex> v, unsigned int i){        
+    auto bindVert = [&](std::shared_ptr<geo::Vertex> v, unsigned int i){
+		// FIXME: remove duplcates
         Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
         v->pos = _v.pos;
         v->color = _v.color;
         v->texCoord = _v.texCoord;    
+
+		uniqueVertices[*v.get()] = v;
     };    
 
     auto bindEdge = [&](std::shared_ptr<geo::Edge> e, 
                         std::shared_ptr<geo::Vertex>& first, 
                         std::shared_ptr<geo::Vertex>& second,
                         std::shared_ptr<geo::Loop>& l ){
-
         e->v1 = first;
         e->v2 = second;
 
-        // Checks if there is an edge with this data in the hash table
+        // A variable to check whether the edge already is in the structure
+		bool isNew = true;
+
+		// Checks if there is an edge with this data in the hash table
         // Either hashes the new edge it or assigns an existing pointer
         if (uniqueEdges.count(*e.get()) != 0) {    
+			isNew = false;
             e = uniqueEdges[*e.get()];
         } else {
             uniqueEdges[*e.get()] = e;
         }
-        
-        /// TODO: here should go the code to load face loops to a radial 
-        /// disk data structure (note that the order of loops matters)
+            
+	
+		auto _l = e->loop;
 
-        // auto _l = e->loop;
-        
-        // while (_l != nullptr) {
-        //     _l = _l->radial_next;
-        // }
+        if (_l != nullptr) {
+            // Appends the loop to the end of the radial edge list
 
-        // _l->radial_next = l;
+            // Add l as the end of the loop
+            _l->radial_prev = l;
+            
+            // Iterate over the loop until it hits the beginning
+            while (_l->radial_next != nullptr) {
+                _l = _l->radial_next;
+            }
+
+            // Closes the loop
+            _l->radial_next = l;
+        } else {
+            e->loop = l;
+        }
+        
+		return isNew;
     };
 
     auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
@@ -319,15 +339,25 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         l->e = e; 
         l->radial_next = l;
         l->radial_prev = l;
-        
+
+		uniqueLoops[*l.get()] = l;
     };
+
+	auto bindFace = [&](std::shared_ptr<geo::Face>& f,
+						std::shared_ptr<geo::Loop>& l1,
+						std::shared_ptr<geo::Loop>& l2,
+						std::shared_ptr<geo::Loop>& l3) {
+		f->loop = l1;
+
+        l1->f = f;
+        l2->f = f;
+        l3->f = f;
+
+		uniqueFaces[*f.get()] = f;
+	};
 
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
-
-        int i1 = i + 0;
-        int i2 = i + 1;
-        int i3 = i + 2;
 
         // FIXME: Compare vertices only by their position
 
@@ -335,10 +365,8 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         std::shared_ptr v1 = std::make_shared<geo::Vertex>();
         std::shared_ptr v2 = std::make_shared<geo::Vertex>();
         std::shared_ptr v3 = std::make_shared<geo::Vertex>();
-        bindVert(v1, i1);
-        bindVert(v2, i2);
-        bindVert(v3, i3);
 
+		
         // Create edges and loops for each pair of vertices
         // order: 1,2 2,3 3,1
 
@@ -346,56 +374,50 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         std::shared_ptr e1 = std::make_shared<geo::Edge>();
         std::shared_ptr l1 = std::make_shared<geo::Loop>();
 
-        bindEdge(e1, v1, v2, l1);
-        bindLoop(l1, v1, e1);
-
         // 2,3
         std::shared_ptr e2 = std::make_shared<geo::Edge>();
         std::shared_ptr l2 = std::make_shared<geo::Loop>();
-        
-        bindEdge(e2, v2,v3,l2);
-        bindLoop(l2, v2, e2);
 
         // 3,1
         std::shared_ptr e3 = std::make_shared<geo::Edge>();
         std::shared_ptr l3 = std::make_shared<geo::Loop>();
-        
-        bindEdge(e3, v3,v1,l3);
-        bindLoop(l3, v3, e3);
 
-        // Create face
+		// Create face 
         std::shared_ptr f = std::make_shared<geo::Face>();
-        f->loop = l1;
-
-        l1->prev = l3;
-        l2->prev = l1;
-        l3->prev = l2;
-
-        l1->next = l2;
-        l2->next = l3;
-        l3->next = l1;
 
 
-        l1->f = f;
-        l2->f = f;
-        l3->f = f;
+		// Create vectors for the binding loop
+		std::vector<std::shared_ptr<geo::Vertex>> verts = {v1,v2,v3};
+		std::vector<std::shared_ptr<geo::Edge>> edges = {e1,e2,e3};
+		std::vector<std::shared_ptr<geo::Loop>> loops = {l1,l2,l3};		
+		std::vector<bool> isNewArr = {true,true,true};
 
-        // FIXME: these vectors contain duplicates for obvious reasons. Implement
-        // hash tables
+		for (size_t j = 0; j < 3; j++) {	
+			bindVert(verts[j], i + j);
 
-        _outMesh.edges.push_back(e1);
-        _outMesh.edges.push_back(e2);
-        _outMesh.edges.push_back(e3);
+			// Previous and next indices for each j. Note that 2 loops to 0
+			int prev = (3 + (j - 1)) % 3;
+			int next = (j + 1) % 3;
 
-        _outMesh.loops.push_back(l1);
-        _outMesh.loops.push_back(l2);
-        _outMesh.loops.push_back(l3);
+			isNewArr[j] = bindEdge(edges[j], verts[j], verts[next], loops[j]);
+        	bindLoop(loops[j], verts[j], edges[j]);
+			
+			// If this edge is new, add adjacent edges to it. If not, add new edges
+			if (isNewArr[j]) {
+				edges[j]->v1_prev = edges[prev];
+				edges[j]->v2_next = edges[next];
+			} else {
+				edges[j]->v1_next = edges[prev];
+				edges[j]->v2_prev = edges[next];
+			}	
+			
+			// Bind loops to each other to form a face
+			loops[j]->next = loops[next];
+			loops[j]->prev = loops[prev];
+		}
 
-        _outMesh.vertices.push_back(v1);
-        _outMesh.vertices.push_back(v2);
-        _outMesh.vertices.push_back(v3);
-
-        _outMesh.faces.push_back(f);
+        // Bind the face afterwards
+		bindFace(f, l1, l2, l3);
     }
 
     return 0;    
