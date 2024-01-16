@@ -276,7 +276,6 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
     std::unordered_map<geo::Edge, std::shared_ptr<geo::Edge>> uniqueEdges;
 	std::unordered_map<ale::geo::Loop, std::shared_ptr<geo::Loop>> uniqueLoops;
     std::unordered_map<ale::geo::Face, std::shared_ptr<geo::Face>> uniqueFaces;
-        
 
     // Helper binding funcitons to make the code DRY
 
@@ -305,8 +304,6 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         if (uniqueEdges.count(*e.get()) != 0) {    
 			isNew = false;
             e = uniqueEdges[*e.get()];
-        } else {
-            uniqueEdges[*e.get()] = e;
         }
             
 	
@@ -339,8 +336,6 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         l->e = e; 
         l->radial_next = l;
         l->radial_prev = l;
-
-		uniqueLoops[*l.get()] = l;
     };
 
 	auto bindFace = [&](std::shared_ptr<geo::Face>& f,
@@ -352,8 +347,6 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
         l1->f = f;
         l2->f = f;
         l3->f = f;
-
-		uniqueFaces[*f.get()] = f;
 	};
 
     // Iterate over each face
@@ -414,12 +407,22 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
 			// Bind loops to each other to form a face
 			loops[j]->next = loops[next];
 			loops[j]->prev = loops[prev];
-		}
 
+            
+		}
+                
         // Bind the face afterwards
 		bindFace(f, l1, l2, l3);
-    }
 
+        uniqueFaces[*f.get()] = f;
+
+        for (size_t j = 0; j < 3; j++) {
+            uniqueLoops[*loops[j].get()] = loops[j];
+            uniqueEdges[*edges[j].get()] = edges[j];
+            uniqueVertices[*verts[j].get()] = verts[j];
+            uniqueEdges[*edges[j].get()] = edges[j];
+        }     
+    }
     return 0;    
 }
 
