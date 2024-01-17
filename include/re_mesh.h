@@ -70,15 +70,6 @@ struct Edge {
     // structures as there is no visible need for them now
     std::shared_ptr<Edge> v1_prev, v1_next, v2_prev, v2_next;
 
-    /* 
-        Compares edges. It is impossible for edges to share the same vertices,
-        since edges have no winding by themseves.
-
-        FIXME: But what if we have two different pointers pointing to the same 
-        edge? Would it create false negatives then? I should eather use other
-        unique identifiers rather than data addressed (potentially slow) or use
-        some additional memory checks (potentially complex)
-    */
     bool operator==(const Edge& other) const {
         return (
                    (*v1.get() == *other.v1.get()  &&
@@ -135,10 +126,6 @@ struct Face {
 } // namespace geo
 } // namespace ale
 
-/* 
-	FIXME: Using pointers as hashes will cause collisions on memory reallocation.
-	Should investigate this as soon as possible.
-*/
 
 namespace std {
     // A hash function for a geometry vertex. So far only the geometry matters
@@ -150,14 +137,16 @@ namespace std {
 }
 
 namespace std {
-    // A hash function for an edge. There should not exist edges that share
-    // the same vertices. Note that this DOES NOT check for null pointers
+    /* 
+    A hash function for an edge. There should not exist edges that share
+    the same vertices. Note that this DOES NOT check for null pointers.
+    This hash function is *order independent*.
+    */
     template<> struct hash<ale::geo::Edge> {
         size_t operator()(ale::geo::Edge const& edge) const {
-            // Quick and dirty way to hash two pointers. Should be stable enough
-            // to work with 3D meshes and given that pointers are at least unique.
-            return hash<ale::geo::Vertex>()(*edge.v1.get()) + 
-				  (hash<ale::geo::Vertex>()(*edge.v2.get()) << 3);
+            // Hashes positions of two edges
+            return hash<ale::geo::Vertex>()(*edge.v1.get()) ^
+				   hash<ale::geo::Vertex>()(*edge.v2.get());
         }
     };
 }
