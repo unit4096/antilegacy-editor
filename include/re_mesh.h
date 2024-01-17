@@ -81,10 +81,10 @@ struct Edge {
     */
     bool operator==(const Edge& other) const {
         return (
-                   (v1.get() == other.v1.get()  &&
-                    v2.get() == other.v2.get()) || 
-                   (v1.get() == other.v2.get()  &&
-                    v2.get() == other.v1.get())
+                   (*v1.get() == *other.v1.get()  &&
+                    *v2.get() == *other.v2.get()) || 
+                   (*v1.get() == *other.v2.get()  &&
+                    *v2.get() == *other.v1.get())
                 );
     }
 
