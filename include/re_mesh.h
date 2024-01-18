@@ -34,7 +34,7 @@ namespace geo {
 
 
 
-struct Vertex;
+struct Vert;
 struct Edge;
 struct Loop;
 struct Face;
@@ -45,10 +45,10 @@ public:
     std::vector<std::shared_ptr<Face>> faces;
     std::vector<std::shared_ptr<Edge>> edges;
     std::vector<std::shared_ptr<Loop>> loops;
-    std::vector<std::shared_ptr<Vertex>> vertices;
+    std::vector<std::shared_ptr<Vert>> vertices;
 };
 
-struct Vertex {
+struct Vert {
     glm::vec3 pos;
     glm::vec3 color;
     glm::vec2 texCoord;
@@ -56,14 +56,14 @@ struct Vertex {
     std::shared_ptr<Edge> edge;
     
     // Compares vertices. Only position is important for RE Vertices
-    bool operator==(const Vertex& other) const {
+    bool operator==(const Vert& other) const {
         return pos == other.pos;
     }
 };
 
 struct Edge {
     // Origin and destination vertices
-    std::shared_ptr<Vertex> v1, v2;
+    std::shared_ptr<Vert> v1, v2;
     std::shared_ptr<Loop> loop; 
     
     // These four edges are links to vertex "disks". I deprecated DiskLink 
@@ -71,6 +71,11 @@ struct Edge {
     std::shared_ptr<Edge> v1_prev, v1_next, v2_prev, v2_next;
 
     bool operator==(const Edge& other) const {
+
+        if (!v1 && !v2 && !other.v1 && !other.v2) {
+            return false;
+        }
+
         return (
                    (*v1.get() == *other.v1.get()  &&
                     *v2.get() == *other.v2.get()) || 
@@ -84,7 +89,7 @@ struct Edge {
 
 // Loop node around the face
 struct Loop {
-    std::shared_ptr<Vertex> v;
+    std::shared_ptr<Vert> v;
     std::shared_ptr<Edge> e;
     // The face the loop belongs to
     std::shared_ptr<Face> f;
@@ -129,8 +134,8 @@ struct Face {
 
 namespace std {
     // A hash function for a geometry vertex. So far only the geometry matters
-    template<> struct hash<ale::geo::Vertex> {
-        size_t operator()(ale::geo::Vertex const& vertex) const {            
+    template<> struct hash<ale::geo::Vert> {
+        size_t operator()(ale::geo::Vert const& vertex) const {            
             return hash<glm::vec3>()(vertex.pos);
         }
     };
@@ -145,8 +150,8 @@ namespace std {
     template<> struct hash<ale::geo::Edge> {
         size_t operator()(ale::geo::Edge const& edge) const {
             // Hashes positions of two edges
-            return hash<ale::geo::Vertex>()(*edge.v1.get()) ^
-				   hash<ale::geo::Vertex>()(*edge.v2.get());
+            return hash<ale::geo::Vert>()(*edge.v1.get()) ^
+				   hash<ale::geo::Vert>()(*edge.v2.get());
         }
     };
 }
