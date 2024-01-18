@@ -44,6 +44,8 @@ int App::run() {
             } else {
                 trc::log("File path is not valid, falling back to defaults!", trc::WARNING);
             }
+        } else {
+            trc::log("No files specified, attempting to load the default file", trc::DEBUG);
         }
 
         
