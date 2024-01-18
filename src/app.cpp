@@ -34,53 +34,23 @@ int App::run() {
         ale::Loader loader;
         
         loader.recordCommandLineArguments(_config.argc, _config.argv);
-        
-        if (loader.cmdOptionExists("-f")) {
-            std::string file = loader.getCmdOption("-f");   
-            trc::log("Loaded argument: " + file);         
-            if (loader.isFileValid(file)) {
-                model_path = file;
-                trc::log("File can be loaded: " + file);
-            } else {
-                trc::log("File path is not valid, falling back to defaults!", trc::WARNING);
-            }
-        } else {
-            trc::log("No files specified, attempting to load the default file", trc::DEBUG);
-        }
-
-        
-        
+        loader.getFlaggedArgument("-f", model_path);
 
         // Main mesh object
         ale::Mesh mesh;
         // Main texture object
         ale::Image image;
 
-        // Model paths
-        // std::string model_cube_path = "./models/cube/Cube.gltf";
-        // std::string model_fox_path = "./models/fox/Fox.gltf";
-
-        // This .obj model should always load
-        // std::string dummy_model_path = "models/viking_room.obj";
-        // std::string dummy_texture_path = "textures/viking_room.png";
-        // UV checker texture
-        // const std::string uv_checker_path = "textures/tex_uv_checker.png";
-        
+        // // You can use this to load a custom texture
+        // std::string tex_path = "";
+        // loader.getFlaggedArgument("-t", tex_path);
+        // loader.loadTexture(tex_path.data(), image);
         
         // Load GLTF models
         if (loader.loadModelGLTF(model_path, mesh, image)) {
             trc::log("Cannot load model by path: " + model_path, trc::ERROR);
             return 1;
         }
-
-        // // Load default .obj model (should always work)
-        // loader.loadModelOBJ(dummy_model_path.data(), mesh);
-        // // Load default texture (should always work)
-        // loader.loadTexture(dummy_texture_path.data(), image);
-        
-        // Load this texture to check UV layout        
-        // loader.loadTexture(uv_checker_path.data(), image);
-
 
         // Create Vulkan renderer object
         ale::Renderer renderer(mesh,image);
