@@ -239,15 +239,15 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
         
     }
     
-    // int edgesCount = _getNumEdgesInMesh(_mesh);
-    // trc::raw << "edges: " << edgesCount << "\n"
-    //          << "idx: " << _mesh.indices.size() << "\n"
-    //          << "vertices: " << _mesh.vertices.size() << "\n"
-    //          << "faces: " << _mesh.indices.size() / 3 << "\n\n";
+    int edgesCount = _getNumEdgesInMesh(_mesh);
+    trc::raw << "edges: " << edgesCount << "\n"
+             << "idx: " << _mesh.indices.size() << "\n"
+             << "vertices: " << _mesh.vertices.size() << "\n"
+             << "faces: " << _mesh.indices.size() / 3 << "\n\n";
 
-    // trc::raw << "Euler-poincare characteristic: " 
-    //          <<  _mesh.indices.size()  + (_mesh.indices.size() / 3) - 
-    //              edgesCount  << "\n";
+    trc::raw << "Euler-poincare characteristic: " 
+             <<  _mesh.indices.size()  + (_mesh.indices.size() / 3) - 
+                 edgesCount  << "\n";
     
     ale::Model newModel;
     newModel.meshes.push_back(_mesh);
@@ -272,56 +272,59 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
     return 1;
 
 	// Hash tables for the mesh. Needed for debug, will optimize later
-    std::unordered_map<ale::geo::Vertex, std::shared_ptr<geo::Vertex>> uniqueVertices;
+    std::unordered_map<geo::Vert, std::shared_ptr<geo::Vert>> uniqueVerts;
     std::unordered_map<geo::Edge, std::shared_ptr<geo::Edge>> uniqueEdges;
-	std::unordered_map<ale::geo::Loop, std::shared_ptr<geo::Loop>> uniqueLoops;
-    std::unordered_map<ale::geo::Face, std::shared_ptr<geo::Face>> uniqueFaces;
+	std::unordered_map<geo::Loop, std::shared_ptr<geo::Loop>> uniqueLoops;
+    std::unordered_map<geo::Face, std::shared_ptr<geo::Face>> uniqueFaces;
 
     // Helper binding funcitons to make the code DRY
 
-    auto bindVert = [&](std::shared_ptr<geo::Vertex> v, unsigned int i){
-		// FIXME: remove duplcates
+    auto bindVert = [&](std::shared_ptr<geo::Vert> v, unsigned int i){
         Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
         v->pos = _v.pos;
         v->color = _v.color;
-        v->texCoord = _v.texCoord;    
-
-		uniqueVertices[*v.get()] = v;
+        v->texCoord = _v.texCoord;   
     };    
 
     auto bindEdge = [&](std::shared_ptr<geo::Edge> e, 
-                        std::shared_ptr<geo::Vertex>& first, 
-                        std::shared_ptr<geo::Vertex>& second,
-                        std::shared_ptr<geo::Loop>& l ){
+                        std::shared_ptr<geo::Vert>& first, 
+                        std::shared_ptr<geo::Vert>& second,
+                        std::shared_ptr<geo::Loop>& l
+                        ){
         e->v1 = first;
         e->v2 = second;
 
-        // A variable to check whether the edge already is in the structure
-		bool isNew = true;
+        first->edge = e;		
+        bool isNew = true;
 
 		// Checks if there is an edge with this data in the hash table
         // Either hashes the new edge it or assigns an existing pointer
-        if (uniqueEdges.count(*e.get()) != 0) {    
+        if (uniqueEdges.contains(*e.get())) {    
 			isNew = false;
             e = uniqueEdges[*e.get()];
-        }
+        } else {
             
+        }
 	
 		auto _l = e->loop;
 
         if (_l != nullptr) {
-            // Appends the loop to the end of the radial edge list
 
-            // Add l as the end of the loop
-            _l->radial_prev = l;
-            
             // Iterate over the loop until it hits the beginning
-            while (_l->radial_next != nullptr) {
-                _l = _l->radial_next;
-            }
+            while (_l->radial_next != e->loop) {
+                // Close the loop if it isn't already
+                if (_l->radial_next == nullptr ) {
+                    // Add l as the end of the loop
+                    /* trc::raw
+                    << "new radial loop created for edge"  << e.get()
+                    << "\n"; */
+                    _l = _l->radial_next;
+                    _l->radial_prev = l;
+                    _l->radial_next = l;
+                    break;
+                }
+            }    
 
-            // Closes the loop
-            _l->radial_next = l;
         } else {
             e->loop = l;
         }
@@ -330,7 +333,7 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
     };
 
     auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
-                        std::shared_ptr<geo::Vertex>& v,                
+                        std::shared_ptr<geo::Vert>& v,                
                         std::shared_ptr<geo::Edge>& e ){
         l->v = v;
         l->e = e; 
@@ -351,14 +354,10 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
-
-        // FIXME: Compare vertices only by their position
-
         // Create vertices
-        std::shared_ptr v1 = std::make_shared<geo::Vertex>();
-        std::shared_ptr v2 = std::make_shared<geo::Vertex>();
-        std::shared_ptr v3 = std::make_shared<geo::Vertex>();
-
+        std::shared_ptr v1 = std::make_shared<geo::Vert>();
+        std::shared_ptr v2 = std::make_shared<geo::Vert>();
+        std::shared_ptr v3 = std::make_shared<geo::Vert>();
 		
         // Create edges and loops for each pair of vertices
         // order: 1,2 2,3 3,1
@@ -378,12 +377,11 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
 		// Create face 
         std::shared_ptr f = std::make_shared<geo::Face>();
 
-
 		// Create vectors for the binding loop
-		std::vector<std::shared_ptr<geo::Vertex>> verts = {v1,v2,v3};
+		std::vector<std::shared_ptr<geo::Vert>> verts = {v1,v2,v3};
 		std::vector<std::shared_ptr<geo::Edge>> edges = {e1,e2,e3};
 		std::vector<std::shared_ptr<geo::Loop>> loops = {l1,l2,l3};		
-		std::vector<bool> isNewArr = {true,true,true};
+		std::vector<bool> isNewArr = {false,false,false};
 
 		for (size_t j = 0; j < 3; j++) {	
 			bindVert(verts[j], i + j);
@@ -391,38 +389,53 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
 			// Previous and next indices for each j. Note that 2 loops to 0
 			int prev = (3 + (j - 1)) % 3;
 			int next = (j + 1) % 3;
-
+            
 			isNewArr[j] = bindEdge(edges[j], verts[j], verts[next], loops[j]);
         	bindLoop(loops[j], verts[j], edges[j]);
 			
-			// If this edge is new, add adjacent edges to it. If not, add new edges
-			if (isNewArr[j]) {
+			// If this edge is new, add adjacent edges to it. 
+            // If not, add new edges
+			if (isNewArr[j]) {            
 				edges[j]->v1_prev = edges[prev];
 				edges[j]->v2_next = edges[next];
 			} else {
-				edges[j]->v1_next = edges[prev];
-				edges[j]->v2_prev = edges[next];
-			}	
+                std::shared_ptr<geo::Edge> tmpEdge = 
+                                                uniqueEdges[*edges[j].get()];
+                
+                tmpEdge->v1_next = edges[prev];
+                tmpEdge->v2_prev = edges[next];
+                edges[j] = tmpEdge;
+			}
 			
 			// Bind loops to each other to form a face
 			loops[j]->next = loops[next];
 			loops[j]->prev = loops[prev];
-
-            
 		}
                 
         // Bind the face afterwards
 		bindFace(f, l1, l2, l3);
 
+        f->size = 3;
         uniqueFaces[*f.get()] = f;
+
 
         for (size_t j = 0; j < 3; j++) {
             uniqueLoops[*loops[j].get()] = loops[j];
+            uniqueVerts[*verts[j].get()] = verts[j];
             uniqueEdges[*edges[j].get()] = edges[j];
-            uniqueVertices[*verts[j].get()] = verts[j];
-            uniqueEdges[*edges[j].get()] = edges[j];
-        }     
+        }
     }
+
+    trc::raw << "\n\n\n" 
+        << uniqueVerts.size() <<  " vertices" << "\n"
+        << uniqueEdges.size() <<  " edges" << "\n"
+        << uniqueLoops.size() <<  " loops" << "\n"
+        << uniqueFaces.size() <<  " faces" << "\n"        
+        << "REMesh E P characteristic: " 
+        << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size() 
+        << "\n"
+        << "\n";
+    
     return 0;    
 }
 
