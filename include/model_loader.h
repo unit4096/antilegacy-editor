@@ -29,6 +29,7 @@ namespace ale {
         int loadModelGLTF(const std::string filename, Mesh &_model, Image &_image);
         bool loadTexture(const char* path, Image& img);
         void recordCommandLineArguments(int & argc, char ** argv);
+        int getFlaggedArgument(const std::string flag, std::string &result);
         const std::string &getCmdOption(const std::string &option) const;
         bool cmdOptionExists(const std::string &option) const;
         bool isFileValid(std::string file_path);

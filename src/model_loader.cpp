@@ -239,15 +239,15 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
         
     }
     
-    int edgesCount = _getNumEdgesInMesh(_mesh);
-    trc::raw << "edges: " << edgesCount << "\n"
-             << "idx: " << _mesh.indices.size() << "\n"
-             << "vertices: " << _mesh.vertices.size() << "\n"
-             << "faces: " << _mesh.indices.size() / 3 << "\n\n";
+    // int edgesCount = _getNumEdgesInMesh(_mesh);
+    // trc::raw << "edges: " << edgesCount << "\n"
+    //          << "idx: " << _mesh.indices.size() << "\n"
+    //          << "vertices: " << _mesh.vertices.size() << "\n"
+    //          << "faces: " << _mesh.indices.size() / 3 << "\n\n";
 
-    trc::raw << "Euler-poincare characteristic: " 
-             <<  _mesh.indices.size()  + (_mesh.indices.size() / 3) - 
-                 edgesCount  << "\n";
+    // trc::raw << "Euler-poincare characteristic: " 
+    //          <<  _mesh.indices.size()  + (_mesh.indices.size() / 3) - 
+    //              edgesCount  << "\n";
     
     ale::Model newModel;
     newModel.meshes.push_back(_mesh);
@@ -503,6 +503,33 @@ void Loader::recordCommandLineArguments(int &argc, char **argv) {
     for (int i=1; i < argc; ++i) {
         this->commandLineTokens.push_back(std::string(argv[i]));
     }
+}
+
+int Loader::getFlaggedArgument(const std::string flag, std::string& result) {
+
+    if (this->commandLineTokens.size() < 1) {
+        trc::log("No tokens loaded!", trc::LogLevel::WARNING);
+        return -1;
+    }
+
+    if (cmdOptionExists("-f")) {
+        std::string file = getCmdOption("-f");
+        trc::log("Loaded argument: " + file);         
+        if (isFileValid(file)) {
+            trc::log("File can be loaded: " + file);
+            result = file;
+            return 0;
+        } else {
+            trc::log("File path is not valid, falling back to defaults!", trc::WARNING);
+            return -1;
+        }
+    } else {
+        trc::log("No files specified, attempting to load the default file", trc::DEBUG);
+        return -1;
+    }
+    
+
+    return 0;
 }
 
 // I borrowed this code from here: 
