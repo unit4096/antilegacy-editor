@@ -17,7 +17,7 @@
 // int
 
 namespace ale {
-
+    
 namespace Tracer {
 
 
@@ -89,7 +89,7 @@ Raw& operator<< (Raw &s, const T &x) {
 }
 
 // Set bool value for a log level (enabled when `true`)
-static void SetLogLevel(LogLevel lvl, bool isEnabled) {
+[[maybe_unused]] static void SetLogLevel(LogLevel lvl, bool isEnabled) {
 
     if (lvl == LogLevel::LogLevel_MAX) {
         log("LogLevel_MAX is not a log level!", LogLevel::WARNING);
@@ -102,7 +102,7 @@ static void SetLogLevel(LogLevel lvl, bool isEnabled) {
 
 
 // Print a 4x4 matrix
-static void printMat4(float* mat, std::string msg) {
+[[maybe_unused]] static void printMat4(float* mat, std::string msg) {
     if (mat == nullptr) {
         log("Incorrect matrix input! Aborting logging", LogLevel::ERROR);
         return;
@@ -122,7 +122,7 @@ static void printMat4(float* mat, std::string msg) {
 // Print a 4x4 matrix
 // TODO: find a way to input glm matrices as templates for handling matrices of 
 // arbitrary sizes
-static void printMat4(const glm::mat4& mat, std::string msg) {
+[[maybe_unused]] static void printMat4(const glm::mat4& mat, std::string msg) {
     raw << msg << "\n";
         for (size_t i = 0; i < 4; i++) {
             for (size_t j = 0; j < 4; j++)
@@ -135,7 +135,7 @@ static void printMat4(const glm::mat4& mat, std::string msg) {
 }
 
 // Sets a list of used LogLevel's 
-static void SetLogLevels(std::vector<LogLevel> lvls) {
+[[maybe_unused]] static void SetLogLevels(std::vector<LogLevel> lvls) {
     globalLogLevels.resize(LogLevel::LogLevel_MAX);
     for (auto lvl: globalLogLevels) {
         lvl = false;
