@@ -94,7 +94,6 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 
 
 // Now loads one mesh and one texture from the .gltf file
-// FIXME: better use bool as status and give std errors if something goes wrong
 // TODO: Add loading full GLTF scenes
 int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::Image& _image) { 
 
