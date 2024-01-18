@@ -43,13 +43,12 @@ Loader::Loader() { }
 Loader::~Loader() { }
 
 // Load an .obj model using a path relative to the project root
-// FIXME: this function does not return any status
-void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
+int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     std::string _path = model_path;
 
     if (!isFileValid(_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
-        return;
+        return -1;
     }
 
     tinyobj::attrib_t attrib;
@@ -58,7 +57,8 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     std::string warn, err;
 
     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, model_path)) {
-        throw std::runtime_error(warn + err);
+        trc::log("Could not load OBJ file!", trc::LogLevel::ERROR);
+        return -1;
     }
 
     std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
@@ -88,6 +88,7 @@ void Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
             _mesh.indices.push_back(uniqueVertices[vertex]);
         }
     }
+    return 0;
 }
 
 
@@ -264,7 +265,7 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
 /* 
     WORK IN PROGRESS
     Populates a geo::Mesh object using default view mesh. Assumes that the mesh 
-    is triangular and that each 3 indices form a face
+    is triangular and that each 3 indices form a face 
 */
 bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
 
