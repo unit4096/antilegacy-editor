@@ -45,7 +45,7 @@ public:
     std::vector<std::shared_ptr<Face>> faces;
     std::vector<std::shared_ptr<Edge>> edges;
     std::vector<std::shared_ptr<Loop>> loops;
-    std::vector<std::shared_ptr<Vert>> vertices;
+    std::vector<std::shared_ptr<Vert>> verts;
 };
 
 struct Vert {
