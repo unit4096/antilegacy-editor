@@ -30,6 +30,7 @@ struct CameraData {
     float fov;
     float yaw, pitch;
     float nearPlane, farPlane;
+    float speed, sensitivity;
 };
 
 
@@ -50,6 +51,10 @@ public:
     v2f getYawPitch();
     void setYawPitch(float yaw, float pitch);
     void setData(CameraData data);
+    float getSpeed();
+    void setSpeed(float speed);
+    float getSensitivity();
+    void setSensitivity(float sensitivity);
     glm::vec3 getForwardOrientation();
     void setForwardOrientation(float yaw, float pitch);
     void setForwardOrientation(glm::vec3 front);

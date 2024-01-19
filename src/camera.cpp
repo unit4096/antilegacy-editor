@@ -44,6 +44,22 @@ void Camera::setData(CameraData data) {
     this->_data = data;
 }
 
+float Camera::getSpeed() {
+    return this->_data.speed;
+}
+
+void Camera::setSpeed(float speed) {
+    this->_data.speed = speed;
+}
+
+float Camera::getSensitivity() {
+    return this->_data.sensitivity;
+}
+
+void Camera::setSensitivity(float sensitivity) {
+    this->_data.sensitivity = sensitivity;
+}
+
 // Get yaw and pitch in degrees. X for yaw, Y for pitch
 v2f Camera::getYawPitch() {
     return v2f(this->_data.yaw,this->_data.pitch);
