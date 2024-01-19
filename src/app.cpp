@@ -68,26 +68,33 @@ int App::run() {
         // Make the default mode to be FREE
         mainCam->toggleMode();
         // Set initial camera position
+        // TODO: Calculate camera position by the model's bounding box
         mainCam->setPosition(glm::vec3(0, 50, 150));
+        mainCam->setSpeed(1.0f);
 
         // Further code tests camera movement
         // TODO: move this code from the main file, provide better handling for bindings
-        float cameraSpeed = 0.1f;
+
+
+        std::chrono::duration<double> deltaTime;
+        
+        float cameraSpeedAdjusted = 1.0f;
+
         float mouseSensitivity = 0.06f;
 
 		// Movement along global XYZ aixs
         // auto moveX  = [&]() {mainCam->movePosGlobal( glm::vec3(0,0,1), cameraSpeed);};
         // auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), cameraSpeed);};
-        auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0), cameraSpeed);};
-        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeed);};
+        auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0), cameraSpeedAdjusted);};
+        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeedAdjusted);};
         // auto moveZ  = [&]() {mainCam->movePosGlobal( glm::vec3(1,0,0), cameraSpeed);};
         // auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), cameraSpeed);};
 
 		// WASD free camera movement
-        auto moveF = [&]() { mainCam->moveForwardLocal(cameraSpeed);};
-        auto moveB = [&]() {mainCam->moveBackwardLocal(cameraSpeed);};
-        auto moveL = [&]() {    mainCam->moveLeftLocal(cameraSpeed);};
-        auto moveR = [&]() {   mainCam->moveRightLocal(cameraSpeed);};
+        auto moveF = [&]() { mainCam->moveForwardLocal(cameraSpeedAdjusted);};
+        auto moveB = [&]() {mainCam->moveBackwardLocal(cameraSpeedAdjusted);};
+        auto moveL = [&]() {    mainCam->moveLeftLocal(cameraSpeedAdjusted);};
+        auto moveR = [&]() {   mainCam->moveRightLocal(cameraSpeedAdjusted);};
 
         // Bind lambda functions to keyboard actions
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F, moveF, true);
@@ -107,8 +114,10 @@ int App::run() {
             // Time point to the frame start
             auto thisFrame = std::chrono::steady_clock::now();
             // Delta time for editor calculations
-            auto deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
+            deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
+
+            cameraSpeedAdjusted = mainCam->getSpeed() * deltaTime.count() * 100 / 8;
 
             // polling events, callbacks fired
             glfwPollEvents();
