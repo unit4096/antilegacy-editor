@@ -93,9 +93,18 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 }
 
 
+
 int Loader::_loadMesh(const tinygltf::Model& in_model,
                       const tinygltf::Mesh& in_mesh, 
                       ale::Mesh& out_mesh) {
+
+    auto loadMeshAttribute = [&](tinygltf::Primitive& prim,
+                             std::string attrName){
+        int idx = prim.attributes[attrName];
+        const auto& accessor = in_model.accessors[idx];
+        return reinterpret_cast<const float*>(
+                    _getDataByAccessor(accessor, in_model));
+    };
 
     for (auto primitive : in_mesh.primitives) {    
 
@@ -106,26 +115,27 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
         
         std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
-        int posAttributeIdx = primitive.attributes["POSITION"];
-        int uvAttributeIdx = primitive.attributes["TEXCOORD_0"];
+        if (!primitive.attributes.contains("POSITION") || 
+            !primitive.attributes.contains("TEXCOORD_0")) {
+            trc::log("Mesh loader currently requres both positions and UV textures", trc::LogLevel::ERROR);
+            return -1;
+        }
         
-        const auto& posAccessor = in_model.accessors[posAttributeIdx];
-        const auto& UVAccessor = in_model.accessors[uvAttributeIdx];
 
-        const float* positions = reinterpret_cast<const float*>(
-                                    _getDataByAccessor(posAccessor, in_model));
-        const float* uvPositions = reinterpret_cast<const float*>(
-                                    _getDataByAccessor(UVAccessor, in_model));
-        
+        const float* positions = nullptr;
+        const float* uvPositions = nullptr;
         const float* normals = nullptr;
+
+        positions = loadMeshAttribute(primitive, "POSITION");
+        auto posAccessor = in_model.accessors[primitive.attributes["POSITION"]];
+
+        uvPositions = loadMeshAttribute(primitive, "TEXCOORD_0");
+        auto UVAccessor = in_model.accessors[primitive.attributes["TEXCOORD_0"]];
+
         if (primitive.attributes.contains("NORMAL")) {
-            int normIdx = primitive.attributes["NORMAL"];
-            const auto& normAccessor = in_model.accessors[normIdx];
-            normals = reinterpret_cast<const float*>(
-                            _getDataByAccessor(normAccessor, in_model));
+            normals = loadMeshAttribute(primitive, "NORMAL");
         }
 
-        
         Vertex vertex{};
 
         for (size_t i = 0; i < posAccessor.count; ++i) {
