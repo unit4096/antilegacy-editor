@@ -1,3 +1,4 @@
+#pragma once
 #include "model_loader.h"
 
 // ext
@@ -92,6 +93,30 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 }
 
 
+int Loader::_loadMesh(const tinygltf::Model& in_model, ale::Mesh& out_mesh) {
+
+    return 0;
+}
+
+int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_texture) {
+    trc::log("Loading texture");
+
+    if (in_texture.width < 1 || in_texture.height < 1) {
+        trc::log("Invalid tex parameters, aborting", trc::LogLevel::ERROR);
+        return -1;
+    }
+    
+    // image.component; // Defines the dimensions of each texel
+    // image.bits // Defines the number of bits in each dimension
+
+    // This copies data to the Image struct directly to keep control
+    // over image data
+    out_texture.data = in_texture.image;
+    out_texture.w = in_texture.width;
+    out_texture.h = in_texture.height;            
+    return 0;
+}
+
 
 // Now loads one mesh and one texture from the .gltf file
 // TODO: Add loading full GLTF scenes
@@ -111,19 +136,9 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
         tinygltf::Texture &tex = gltfModel.textures[0];
         
         if (tex.source > -1) {
-            trc::log("Loading texture");
-            tinygltf::Image &image = gltfModel.images[tex.source];
-
-            // image.component; // Defines the dimensions of each texel
-            // image.bits // Defines the number of bits in each dimension
-
-            // This copies data to the Image struct directly to keep control
-            // over image data
-            _image.data = image.image;
-            _image.w = image.width;
-            _image.h = image.height;            
+            _loadTexture(gltfModel.images[tex.source], _image);
         } else {
-            trc::log("Cannot load texture");
+            trc::log("No texture to load");
         }
 
     } else {

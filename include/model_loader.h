@@ -15,6 +15,8 @@
 #include <primitives.h>
 #include <re_mesh.h>
 #include <tracer.h>
+#include <tinygltf/tiny_gltf.h>
+#include <tol/tiny_obj_loader.h>
 
 namespace ale {
     class Loader {
@@ -22,7 +24,10 @@ namespace ale {
         std::vector<std::string> commandLineTokens;
         
         bool _canReadFile(std::filesystem::path p);
-    public: 
+        int _loadMesh(const tinygltf::Model &in_model, ale::Mesh &out_mesh);
+        int _loadTexture(const tinygltf::Image &in_texture, ale::Image &out_texture);
+
+    public:
         Loader();
         ~Loader();
         int loadModelOBJ(char *model_path, Mesh &_model);
