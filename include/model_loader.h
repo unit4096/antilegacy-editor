@@ -24,7 +24,7 @@ namespace ale {
         std::vector<std::string> commandLineTokens;
         
         bool _canReadFile(std::filesystem::path p);
-        int _loadMesh(const tinygltf::Model &in_model, ale::Mesh &out_mesh);
+        int _loadMesh(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::Mesh &out_mesh);
         int _loadTexture(const tinygltf::Image &in_texture, ale::Image &out_texture);
 
     public:

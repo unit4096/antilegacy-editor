@@ -33,7 +33,7 @@ This "C style incapsulation" is a handy way to not include tiny_*.h directives
 inside the loader's header (since you cannot do it with these libraries)
 */
 
-const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, tinygltf::Model& model);
+const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, const tinygltf::Model& model);
 int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
 const int _getNumEdgesInMesh(const Mesh &_mesh);
 bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh );
@@ -93,93 +93,36 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 }
 
 
-int Loader::_loadMesh(const tinygltf::Model& in_model, ale::Mesh& out_mesh) {
+int Loader::_loadMesh(const tinygltf::Model& in_model,
+                      const tinygltf::Mesh& in_mesh, 
+                      ale::Mesh& out_mesh) {
 
-    return 0;
-}
-
-int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_texture) {
-    trc::log("Loading texture");
-
-    if (in_texture.width < 1 || in_texture.height < 1) {
-        trc::log("Invalid tex parameters, aborting", trc::LogLevel::ERROR);
-        return -1;
-    }
-    
-    // image.component; // Defines the dimensions of each texel
-    // image.bits // Defines the number of bits in each dimension
-
-    // This copies data to the Image struct directly to keep control
-    // over image data
-    out_texture.data = in_texture.image;
-    out_texture.w = in_texture.width;
-    out_texture.h = in_texture.height;            
-    return 0;
-}
-
-
-// Now loads one mesh and one texture from the .gltf file
-// TODO: Add loading full GLTF scenes
-int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::Image& _image) { 
-
-    if (!isFileValid(model_path)) {
-        trc::log("Input file is not valid!", trc::LogLevel::ERROR);
-        return 1;
-    }
-
-    tinygltf::Model gltfModel;
-
-    _loadTinyGLTFModel(gltfModel, model_path);
-    
-    if (gltfModel.textures.size() > 0) {
-        trc::log("Found textures");
-        tinygltf::Texture &tex = gltfModel.textures[0];
-        
-        if (tex.source > -1) {
-            _loadTexture(gltfModel.images[tex.source], _image);
-        } else {
-            trc::log("No texture to load");
-        }
-
-    } else {
-        trc::log("Textures not found");
-    }
-
-
-    // TODO: implement loading multiple nodes
-    tinygltf::Mesh mesh = gltfModel.meshes[0];
-    for (auto primitive : mesh.primitives) {    
+    for (auto primitive : in_mesh.primitives) {    
 
         // List model attributes for Debug
         for (auto attr: primitive.attributes) {
-            trc::log("This model has " + attr.first);
+            trc::log("This mesh has " + attr.first);
         }
         
         std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
-        // TOOD: implement generic attribute deduction
-
-        // NOTE: in tinyGLTF an index acessor is a separate accessor
-        // As for now is not used (for a reason)
-        // tinygltf::Accessor indexAccessor = gltfModel.accessors[primitive.indices];
-
         int posAttributeIdx = primitive.attributes["POSITION"];
         int uvAttributeIdx = primitive.attributes["TEXCOORD_0"];
         
-        const auto& posAccessor = gltfModel.accessors[posAttributeIdx];
-        const auto& UVAccessor = gltfModel.accessors[uvAttributeIdx];
+        const auto& posAccessor = in_model.accessors[posAttributeIdx];
+        const auto& UVAccessor = in_model.accessors[uvAttributeIdx];
 
         const float* positions = reinterpret_cast<const float*>(
-                                    _getDataByAccessor(posAccessor, gltfModel));
+                                    _getDataByAccessor(posAccessor, in_model));
         const float* uvPositions = reinterpret_cast<const float*>(
-                                    _getDataByAccessor(UVAccessor, gltfModel));
+                                    _getDataByAccessor(UVAccessor, in_model));
         
         const float* normals = nullptr;
-        if (primitive.attributes.count("NORMAL") > 0) {
+        if (primitive.attributes.contains("NORMAL")) {
             int normIdx = primitive.attributes["NORMAL"];
-            const auto& normAccessor = gltfModel.accessors[normIdx];
+            const auto& normAccessor = in_model.accessors[normIdx];
             normals = reinterpret_cast<const float*>(
-                        _getDataByAccessor(normAccessor, gltfModel));
+                            _getDataByAccessor(normAccessor, in_model));
         }
 
         
@@ -237,22 +180,77 @@ int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::I
             // since the flag's value is const
             if (COMPRESS_VERTEX_DUPLICATES) {
             if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<unsigned int>(_mesh.vertices.size());
-                    _mesh.vertices.push_back(vertex);
+                    uniqueVertices[vertex] = static_cast<unsigned int>(out_mesh.vertices.size());
+                    out_mesh.vertices.push_back(vertex);
                 }
-                _mesh.indices.push_back(uniqueVertices[vertex]);    
+                out_mesh.indices.push_back(uniqueVertices[vertex]);    
             } else {
-                _mesh.vertices.push_back(vertex);
-                _mesh.indices.push_back(i);
+                out_mesh.vertices.push_back(vertex);
+                out_mesh.indices.push_back(i);
             }
         }
 
         if (!normals) {
             trc::log("Normals not found in the model! Generating vertex normals", trc::WARNING);
-            _generateVertexNormals(_mesh);
+            _generateVertexNormals(out_mesh);
         }
-        
     }
+
+    return 0;
+}
+
+int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_texture) {
+    trc::log("Loading texture");
+
+    if (in_texture.width < 1 || in_texture.height < 1) {
+        trc::log("Invalid tex parameters, aborting", trc::LogLevel::ERROR);
+        return -1;
+    }
+    
+    // image.component; // Defines the dimensions of each texel
+    // image.bits // Defines the number of bits in each dimension
+
+    // This copies data to the Image struct directly to keep control
+    // over image data
+    out_texture.data = in_texture.image;
+    out_texture.w = in_texture.width;
+    out_texture.h = in_texture.height;            
+    return 0;
+}
+
+
+// Now loads one mesh and one texture from the .gltf file
+// TODO: Add loading full GLTF scenes
+int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::Image& _image) { 
+
+    if (!isFileValid(model_path)) {
+        trc::log("Input file is not valid!", trc::LogLevel::ERROR);
+        return 1;
+    }
+
+    tinygltf::Model gltfModel;
+
+    _loadTinyGLTFModel(gltfModel, model_path);
+    
+    if (gltfModel.textures.size() > 0) {
+        trc::log("Found textures");
+        tinygltf::Texture &tex = gltfModel.textures[0];
+        
+        if (tex.source > -1) {
+            _loadTexture(gltfModel.images[tex.source], _image);
+        } else {
+            trc::log("No texture to load");
+        }
+
+    } else {
+        trc::log("Textures not found");
+    }
+
+
+    // TODO: implement loading multiple nodes
+    tinygltf::Mesh mesh = gltfModel.meshes[0];
+
+    _loadMesh(gltfModel, mesh, _mesh);
     
     // int edgesCount = _getNumEdgesInMesh(_mesh);
     // trc::raw << "edges: " << edgesCount << "\n"
@@ -597,7 +595,7 @@ bool Loader::_canReadFile(std::filesystem::path p) {
 
 // Load raw data from buffer by accessor
 const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, 
-                                                tinygltf::Model& model) {
+                                                const tinygltf::Model& model) {
 
     const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
     const tinygltf::Buffer& posBuffer = model.buffers[bufferView.buffer];
