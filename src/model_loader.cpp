@@ -232,27 +232,41 @@ int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_text
     return 0;
 }
 
+int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
+                           ale::Model& out_model ) {
+    
+    trc::log("Not implemented!", trc::LogLevel::ERROR);
+    return -1;
+    
+    if (in_model.nodes.size() < 1) {
+        trc::log("No nodes found", trc::LogLevel::ERROR);
+        return -1;
+    }
+    
+    return 0;
+}
+
 
 // Now loads one mesh and one texture from the .gltf file
 // TODO: Add loading full GLTF scenes
 int Loader::loadModelGLTF(const std::string model_path,
-                          ale::Mesh& _mesh, ale::Image& _image) { 
+                          ale::Mesh& out_mesh, ale::Image& _image) { 
 
     if (!isFileValid(model_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
         return 1;
     }
 
-    tinygltf::Model gltfModel;
+    tinygltf::Model in_model;
 
-    _loadTinyGLTFModel(gltfModel, model_path);
+    _loadTinyGLTFModel(in_model, model_path);
     
-    if (gltfModel.textures.size() > 0) {
+    if (in_model.textures.size() > 0) {
         trc::log("Found textures");
-        tinygltf::Texture &tex = gltfModel.textures[0];
+        tinygltf::Texture &tex = in_model.textures[0];
         
         if (tex.source > -1) {
-            _loadTexture(gltfModel.images[tex.source], _image);
+            _loadTexture(in_model.images[tex.source], _image);
         } else {
             trc::log("No texture to load");
         }
@@ -263,9 +277,9 @@ int Loader::loadModelGLTF(const std::string model_path,
 
 
     // TODO: implement loading multiple nodes
-    tinygltf::Mesh mesh = gltfModel.meshes[0];
+    tinygltf::Mesh mesh = in_model.meshes[0];
 
-    _loadMesh(gltfModel, mesh, _mesh);
+    _loadMesh(in_model, mesh, out_mesh);
     
     // int edgesCount = _getNumEdgesInMesh(_mesh);
     // trc::raw << "edges: " << edgesCount << "\n"
@@ -278,12 +292,12 @@ int Loader::loadModelGLTF(const std::string model_path,
     //              edgesCount  << "\n";
     
     ale::Model newModel;
-    newModel.meshes.push_back(_mesh);
+    newModel.meshes.push_back(out_mesh);
     newModel.textures.push_back(_image);
 
     geo::REMesh reMesh;
 
-    _populateREMesh(_mesh, reMesh);
+    _populateREMesh(out_mesh, reMesh);
     
     trc::log("Finished loading model");
     return 0;
