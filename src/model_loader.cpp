@@ -57,7 +57,8 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, model_path)) {
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials,
+                                &warn, &err, model_path)) {
         trc::log("Could not load OBJ file!", trc::LogLevel::ERROR);
         return -1;
     }
@@ -82,7 +83,8 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
             vertex.color = {1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = static_cast<unsigned int>(_mesh.vertices.size());
+                uniqueVertices[vertex] = 
+                            static_cast<unsigned int>(_mesh.vertices.size());
                 _mesh.vertices.push_back(vertex);
             }
 
@@ -154,7 +156,8 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
             // Check if there are min and max UV values and normalize it
             // FIXME: it is possible that the model does not use the entire UV 
             // space of the texture. Normalization code will not work in this case
-            if (UVAccessor.minValues.size() > 1 && UVAccessor.maxValues.size() > 1) {
+            if (UVAccessor.minValues.size() > 1 && 
+                UVAccessor.maxValues.size() > 1) {
                 // Normalize if possible
                 float min_u = static_cast<float>(UVAccessor.minValues[0]);
                 float min_v = static_cast<float>(UVAccessor.minValues[1]);
@@ -189,8 +192,9 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
             // for debug. Hopefully the compiler will optimize away this check
             // since the flag's value is const
             if (COMPRESS_VERTEX_DUPLICATES) {
-            if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<unsigned int>(out_mesh.vertices.size());
+                if (uniqueVertices.count(vertex) == 0) {
+                    uniqueVertices[vertex] = static_cast<unsigned int>(
+                                                out_mesh.vertices.size());
                     out_mesh.vertices.push_back(vertex);
                 }
                 out_mesh.indices.push_back(uniqueVertices[vertex]);    
@@ -231,7 +235,8 @@ int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_text
 
 // Now loads one mesh and one texture from the .gltf file
 // TODO: Add loading full GLTF scenes
-int Loader::loadModelGLTF(const std::string model_path, ale::Mesh& _mesh, ale::Image& _image) { 
+int Loader::loadModelGLTF(const std::string model_path,
+                          ale::Mesh& _mesh, ale::Image& _image) { 
 
     if (!isFileValid(model_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
@@ -472,7 +477,8 @@ bool Loader::loadTexture(const char* path, Image& img) {
     img.data.resize(0);    
 
     // Load the image using stbi
-    unsigned char* _data = stbi_load(path, &img.w, &img.h, &img.channels, STBI_rgb_alpha);
+    unsigned char* _data = stbi_load(path, &img.w,
+                                     &img.h, &img.channels, STBI_rgb_alpha);
 
     if (!_data) {
         trc::log("Cannot get texture!", trc::LogLevel::ERROR);
@@ -563,17 +569,19 @@ int Loader::getFlaggedArgument(const std::string flag, std::string& result) {
 const std::string& Loader::getCmdOption(const std::string &option) const{
 
     std::vector<std::string>::const_iterator itr;
-    itr =  std::find(this->commandLineTokens.begin(), this->commandLineTokens.end(), option);
-    if (itr != this->commandLineTokens.end() && ++itr != this->commandLineTokens.end()){
-            return *itr;
+    itr =  std::find(this->commandLineTokens.begin(),
+                     this->commandLineTokens.end(), option);
+    if (itr != this->commandLineTokens.end() &&
+      ++itr != this->commandLineTokens.end()){
+        return *itr;
     }
     static const std::string empty_string("");
     return empty_string;
 }
 
-bool  Loader::cmdOptionExists(const std::string &option) const{
-
-    return std::find(this->commandLineTokens.begin(), this->commandLineTokens.end(), option)
+bool  Loader::cmdOptionExists(const std::string &option) const {
+    return std::find(this->commandLineTokens.begin(),
+                     this->commandLineTokens.end(), option)
             != this->commandLineTokens.end();
 }
 
@@ -594,10 +602,10 @@ bool Loader::isFileValid(std::string file_path) {
 bool Loader::_canReadFile(std::filesystem::path p) {
     std::error_code ec;
     auto perms = std::filesystem::status(p, ec).permissions();
-    if ((perms & std::filesystem::perms::owner_read) != std::filesystem::perms::none &&
-        (perms & std::filesystem::perms::group_read) != std::filesystem::perms::none &&
-        (perms & std::filesystem::perms::others_read) != std::filesystem::perms::none
-        ) {
+    auto none = std::filesystem::perms::none;
+    if ((perms & std::filesystem::perms::owner_read) != none  &&
+        (perms & std::filesystem::perms::group_read) != none &&
+        (perms & std::filesystem::perms::others_read) != none ) {
         return true;
     }
     return false;
@@ -607,8 +615,8 @@ bool Loader::_canReadFile(std::filesystem::path p) {
 const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, 
                                                 const tinygltf::Model& model) {
 
-    const tinygltf::BufferView& bufferView = model.bufferViews[accessor.bufferView];
-    const tinygltf::Buffer& posBuffer = model.buffers[bufferView.buffer];
+    const auto& bufferView = model.bufferViews[accessor.bufferView];
+    const auto& posBuffer = model.buffers[bufferView.buffer];
 
 	return &posBuffer.data[bufferView.byteOffset + accessor.byteOffset];
 }
