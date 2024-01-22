@@ -236,15 +236,50 @@ int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_text
 int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
                            ale::Model& out_model ) {
     
-    trc::log("Not implemented!", trc::LogLevel::ERROR);
-    return -1;
+    // trc::log("Not implemented!", trc::LogLevel::ERROR);
+    // return -1;
     
     if (in_model.nodes.size() < 1) {
         trc::log("No nodes found", trc::LogLevel::ERROR);
         return -1;
     }
     
+    const auto &scene = in_model.scenes[in_model.defaultScene];
+    
+    // TODO: Use iteration. It is safer than recursion
+    for (size_t i = 0; i < scene.nodes.size(); i++) {
+        _bindNode(in_model, in_model.nodes[i], -1, i,  out_model);
+        out_model.rootNodes.push_back(i);
+    }
+
     return 0;
+}
+
+// Recursively builds node hierarchy
+void Loader::_bindNode(const tinygltf::Model& in_model, 
+                       const tinygltf::Node& n,
+                       int parent, int current,  ale::Model& out_model ) {
+    
+    ale::Node ale_node;
+    ale_node.mesh = n.mesh;
+    if (n.translation.size() >= 3) {
+        ale_node.pos.x = n.translation[0];
+        ale_node.pos.y = n.translation[1];
+        ale_node.pos.z = n.translation[2];
+    } else {
+        ale_node.pos = glm::vec3(0);
+    }
+    ale_node.name = n.name;
+    ale_node.children = n.children;
+    ale_node.id = current;
+    ale_node.parent = parent;
+    
+    out_model.nodes.push_back(ale_node);
+
+    for (size_t i = 0; i < n.children.size(); i++) {
+        assert((n.children[i] >= 0) && (n.children[i] < in_model.nodes.size()));
+        _bindNode(in_model, in_model.nodes[n.children[i]], current, n.children[i], out_model);
+    }
 }
 
 
@@ -287,6 +322,8 @@ int Loader::loadModelGLTF(const std::string model_path,
         if (result != 0) return -1;
         out_model.meshes.push_back(_out_mesh);
     }
+
+    _loadNodesGLTF(in_model, out_model);
 
     out_mesh = out_model.meshes[0];
 
