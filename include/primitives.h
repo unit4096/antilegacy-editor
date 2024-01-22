@@ -21,12 +21,11 @@ using namespace ale;
 
 // TOOD: add namespace 
 namespace ale {
-struct Face;
 struct Model;
 struct Mesh;
 struct Vertex;
-
-
+struct Node;
+struct NodeData;
 
 // A vertex with a position, a vertex color, and UV coordinates
 struct Vertex {
@@ -61,23 +60,22 @@ struct Mesh {
     std::vector<uint32_t> indices;
 };
 
+
+struct Node {
+    std::string name;
+    glm::vec3 pos;
+    int id;
+    int parent = -1;
+    int mesh = -1;
+    std::vector<int> children{};
+};
+
 struct Model {
-    glm::mat4 transform;
     std::vector<Mesh> meshes;
-    std::vector<Image> textures;
+    std::vector<Image> textures;    
+    std::vector<Node> nodes;
+    std::vector<int> rootNodes;
 };
-
-struct Scene {
-    std::vector<Model> models;
-};
-
-struct Edge {
-    
-};
-
-struct Face {
-};
-
 
 // Basic 2D vector from 2 floats. Can be used as a vector implementation wrapper
 struct v2f {
