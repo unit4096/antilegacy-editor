@@ -33,7 +33,7 @@ namespace ale {
         Loader();
         ~Loader();
         int loadModelOBJ(char *model_path, Mesh &_model);
-        int loadModelGLTF(const std::string filename, Mesh &_model, Image &_image);
+        int loadModelGLTF(const std::string model_path, ale::Model &out_model);
         bool loadTexture(const char* path, Image& img);
         void recordCommandLineArguments(int & argc, char ** argv);
         int getFlaggedArgument(const std::string flag, std::string &result);

@@ -102,7 +102,9 @@ class Renderer {
 public:
     // FIXME: find a way to not include ImGuiIO in the constructor
     // separate model loading and vulkan init
-    Renderer(Mesh _mesh, Image _image):mesh(_mesh), image(_image){
+    Renderer(ale::Model _model):model(_model){
+        mesh = model.meshes[0];
+        image = model.textures[0];
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         this->io = std::make_shared<ImGuiIO>(ImGui::GetIO());
@@ -366,6 +368,9 @@ private:
 
     std::stack<std::function<bool()>> destructorStack = {};
     // TODO: add multiple model handling and scene hierarchy
+
+    ale::Model model;
+
     Mesh mesh;
     Image image;
 
@@ -1574,6 +1579,7 @@ private:
     }
 
     void drawImGui() {
+        bool bItemFocused = ImGui::IsAnyItemFocused();
 
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();

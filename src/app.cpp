@@ -31,29 +31,30 @@ int App::run() {
         trc::SetLogLevels(logLevels);
 
         std::string model_path = "./models/fox/Fox.gltf";
+
+        // Loader handles system IO
         ale::Loader loader;
         
         loader.recordCommandLineArguments(_config.argc, _config.argv);
         loader.getFlaggedArgument("-f", model_path);
 
-        // Main mesh object
-        ale::Mesh mesh;
-        // Main texture object
-        ale::Image image;
+        /* 
+        Model object that represents a scene with multiple nodes, 
+        meshes, and textures
+        */
+        ale::Model model;
 
         // // You can use this to load a custom texture
-        // std::string tex_path = "";
-        // loader.getFlaggedArgument("-t", tex_path);
-        // loader.loadTexture(tex_path.data(), image);
+        // loader.loadTexture("RELATIVE_PATH_TO_TEX", image);
         
-        // Load GLTF models
-        if (loader.loadModelGLTF(model_path, mesh, image)) {
+        // Load a GLTF model
+        if (loader.loadModelGLTF(model_path, model)) {
             trc::log("Cannot load model by path: " + model_path, trc::ERROR);
             return 1;
         }
 
         // Create Vulkan renderer object
-        ale::Renderer renderer(mesh,image);
+        ale::Renderer renderer(model);
 
         // Create input manager object
         ale::InputManager input;
@@ -116,7 +117,7 @@ int App::run() {
             // Delta time for editor calculations
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
-
+            
             cameraSpeedAdjusted = mainCam->getSpeed() * deltaTime.count() * 100 / 8;
 
             // polling events, callbacks fired

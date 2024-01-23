@@ -286,7 +286,7 @@ void Loader::_bindNode(const tinygltf::Model& in_model,
 // Now loads one mesh and one texture from the .gltf file
 // TODO: Add loading full GLTF scenes
 int Loader::loadModelGLTF(const std::string model_path,
-                          ale::Mesh& out_mesh, ale::Image& out_image) { 
+                          ale::Model& out_model) { 
 
     if (!isFileValid(model_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
@@ -294,7 +294,6 @@ int Loader::loadModelGLTF(const std::string model_path,
     }
 
     tinygltf::Model in_model;
-    ale::Model out_model;
 
     _loadTinyGLTFModel(in_model, model_path);
 
@@ -325,17 +324,16 @@ int Loader::loadModelGLTF(const std::string model_path,
         out_model.meshes.push_back(_out_mesh);
     }
 
+
+    // TODO: Check for node index collisions. Nodes should not have the same indices
     _loadNodesGLTF(in_model, out_model);
 
-    /* 
-    TODO: now it returns just the first mesh & texture. Renderer rework 
-    needed to display full scenes 
-    */
-    out_mesh = out_model.meshes[0];
-    out_image = out_model.textures[0];
 
+    // The following code is here just to test re_mesh loading
+    
+    ale::Mesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
-    _populateREMesh(out_mesh, reMesh);
+    _populateREMesh(sampleMesh, reMesh);
     
     trc::log("Finished loading model");
     return 0;
