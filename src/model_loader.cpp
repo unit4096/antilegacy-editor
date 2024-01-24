@@ -108,7 +108,26 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
                     _getDataByAccessor(accessor, in_model));
     };
 
+    
     for (auto primitive : in_mesh.primitives) {    
+
+        int indicesIdx = primitive.indices;
+        bool bHasIndices = false;
+
+        if (indicesIdx != -1) {
+            bHasIndices = true;    
+            const auto& accessor = in_model.accessors[indicesIdx];
+
+            // FIXME: Implement type deduction, now just assumes that it is u short
+            const unsigned short* indices =
+                                reinterpret_cast<const unsigned short*>(
+                                    _getDataByAccessor(accessor, in_model));
+
+            for (size_t i = 0; i < accessor.count; i++) {
+                out_mesh.indices.push_back(*(indices + i));
+            }
+        }
+
 
         // List model attributes for Debug
         for (auto attr: primitive.attributes) {
@@ -200,7 +219,9 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
                 out_mesh.indices.push_back(uniqueVertices[vertex]);    
             } else {
                 out_mesh.vertices.push_back(vertex);
-                out_mesh.indices.push_back(i);
+                if (!bHasIndices) {
+                    out_mesh.indices.push_back(i);
+                }
             }
         }
 
