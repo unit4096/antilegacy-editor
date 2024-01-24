@@ -393,9 +393,6 @@ bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
                 // Close the loop if it isn't already
                 if (_l->radial_next == nullptr ) {
                     // Add l as the end of the loop
-                    /* trc::raw
-                    << "new radial loop created for edge"  << e.get()
-                    << "\n"; */
                     _l = _l->radial_next;
                     _l->radial_prev = l;
                     _l->radial_next = l;
