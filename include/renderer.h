@@ -100,11 +100,9 @@ struct UniformBufferObject {
 
 class Renderer {
 public:
-    // FIXME: find a way to not include ImGuiIO in the constructor
-    // separate model loading and vulkan init
     Renderer(ale::Model _model):model(_model){
         // FIXME: For now, treats the first texture as the default tex for all
-        // meshes
+        // meshes. Also just loads all meshes to 0,0,0 since node loading is WIP
         image = model.textures[0];
 
         IMGUI_CHECKVERSION();
