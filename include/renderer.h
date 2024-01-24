@@ -103,8 +103,10 @@ public:
     // FIXME: find a way to not include ImGuiIO in the constructor
     // separate model loading and vulkan init
     Renderer(ale::Model _model):model(_model){
-        mesh = model.meshes[0];
+        // FIXME: For now, treats the first texture as the default tex for all
+        // meshes
         image = model.textures[0];
+
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         this->io = std::make_shared<ImGuiIO>(ImGui::GetIO());
@@ -371,7 +373,6 @@ private:
 
     ale::Model model;
 
-    Mesh mesh;
     Image image;
 
     glm::vec4 _lightPosition = glm::vec4(30.0, 40.0, 100.0, 1.0);
@@ -379,6 +380,7 @@ private:
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
+    uint32_t indexBufferCount;
     VkDeviceMemory indexBufferMemory;
 
     // Number of images in the swap chain
@@ -1193,7 +1195,23 @@ private:
     }
 
     void createVertexBuffer() {
-        VkDeviceSize bufferSize = sizeof(mesh.vertices[0]) * mesh.vertices.size();
+
+        VkDeviceSize bufferSize = 0;
+
+        auto vert = model.meshes[0].vertices[0];
+
+        if (model.meshes.size() <= 0) {
+            throw std::runtime_error("No meshes in the model!");
+        }
+
+        for(auto m: model.meshes) {
+            bufferSize += sizeof(vert) * m.vertices.size();
+        }
+
+        if (bufferSize <= 0) {
+            throw std::runtime_error("Vertex buffer size is 0!");
+        }
+        
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1201,7 +1219,18 @@ private:
 
         void* data;
         vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, mesh.vertices.data(), (size_t) bufferSize);
+
+            // Iterator to calculate offsets for each mesh in the buffer
+            // char* has the "atomic" size ratio across all C/C++ standards
+            char* memoryItr = reinterpret_cast<char*>(data);
+
+            // Loads vertices for all meshes into one buffer
+            for (auto m: model.meshes) {
+                size_t memoryOffset = sizeof(vert) * m.vertices.size();
+                memcpy(memoryItr, m.vertices.data(), memoryOffset);
+                memoryItr += memoryOffset;
+            }
+
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
@@ -1213,7 +1242,24 @@ private:
     }
 
     void createIndexBuffer() {
-        VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
+        
+        VkDeviceSize bufferSize = 0;
+        indexBufferCount = 0;
+
+        auto index = model.meshes[0].indices[0];
+
+        if (model.meshes.size() <= 0) {
+            throw std::runtime_error("No meshes in the model!");
+        }
+
+        for(auto m: model.meshes) {
+            bufferSize += sizeof(index) * m.indices.size();            
+            indexBufferCount += m.indices.size();
+        }
+
+        if (bufferSize <= 0) {
+            throw std::runtime_error("Vertex buffer size is 0!");
+        }
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1221,7 +1267,29 @@ private:
 
         void* data;
         vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
-            memcpy(data, mesh.indices.data(), (size_t) bufferSize);
+
+
+            // Iterator to calculate offsets for each mesh in the buffer
+            // char* has the "atomic" size ratio across all C/C++ standards
+            char* memoryItr = reinterpret_cast<char*>(data);
+
+            size_t idxOffset = 0;
+            for (size_t i = 0; i < model.meshes.size(); i++) {
+                size_t memoryOffset = sizeof(index) * model.meshes[i].indices.size();
+
+                // Temporary mesh for index offsets
+                auto m = model.meshes[i];
+
+                //  This loop adds offsets to indices for a shared index buffer
+                for (size_t j = 0; j < model.meshes[i].indices.size(); j++) {
+                    m.indices[j] += idxOffset;
+                }
+
+                memcpy(memoryItr, m.indices.data(), memoryOffset);
+                memoryItr += memoryOffset;
+                idxOffset += model.meshes[i].indices.size();
+            }
+                    
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
@@ -1454,7 +1522,7 @@ private:
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, indexBufferCount, 1, 0, 0, 0);
 
             // TODO: make implementation of imgui into a separate abstraction
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
