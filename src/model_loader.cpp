@@ -234,6 +234,21 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
     return 0;
 }
 
+int Loader::_loadTexturesGLTF(const tinygltf::Model& in_model, ale::Model& out_model) {
+
+    for (auto tex: in_model.textures) {    
+        if (tex.source > -1) {
+            ale::Image _image;
+            _loadTexture(in_model.images[tex.source], _image);
+            out_model.textures.push_back(_image);
+        } else {
+            trc::log("No texture to load", trc::LogLevel::WARNING);
+            return -1;
+        }
+    }
+    return 0;
+}
+
 // Loads data from a tinygltf Texture to the inner Image format
 int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_texture) {
     trc::log("Loading texture");
@@ -323,16 +338,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     // Load textures to a vector
     if (in_model.textures.size() > 0) {
         trc::log("Found textures");
-
-        for (auto tex: in_model.textures) {    
-            if (tex.source > -1) {
-                ale::Image _image;
-                _loadTexture(in_model.images[tex.source], _image);
-                out_model.textures.push_back(_image);
-            } else {
-                trc::log("No texture to load", trc::LogLevel::WARNING);
-            }
-        }
+        _loadTexturesGLTF(in_model, out_model);
     } else {
         trc::log("Textures not found");
     }

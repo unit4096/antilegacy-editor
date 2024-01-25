@@ -25,6 +25,7 @@ namespace ale {
         
         bool _canReadFile(std::filesystem::path p);
         int _loadMesh(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::Mesh &out_mesh);
+        int _loadTexturesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);        
         int _loadTexture(const tinygltf::Image &in_texture, ale::Image &out_texture);
         int _loadNodesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);
         void _bindNode(const tinygltf::Model &in_model, const tinygltf::Node &n, int parent, int current, ale::Model &out_model);
