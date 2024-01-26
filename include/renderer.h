@@ -459,8 +459,8 @@ private:
 
     // FIXME: causes stack-use-after-return. investigate
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
-        Renderer* app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
-            // app->framebufferResized = true;
+        // Renderer* app = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
+        // app->framebufferResized = true;
     }
 
 
@@ -636,42 +636,6 @@ private:
         // Inner function for device rating
         // returns int: 0 - invalid, 1 - integrated,
         // 100 + VRAM size (mb) - dedicated
-        auto getPhysicalDeviceRating = [this](VkPhysicalDevice device){
-            
-            int rate = 1;
-
-            VkPhysicalDeviceProperties2 props = {};
-            props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-            vkGetPhysicalDeviceProperties2(device, &props);
-
-            VkPhysicalDeviceType type = props.properties.deviceType;
-            
-            if (type == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU){
-                rate += 1000;
-                
-                auto memoryProps = VkPhysicalDeviceMemoryProperties2{};
-                
-                vkGetPhysicalDeviceMemoryProperties2(device, &memoryProps);
-
-                auto heapsPointer = memoryProps.memoryProperties.memoryHeaps;
-                auto heaps = std::vector<VkMemoryHeap>(
-                                    heapsPointer, 
-                                    heapsPointer
-                                    + memoryProps.memoryProperties.memoryHeapCount);
-                
-                
-
-                for (const auto& heap : heaps) {
-                    if (heap.flags & VkMemoryHeapFlagBits::VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
-                        VkDeviceSize size = heap.size;
-                        unsigned long mb  = size / 1000000;
-                        rate+= mb;
-                    }
-                }
-            }
-
-            return rate;
-        };
     }
 
     void createLogicalDevice() {
@@ -1590,7 +1554,7 @@ private:
         float size_pixels = 20;        
         ImFontConfig config;
         io->Fonts->Clear();
-        ImFont* font =  io->Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
+        io->Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
     }
 
     void initImGUI(){
@@ -1645,7 +1609,7 @@ private:
     }
 
     void drawImGui() {
-        bool bItemFocused = ImGui::IsAnyItemFocused();
+        // bool bItemFocused = ImGui::IsAnyItemFocused();
 
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
