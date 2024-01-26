@@ -632,10 +632,6 @@ private:
 
 
         vkb_physicalDevice = physical_device_selector_return.value();
-
-        // Inner function for device rating
-        // returns int: 0 - invalid, 1 - integrated,
-        // 100 + VRAM size (mb) - dedicated
     }
 
     void createLogicalDevice() {
@@ -1518,12 +1514,6 @@ private:
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
-        // Time not needed now
-        // static auto startTime = std::chrono::high_resolution_clock::now();
-
-        // auto currentTime = std::chrono::high_resolution_clock::now();
-        // float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
         memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
     }
 
@@ -1609,8 +1599,6 @@ private:
     }
 
     void drawImGui() {
-        // bool bItemFocused = ImGui::IsAnyItemFocused();
-
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
