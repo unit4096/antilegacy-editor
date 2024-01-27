@@ -69,8 +69,28 @@ int App::run() {
         // Make the default mode to be FREE
         mainCam->toggleMode();
         // Set initial camera position
-        // TODO: Calculate camera position by the model's bounding box
-        mainCam->setPosition(glm::vec3(0, 50, 150));
+        
+
+        // Dynamically set camera position by mesh bounding box
+
+        assert(model.meshes.size() > 0);
+        
+        // Uses AABB of the first mesh
+        if (model.meshes[0].minPos.size() >= 3) {
+            assert(model.meshes[0].minPos.size() ==
+                   model.meshes[0].maxPos.size());
+
+            float sizeZ = std::abs(model.meshes[0].minPos[2] - model.meshes[0].maxPos[2]);
+
+            float frontEdge = model.meshes[0].minPos[2] - sizeZ;
+            float middleY = (model.meshes[0].minPos[1] +
+                             model.meshes[0].maxPos[1]) / 2;
+
+            mainCam->setPosition(glm::vec3(0, middleY, -frontEdge));
+        } else {
+            mainCam->setPosition(glm::vec3(0, 50, 150));
+        }        
+
         mainCam->setSpeed(1.0f);
 
         // Further code tests camera movement

@@ -7,6 +7,8 @@
 #include <memory>
 #include <chrono>
 #include <thread>
+#include <cassert>
+#include <cmath>
 
 #ifndef GLFW
 #define GLFW

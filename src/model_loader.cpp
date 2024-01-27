@@ -159,6 +159,17 @@ int Loader::_loadMesh(const tinygltf::Model& in_model,
 
         Vertex vertex{};
 
+        if (posAccessor.minValues.size() > 0){
+            assert(posAccessor.minValues.size() == posAccessor.maxValues.size());
+            for (size_t i = 0; i < posAccessor.minValues.size(); i++) {
+                float min = posAccessor.minValues[i];
+                float max = posAccessor.maxValues[i];
+                out_mesh.minPos.push_back(min);
+                out_mesh.maxPos.push_back(max);
+            }
+        }
+        
+
         for (size_t i = 0; i < posAccessor.count; ++i) {
 
             vertex.pos = {
