@@ -58,6 +58,8 @@ struct Image {
 struct Mesh {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
+    std::vector<float> minPos{};
+    std::vector<float> maxPos{};
 };
 
 
