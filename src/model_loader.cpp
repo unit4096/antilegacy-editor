@@ -35,16 +35,16 @@ inside the loader's header (since you cannot do it with these libraries)
 
 const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, const tinygltf::Model& model);
 int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
-const int _getNumEdgesInMesh(const Mesh &_mesh);
-bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh );
-void _generateVertexNormals(ale::Mesh &_mesh);
+const int _getNumEdgesInMesh(const ViewMesh &_mesh);
+bool _populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh );
+void _generateVertexNormals(ale::ViewMesh &_mesh);
 
 Loader::Loader() { }   
 
 Loader::~Loader() { }
 
 // Load an .obj model using a path relative to the project root
-int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
+int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
     std::string _path = model_path;
 
     if (!isFileValid(_path)) {
@@ -98,7 +98,7 @@ int Loader::loadModelOBJ(char *model_path, Mesh& _mesh) {
 
 int Loader::_loadMesh(const tinygltf::Model& in_model,
                       const tinygltf::Mesh& in_mesh, 
-                      ale::Mesh& out_mesh) {
+                      ale::ViewMesh& out_mesh) {
 
     auto loadMeshAttribute = [&](tinygltf::Primitive& prim,
                              std::string attrName){
@@ -356,7 +356,7 @@ int Loader::loadModelGLTF(const std::string model_path,
 
     // Load meshes to a vector
     for (auto mesh: in_model.meshes) {
-        ale::Mesh _out_mesh;
+        ale::ViewMesh _out_mesh;
         int result = _loadMesh(in_model, mesh, _out_mesh);
         if (result != 0) return -1;
         out_model.meshes.push_back(_out_mesh);
@@ -369,7 +369,7 @@ int Loader::loadModelGLTF(const std::string model_path,
 
     // The following code is here just to test re_mesh loading
     
-    ale::Mesh sampleMesh = out_model.meshes[0];
+    ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     _populateREMesh(sampleMesh, reMesh);
     
@@ -382,7 +382,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     Populates a geo::Mesh object using default view mesh. Assumes that the mesh 
     is triangular and that each 3 indices form a face 
 */
-bool _populateREMesh(Mesh& _inpMesh, geo::REMesh& _outMesh ) {
+bool _populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     trc::log("Not implemented!", trc::ERROR);
     return 1;
@@ -706,7 +706,7 @@ const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor,
 	return &posBuffer.data[bufferView.byteOffset + accessor.byteOffset];
 }
 
-void _generateVertexNormals(ale::Mesh &_mesh) {
+void _generateVertexNormals(ale::ViewMesh &_mesh) {
     
     if (_mesh.indices.size() % 3 != 0) {
         trc::log("Cannot calculate normals, input mesh is not manifold!", trc::ERROR);
@@ -735,7 +735,7 @@ void _generateVertexNormals(ale::Mesh &_mesh) {
 
 
 // Returns a number of ints 
-const int _getNumEdgesInMesh(const Mesh &_mesh) {
+const int _getNumEdgesInMesh(const ViewMesh &_mesh) {
     std::set<std::pair<int,int>> uniqueEdges;
 
     auto sortedPair = [](int first, int second ) {

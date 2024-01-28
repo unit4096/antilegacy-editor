@@ -24,7 +24,7 @@ namespace ale {
         std::vector<std::string> commandLineTokens;
         
         bool _canReadFile(std::filesystem::path p);
-        int _loadMesh(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::Mesh &out_mesh);
+        int _loadMesh(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::ViewMesh &out_mesh);
         int _loadTexturesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);        
         int _loadTexture(const tinygltf::Image &in_texture, ale::Image &out_texture);
         int _loadNodesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);
@@ -33,7 +33,7 @@ namespace ale {
     public:
         Loader();
         ~Loader();
-        int loadModelOBJ(char *model_path, Mesh &_model);
+        int loadModelOBJ(char *model_path, ViewMesh &_model);
         int loadModelGLTF(const std::string model_path, ale::Model &out_model);
         bool loadTexture(const char* path, Image& img);
         void recordCommandLineArguments(int & argc, char ** argv);

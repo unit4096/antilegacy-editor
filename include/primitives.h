@@ -22,7 +22,7 @@ using namespace ale;
 // TOOD: add namespace 
 namespace ale {
 struct Model;
-struct Mesh;
+struct ViewMesh;
 struct Vertex;
 struct Node;
 struct NodeData;
@@ -55,7 +55,7 @@ struct Image {
 
 
 // Basic mesh, contains arrays of indices and vertices
-struct Mesh {
+struct ViewMesh {
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     std::vector<float> minPos{};
@@ -73,7 +73,7 @@ struct Node {
 };
 
 struct Model {
-    std::vector<Mesh> meshes;
+    std::vector<ViewMesh> meshes;
     std::vector<Image> textures;    
     std::vector<Node> nodes;
     std::vector<int> rootNodes;
