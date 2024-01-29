@@ -25,20 +25,6 @@ namespace trc = ale::Tracer;
 
 const bool COMPRESS_VERTEX_DUPLICATES = false;
 
-/* 
-Declarations for the helper functions. I use the notation for private members to 
-distinguish them from functions in the header.
-
-This "C style incapsulation" is a handy way to not include tiny_*.h directives
-inside the loader's header (since you cannot do it with these libraries)
-*/
-
-const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, const tinygltf::Model& model);
-int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename);
-const int _getNumEdgesInMesh(const ViewMesh &_mesh);
-bool _populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh );
-void _generateVertexNormals(ale::ViewMesh &_mesh);
-
 Loader::Loader() { }   
 
 Loader::~Loader() { }
@@ -96,7 +82,7 @@ int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
 
 
 
-int Loader::_loadMesh(const tinygltf::Model& in_model,
+int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                       const tinygltf::Mesh& in_mesh, 
                       ale::ViewMesh& out_mesh) {
 
@@ -250,7 +236,7 @@ int Loader::_loadTexturesGLTF(const tinygltf::Model& in_model, ale::Model& out_m
     for (auto tex: in_model.textures) {    
         if (tex.source > -1) {
             ale::Image _image;
-            _loadTexture(in_model.images[tex.source], _image);
+            _loadTextureGLTF(in_model.images[tex.source], _image);
             out_model.textures.push_back(_image);
         } else {
             trc::log("No texture to load", trc::LogLevel::WARNING);
@@ -261,7 +247,7 @@ int Loader::_loadTexturesGLTF(const tinygltf::Model& in_model, ale::Model& out_m
 }
 
 // Loads data from a tinygltf Texture to the inner Image format
-int Loader::_loadTexture(const tinygltf::Image& in_texture, ale::Image& out_texture) {
+int Loader::_loadTextureGLTF(const tinygltf::Image& in_texture, ale::Image& out_texture) {
     trc::log("Loading texture");
 
     if (in_texture.width < 1 || in_texture.height < 1) {
@@ -295,7 +281,7 @@ int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
     
     // TODO: Use iteration. It is safer than recursion
     for (size_t i = 0; i < scene.nodes.size(); i++) {
-        _bindNode(in_model, in_model.nodes[i], -1, i,  out_model);
+        _bindNodeGLTF(in_model, in_model.nodes[i], -1, i,  out_model);
         out_model.rootNodes.push_back(i);
     }
 
@@ -303,7 +289,7 @@ int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
 }
 
 // Recursively builds node hierarchy
-void Loader::_bindNode(const tinygltf::Model& in_model, 
+void Loader::_bindNodeGLTF(const tinygltf::Model& in_model, 
                        const tinygltf::Node& n,
                        int parent, int current,  ale::Model& out_model ) {
     
@@ -325,7 +311,7 @@ void Loader::_bindNode(const tinygltf::Model& in_model,
 
     for (size_t i = 0; i < n.children.size(); i++) {
         assert((n.children[i] >= 0) && (n.children[i] < in_model.nodes.size()));
-        _bindNode(in_model, in_model.nodes[n.children[i]], current, n.children[i], out_model);
+        _bindNodeGLTF(in_model, in_model.nodes[n.children[i]], current, n.children[i], out_model);
     }
 }
 
@@ -357,7 +343,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     // Load meshes to a vector
     for (auto mesh: in_model.meshes) {
         ale::ViewMesh _out_mesh;
-        int result = _loadMesh(in_model, mesh, _out_mesh);
+        int result = _loadMeshGLTF(in_model, mesh, _out_mesh);
         if (result != 0) return -1;
         out_model.meshes.push_back(_out_mesh);
     }
@@ -382,7 +368,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     Populates a geo::Mesh object using default view mesh. Assumes that the mesh 
     is triangular and that each 3 indices form a face 
 */
-bool _populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
+bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     trc::log("Not implemented!", trc::ERROR);
     return 1;
@@ -585,7 +571,7 @@ bool Loader::loadTexture(const char* path, Image& img) {
 }
 
 // A helper function to populate a tinygltf::Model object
-int _loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename) {
+int Loader::_loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& filename) {
     tinygltf::TinyGLTF loader;
     std::string err;
     std::string warn;
@@ -697,7 +683,7 @@ bool Loader::_canReadFile(std::filesystem::path p) {
 }
 
 // Load raw data from buffer by accessor
-const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor, 
+const unsigned char* Loader::_getDataByAccessor(tinygltf::Accessor accessor, 
                                                 const tinygltf::Model& model) {
 
     const auto& bufferView = model.bufferViews[accessor.bufferView];
@@ -706,7 +692,7 @@ const unsigned char* _getDataByAccessor(tinygltf::Accessor accessor,
 	return &posBuffer.data[bufferView.byteOffset + accessor.byteOffset];
 }
 
-void _generateVertexNormals(ale::ViewMesh &_mesh) {
+void Loader::_generateVertexNormals(ale::ViewMesh &_mesh) {
     
     if (_mesh.indices.size() % 3 != 0) {
         trc::log("Cannot calculate normals, input mesh is not manifold!", trc::ERROR);
@@ -735,7 +721,7 @@ void _generateVertexNormals(ale::ViewMesh &_mesh) {
 
 
 // Returns a number of ints 
-const int _getNumEdgesInMesh(const ViewMesh &_mesh) {
+const int Loader::_getNumEdgesInMesh(const ViewMesh &_mesh) {
     std::set<std::pair<int,int>> uniqueEdges;
 
     auto sortedPair = [](int first, int second ) {

@@ -22,21 +22,29 @@ namespace ale {
     class Loader {
     private:
         std::vector<std::string> commandLineTokens;
-        
+        // System IO methods
         bool _canReadFile(std::filesystem::path p);
-        int _loadMesh(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::ViewMesh &out_mesh);
+        // Geometry methods
+        void _generateVertexNormals(ale::ViewMesh &_mesh);
+        const int _getNumEdgesInMesh(const ViewMesh &_mesh);
+        bool _populateREMesh(ViewMesh &_inpMesh, geo::REMesh &_outMesh);
+
+        // TinyGlTF methods
+        const unsigned char *_getDataByAccessor(tinygltf::Accessor accessor, const tinygltf::Model &model);        
+        int _loadMeshGLTF(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::ViewMesh &out_mesh);
+        int _loadTinyGLTFModel(tinygltf::Model &gltfModel, const std::string &filename);
         int _loadTexturesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);        
-        int _loadTexture(const tinygltf::Image &in_texture, ale::Image &out_texture);
         int _loadNodesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);
-        void _bindNode(const tinygltf::Model &in_model, const tinygltf::Node &n, int parent, int current, ale::Model &out_model);
+        int _loadTextureGLTF(const tinygltf::Image &in_texture, ale::Image &out_texture);
+        void _bindNodeGLTF(const tinygltf::Model &in_model, const tinygltf::Node &n, int parent, int current, ale::Model &out_model);
 
     public:
         Loader();
         ~Loader();
         int loadModelOBJ(char *model_path, ViewMesh &_model);
         int loadModelGLTF(const std::string model_path, ale::Model &out_model);
-        bool loadTexture(const char* path, Image& img);
-        void recordCommandLineArguments(int & argc, char ** argv);
+        bool loadTexture(const char *path, Image &img);
+        void recordCommandLineArguments(int &argc, char **argv);
         int getFlaggedArgument(const std::string flag, std::string &result);
         const std::string &getCmdOption(const std::string &option) const;
         bool cmdOptionExists(const std::string &option) const;
