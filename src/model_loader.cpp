@@ -80,8 +80,8 @@ int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
     return 0;
 }
 
-
-
+// Loads mesh data to ale::ViewMesh
+// TODO: refactor to make the code more readable
 int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                       const tinygltf::Mesh& in_mesh, 
                       ale::ViewMesh& out_mesh) {
@@ -315,6 +315,43 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     }
 }
 
+
+int _checkNodeCollisions(const ale::Model& in_model) {
+
+    std::unordered_map<std::string, int> nameMap;
+    std::unordered_map<int, int> idMap;
+
+    // Check by names
+    for (auto node: in_model.nodes) {
+        
+        if (nameMap.contains(node.name)) {
+            trc::raw << "Node name collision detected!"<< "\n";
+            trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
+            return -1;
+        } else {
+            nameMap[node.name] = 1;
+        }
+    }
+
+    for (auto node: in_model.nodes) {
+        if (idMap.contains(node.id)) {
+            trc::raw << "Node id collision detected!"<< "\n";
+            trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
+            return -1;
+        } else {
+            idMap[node.id] = 1;
+        }
+    }
+    
+    trc::raw << "No collisions detected" << "\n";
+    trc::raw << "nodes:"<< "\n";
+
+    for (auto node: in_model.nodes) {
+        trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
+    }
+    
+    return 0;
+}
 
 // Now loads one mesh and one texture from the .gltf file
 // TODO: Add loading full GLTF scenes
