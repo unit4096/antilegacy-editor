@@ -5,8 +5,8 @@
 
 #endif // GLM
 
-#ifndef PRIMITIVES
-#define PRIMITIVES
+#ifndef ALE_PRIMITIVES
+#define ALE_PRIMITIVES
 
 #pragma once
 #include <memory>
@@ -106,4 +106,4 @@ namespace std {
 }
 
 
-#endif // PRIMITIVES
+#endif // ALE_PRIMITIVES
