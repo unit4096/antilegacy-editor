@@ -866,17 +866,27 @@ private:
         dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
         dynamicState.pDynamicStates = dynamicStates.data();
 
-        VkPushConstantRange pushConstantRange = {};
-        pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-        pushConstantRange.offset = 0;
-        pushConstantRange.size = 64;
+
+
+        std::vector<VkPushConstantRange> pushConstantRanges = {
+            {
+                .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+                .offset = 0,
+                .size = 64,
+            },
+            {
+                .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+                .offset = 64,
+                .size = 16,
+            },
+        };
 
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 1;
         pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-        pipelineLayoutInfo.pushConstantRangeCount = 1;
-        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+        pipelineLayoutInfo.pushConstantRangeCount = pushConstantRanges.size();
+        pipelineLayoutInfo.pPushConstantRanges = &pushConstantRanges.at(0);
 
         if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create pipeline layout!");
@@ -1471,16 +1481,18 @@ private:
             float y = 0.0f;
             float z = 0.0f;
 
-
             // Per object transform
-            float transformMatrix[16] = {
+            float objTransformMatrix[16] = {
                 1, 0, 0, 0,
                 z, 1, 0, 0,
                 y, 0, 1, 0,
                 x, 0, 0, 1,
             };
+
+            float perObjColorData[4] = {0,0,0,0};
             
-            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, pushConstantOffset, pushConstantSize, transformMatrix);
+            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, pushConstantOffset, pushConstantSize, objTransformMatrix);
+            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 64, 16, perObjColorData);
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 

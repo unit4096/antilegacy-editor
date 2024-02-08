@@ -1,5 +1,9 @@
 #version 450
 
+layout(push_constant, std430) uniform pc {
+    layout(offset = 64) vec4 color_data;
+};
+
 layout(binding = 1) uniform sampler2D texSampler;
 
 layout(location = 0) in vec3 fragColor;
@@ -17,8 +21,6 @@ void main() {
     vec3 lightDir = normalize(lightPos - fragPos);
 
     vec3 norm = normalize(fragNormal);
-
-
 
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = diff * lightColor;
