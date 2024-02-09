@@ -784,9 +784,11 @@ private:
         
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+
+        std::string sMainStage = "main";
         
-        VkPipelineShaderStageCreateInfo vertShaderStageInfo = vk::getShaderStageInfo(vertShaderModule, VK_SHADER_STAGE_VERTEX_BIT, "main");
-        VkPipelineShaderStageCreateInfo fragShaderStageInfo = vk::getShaderStageInfo(fragShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT, "main");
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo = vk::getShaderStageInfo(vertShaderModule, VK_SHADER_STAGE_VERTEX_BIT, sMainStage);
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo = vk::getShaderStageInfo(fragShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT, sMainStage);
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
