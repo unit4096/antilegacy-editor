@@ -1,7 +1,11 @@
 #pragma once
 
+/* 
+    Utility functions for Vulkan. 
+*/
 // ext
-#pragma once
+#include <vector>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -11,9 +15,7 @@
 
 #ifndef GLM
 #define GLM
-
 #include <glm/glm.hpp>
-
 #endif //GLM
 
 
@@ -23,12 +25,12 @@
 namespace ale {
 namespace vk {
 
-VkPipelineShaderStageCreateInfo getShaderStageInfo(VkShaderModule &module, VkShaderStageFlagBits stage, std::string name);
+VkPipelineShaderStageCreateInfo getShaderStageInfo(VkShaderModule &module, VkShaderStageFlagBits stage, std::string& name);
 
 VkPipelineShaderStageCreateInfo getShaderStageInfo(
-                                                    VkShaderModule &module,
-                                                    VkShaderStageFlagBits stage,
-                                                    std::string name) {
+                                                VkShaderModule &module,
+                                                VkShaderStageFlagBits stage,
+                                                std::string& name) {
     return {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = stage,
@@ -37,8 +39,141 @@ VkPipelineShaderStageCreateInfo getShaderStageInfo(
     };
 }
 
+// Create a VK shader module from raw .spv code for a given device
+static VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code) {
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create shader module!");
+    }
+
+    return shaderModule;
+}
+
+// Creates a binding description based on binding location and its stride in bytes
+static VkVertexInputBindingDescription getVertBindingDescription(
+                                                        unsigned int binding,
+                                                        unsigned int stride) {    
+    return {
+        .binding = binding,
+        .stride = stride,
+        .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+    };
+}
+
+
+VkPipelineVertexInputStateCreateInfo getVertexInputInfo(
+                const VkVertexInputBindingDescription& bindingDescription,
+                const std::vector<VkVertexInputAttributeDescription>& attributeDescriptions) {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDescription,
+        .vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size()),
+        .pVertexAttributeDescriptions = attributeDescriptions.data(),
+    };
+};
+
+
+static VkPipelineDynamicStateCreateInfo getPipelineDynamicState(
+                            const std::vector<VkDynamicState>& dynamicStates) {
+
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = static_cast<uint32_t>(dynamicStates.size()),
+        .pDynamicStates = dynamicStates.data(),
+    };
+
+};
+
+
+static VkPipelineLayoutCreateInfo getPipelineLayout(
+                const VkDescriptorSetLayout& descriptorSetLayout,
+                const std::vector<VkPushConstantRange>& pushConstantRanges) {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .setLayoutCount = 1,
+        .pSetLayouts = &descriptorSetLayout,
+        .pushConstantRangeCount = static_cast<unsigned int>(pushConstantRanges.size()),
+        .pPushConstantRanges = &pushConstantRanges.at(0),
+    };
+};
+
+static VkPipelineColorBlendStateCreateInfo getColorBlending(
+            const VkPipelineColorBlendAttachmentState& colorBlendAttachment) {
+
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &colorBlendAttachment,
+        .blendConstants = {0,0,0,0},
+    };
     
+};
+
+// Default
+
+
+static VkPipelineViewportStateCreateInfo getDefaultViewportState(){
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .scissorCount = 1,
+    };
+};
+
+
+static VkPipelineInputAssemblyStateCreateInfo getDefaultInputAssembly() {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .primitiveRestartEnable = VK_FALSE,
+    };
+};
+
+
+static VkPipelineRasterizationStateCreateInfo  getDefaultRasterizer() {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .depthClampEnable = VK_FALSE,
+        .rasterizerDiscardEnable = VK_FALSE,
+        .polygonMode = VK_POLYGON_MODE_FILL,
+        .cullMode = VK_CULL_MODE_BACK_BIT,
+        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
+        .depthBiasEnable = VK_FALSE,
+        .lineWidth = 1.0f,
+    };
+};
+
+
+static VkPipelineMultisampleStateCreateInfo getDefaultMultisampling() {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .sampleShadingEnable = VK_FALSE,
+    };
+};
+    
+
+static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
+    return {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+    };
+};
+    
+
+
 } // namespace vk
 } // namespace ale
 
