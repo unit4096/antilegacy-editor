@@ -29,11 +29,31 @@ Loader::Loader() { }
 
 Loader::~Loader() { }
 
+
+std::vector<char> Loader::getFileContent(const std::string& file_path) {
+    std::ifstream file(file_path, std::ios::ate | std::ios::binary);
+
+    if (!Loader::isFileValid(file_path)) {
+        throw std::runtime_error("failed to open file!");
+    }
+
+    size_t fileSize = (size_t) file.tellg();
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+
+    file.close();
+
+    return buffer;
+}
+
+
 // Load an .obj model using a path relative to the project root
 int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
     std::string _path = model_path;
 
-    if (!isFileValid(_path)) {
+    if (!Loader::isFileValid(_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
         return -1;
     }
@@ -358,7 +378,7 @@ int _checkNodeCollisions(const ale::Model& in_model) {
 int Loader::loadModelGLTF(const std::string model_path,
                           ale::Model& out_model) { 
 
-    if (!isFileValid(model_path)) {
+    if (!Loader::isFileValid(model_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
         return 1;
     }
@@ -652,7 +672,7 @@ int Loader::getFlaggedArgument(const std::string flag, std::string& result) {
     if (cmdOptionExists("-f")) {
         std::string file = getCmdOption("-f");
         trc::log("Loaded argument: " + file);         
-        if (isFileValid(file)) {
+        if (Loader::isFileValid(file)) {
             trc::log("File can be loaded: " + file);
             result = file;
             return 0;
@@ -699,7 +719,7 @@ bool Loader::isFileValid(std::string file_path) {
     std::filesystem::path filePath(file_path);
 
     if (std::filesystem::exists(filePath)) {
-        if (_canReadFile(filePath)) {
+        if (Loader::_canReadFile(filePath)) {
             return true;    
         }
     }

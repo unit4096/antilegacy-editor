@@ -23,7 +23,7 @@ namespace ale {
     private:
         std::vector<std::string> commandLineTokens;
         // System IO methods
-        bool _canReadFile(std::filesystem::path p);
+        static bool _canReadFile(std::filesystem::path p);
         // Geometry methods
         void _generateVertexNormals(ale::ViewMesh &_mesh);
         const int _getNumEdgesInMesh(const ViewMesh &_mesh);
@@ -48,7 +48,8 @@ namespace ale {
         int getFlaggedArgument(const std::string flag, std::string &result);
         const std::string &getCmdOption(const std::string &option) const;
         bool cmdOptionExists(const std::string &option) const;
-        bool isFileValid(std::string file_path);
+        static bool isFileValid(std::string file_path);
+        static std::vector<char> getFileContent(const std::string& file_path);
     };
 
 } // namespace loader

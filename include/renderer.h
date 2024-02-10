@@ -28,7 +28,6 @@ initialization and switches to 1.3 structures whenever they are availible
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <iostream>
-#include <fstream>
 #include <stdexcept>
 #include <algorithm>
 #include <chrono>
@@ -52,6 +51,7 @@ initialization and switches to 1.3 structures whenever they are availible
 #include <camera.h>
 #include <tracer.h>
 #include <vulkan_utils.h>
+#include <os_loader.h>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
@@ -775,8 +775,8 @@ private:
     }
 
     void createGraphicsPipeline() {        
-        auto vertShaderCode = readFile("shaders/vert.spv");
-        auto fragShaderCode = readFile("shaders/frag.spv");
+        auto vertShaderCode = Loader::getFileContent("shaders/vert.spv");
+        auto fragShaderCode = Loader::getFileContent("shaders/frag.spv");
         
         auto vertShaderModule = vk::createShaderModule(vkb_device, vertShaderCode);
         auto fragShaderModule = vk::createShaderModule(vkb_device, fragShaderCode);
@@ -1749,26 +1749,6 @@ private:
         }
         
         return indices;
-    }
-
-    // TODO: move this to loader
-
-    static std::vector<char> readFile(const std::string& filename) {
-        std::ifstream file(filename, std::ios::ate | std::ios::binary);
-
-        if (!file.is_open()) {
-            throw std::runtime_error("failed to open file!");
-        }
-
-        size_t fileSize = (size_t) file.tellg();
-        std::vector<char> buffer(fileSize);
-
-        file.seekg(0);
-        file.read(buffer.data(), fileSize);
-
-        file.close();
-
-        return buffer;
     }
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
