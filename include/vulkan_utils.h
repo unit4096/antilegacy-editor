@@ -25,6 +25,17 @@
 namespace ale {
 namespace vk {
 
+
+// ================
+// Getters for vulkan info structs
+// ================
+// {{{
+
+
+// ----
+// Vulkan pipeline creation
+// ----
+
 VkPipelineShaderStageCreateInfo getShaderStageInfo(VkShaderModule &module, VkShaderStageFlagBits stage, std::string& name);
 
 VkPipelineShaderStageCreateInfo getShaderStageInfo(
@@ -38,6 +49,7 @@ VkPipelineShaderStageCreateInfo getShaderStageInfo(
         .pName = name.data(),
     };
 }
+
 
 // Create a VK shader module from raw .spv code for a given device
 static VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code) {
@@ -53,6 +65,7 @@ static VkShaderModule createShaderModule(VkDevice device, const std::vector<char
 
     return shaderModule;
 }
+
 
 // Creates a binding description based on binding location and its stride in bytes
 static VkVertexInputBindingDescription getVertBindingDescription(
@@ -103,6 +116,7 @@ static VkPipelineLayoutCreateInfo getPipelineLayout(
     };
 };
 
+
 static VkPipelineColorBlendStateCreateInfo getColorBlending(
             const VkPipelineColorBlendAttachmentState& colorBlendAttachment) {
 
@@ -117,8 +131,48 @@ static VkPipelineColorBlendStateCreateInfo getColorBlending(
     
 };
 
-// Default
 
+// ----
+// Image creation
+// ----
+
+VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
+                                VkFormat format, VkImageTiling tiling,
+                                VkImageUsageFlags usage) {
+
+    VkExtent3D extent = {
+        .width = w,
+        .height = h,
+        .depth = 1,
+    };
+
+    return {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+        .imageType = VK_IMAGE_TYPE_2D,
+        .format = format,
+        .extent = extent,
+        .mipLevels = 1,
+        .arrayLayers = 1,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .tiling = tiling,
+        .usage = usage,
+        .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+};
+
+// }}}
+
+
+// ================
+// Getters for "default" vulkan structs. Exist to shrink boilerplate code
+// ================
+
+// {{{
+
+// ----
+// Render pipeline arguments
+// ----
 
 static VkPipelineViewportStateCreateInfo getDefaultViewportState(){
     return {
@@ -171,6 +225,8 @@ static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
         .stencilTestEnable = VK_FALSE,
     };
 };
+
+// }}}
     
 
 

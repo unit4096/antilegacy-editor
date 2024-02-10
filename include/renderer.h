@@ -470,6 +470,7 @@ private:
         pickPhysicalDevice();
         createLogicalDevice();
         createSwapChain();
+        // Interesting things start from here
         createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
@@ -503,7 +504,6 @@ private:
             vkDestroyImageView(vkb_device, imageView, nullptr);
         }
 
-        // vkDestroySwapchainKHR(vkb_device, swapChain, nullptr);
         vkb::destroy_swapchain(vkb_swapchain);
     }
 
@@ -763,6 +763,7 @@ private:
         samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
         std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+        
         VkDescriptorSetLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
@@ -1002,20 +1003,7 @@ private:
     }
 
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
-        VkImageCreateInfo imageInfo{};
-        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = width;
-        imageInfo.extent.height = height;
-        imageInfo.extent.depth = 1;
-        imageInfo.mipLevels = 1;
-        imageInfo.arrayLayers = 1;
-        imageInfo.format = format;
-        imageInfo.tiling = tiling;
-        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageInfo.usage = usage;
-        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VkImageCreateInfo imageInfo = vk::getImageInfo(width, height, format, tiling, usage);
 
         if (vkCreateImage(vkb_device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
             throw std::runtime_error("failed to create image!");
@@ -1158,6 +1146,7 @@ private:
         VkDeviceSize bufferSize = 0;
         indexBufferCount = 0;
 
+        // Samples the first index for default size
         auto index = model.meshes[0].indices[0];
 
         if (model.meshes.size() <= 0) {
@@ -1168,7 +1157,7 @@ private:
             bufferSize += sizeof(index) * m.indices.size();            
             indexBufferCount += m.indices.size();
         }
-
+ 
         if (bufferSize <= 0) {
             throw std::runtime_error("Vertex buffer size is 0!");
         }
@@ -1761,6 +1750,8 @@ private:
         
         return indices;
     }
+
+    // TODO: move this to loader
 
     static std::vector<char> readFile(const std::string& filename) {
         std::ifstream file(filename, std::ios::ate | std::ios::binary);
