@@ -170,6 +170,38 @@ VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
 
 // {{{
 
+
+// ----
+// Descriptor set arguments
+// ----
+
+static void pushBackDescriptorSetBinding(
+                            std::vector<VkDescriptorSetLayoutBinding>& bindings,
+                            const unsigned int count,
+                            const VkDescriptorType type,
+                            const VkShaderStageFlags flags,
+                            const VkSampler* immutableSamplers = nullptr) {
+
+    VkDescriptorSetLayoutBinding binding {};
+    binding.binding = bindings.size();
+    binding.descriptorCount = count;
+    binding.descriptorType = type;
+    binding.stageFlags = flags;
+    binding.pImmutableSamplers = immutableSamplers;
+
+    bindings.push_back(binding);
+}
+
+static VkDescriptorSetLayoutCreateInfo getDescriptorSetLayout(
+                    const std::vector<VkDescriptorSetLayoutBinding>& bindings){
+    return {
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(bindings.size()),
+        .pBindings = bindings.data(),
+    };
+
+};
+
 // ----
 // Render pipeline arguments
 // ----
