@@ -31,7 +31,7 @@
 #include <camera.h>
 #include <renderer.h>
 #include <tracer.h>
-#include <model_loader.h>
+#include <os_loader.h>
 
 
 namespace ale {
