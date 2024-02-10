@@ -31,6 +31,26 @@ namespace vk {
 // ================
 // {{{
 
+// ----
+// Descriptor set arguments
+// ----
+
+static void pushBackDescriptorSetBinding(
+                            std::vector<VkDescriptorSetLayoutBinding>& bindings,
+                            const unsigned int count,
+                            const VkDescriptorType type,
+                            const VkShaderStageFlags flags,
+                            const VkSampler* immutableSamplers = nullptr) {
+
+    VkDescriptorSetLayoutBinding binding {};
+    binding.binding = bindings.size();
+    binding.descriptorCount = count;
+    binding.descriptorType = type;
+    binding.stageFlags = flags;
+    binding.pImmutableSamplers = immutableSamplers;
+
+    bindings.push_back(binding);
+}
 
 // ----
 // Vulkan pipeline creation
@@ -169,28 +189,6 @@ VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
 // ================
 
 // {{{
-
-
-// ----
-// Descriptor set arguments
-// ----
-
-static void pushBackDescriptorSetBinding(
-                            std::vector<VkDescriptorSetLayoutBinding>& bindings,
-                            const unsigned int count,
-                            const VkDescriptorType type,
-                            const VkShaderStageFlags flags,
-                            const VkSampler* immutableSamplers = nullptr) {
-
-    VkDescriptorSetLayoutBinding binding {};
-    binding.binding = bindings.size();
-    binding.descriptorCount = count;
-    binding.descriptorType = type;
-    binding.stageFlags = flags;
-    binding.pImmutableSamplers = immutableSamplers;
-
-    bindings.push_back(binding);
-}
 
 static VkDescriptorSetLayoutCreateInfo getDescriptorSetLayout(
                     const std::vector<VkDescriptorSetLayoutBinding>& bindings){
