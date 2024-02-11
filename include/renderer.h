@@ -212,6 +212,8 @@ public:
         vkResetFences(vkb_device, 1, &inFlightFences[currentFrame]);
 
         vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+
+        
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
         VkSubmitInfo submitInfo{};
@@ -756,7 +758,7 @@ private:
         vk::pushBackDescriptorSetBinding(layoutBindings, 1,
                                          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                          VK_SHADER_STAGE_FRAGMENT_BIT);
-        
+                
         auto layoutInfo = vk::getDescriptorSetLayout(layoutBindings);
 
         if (vkCreateDescriptorSetLayout(vkb_device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
@@ -788,8 +790,10 @@ private:
 
         VkPipelineColorBlendAttachmentState colorBlendAttachment = {
             .blendEnable = VK_FALSE,
-            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                              VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+            .colorWriteMask = 	VK_COLOR_COMPONENT_R_BIT |
+								VK_COLOR_COMPONENT_G_BIT |
+								VK_COLOR_COMPONENT_B_BIT | 
+								VK_COLOR_COMPONENT_A_BIT,
         };
 
         auto colorBlending = vk::getColorBlending(colorBlendAttachment);
@@ -816,9 +820,9 @@ private:
 
         auto pipelineLayoutInfo = vk::getPipelineLayout(descriptorSetLayout, pushConstantRanges);
         
-        if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create pipeline layout!");
-        }
+        if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) { 
+			throw std::runtime_error("failed to create pipeline layout!");
+		}
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -1373,12 +1377,7 @@ private:
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderPass;
-        renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-        renderPassInfo.renderArea.offset = {0, 0};
-        renderPassInfo.renderArea.extent = swapChainExtent;
+        VkRenderPassBeginInfo renderPassInfo = vk::getRenderPassBegin(renderPass, swapChainFramebuffers[imageIndex], swapChainExtent);
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
@@ -1410,15 +1409,10 @@ private:
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, pushConstantOffset, pushConstantSize, objTransformMatrix);
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 64, 16, perObjColorData);
 
+
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-            VkViewport viewport{};
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.width = (float) swapChainExtent.width;
-            viewport.height = (float) swapChainExtent.height;
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
+            VkViewport viewport = vk::getViewport(swapChainExtent);            
             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
             VkRect2D scissor{};
@@ -1428,9 +1422,11 @@ private:
 
             VkBuffer vertexBuffers[] = {vertexBuffer};
             VkDeviceSize offsets[] = {0};
+            
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+            
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 

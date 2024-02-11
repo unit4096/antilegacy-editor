@@ -316,11 +316,20 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     ale::Node ale_node;
     ale_node.mesh = n.mesh;
     if (n.translation.size() >= 3) {
-        ale_node.pos.x = n.translation[0];
-        ale_node.pos.y = n.translation[1];
-        ale_node.pos.z = n.translation[2];
+		
+		float x = n.translation[0];
+        float y = n.translation[1];
+		float z = n.translation[2];
+
+        float newTransform[16] = {
+                1, 0, 0, 0,
+                z, 1, 0, 0,
+                y, 0, 1, 0,
+                x, 0, 0, 1,
+            };
+        ale_node.transform = glm::make_mat4(newTransform);
     } else {
-        ale_node.pos = glm::vec3(0);
+		ale_node.transform = glm::mat4(0);
     }
     ale_node.name = n.name;
     ale_node.children = n.children;

@@ -12,6 +12,7 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
 
@@ -65,7 +66,7 @@ struct ViewMesh {
 
 struct Node {
     std::string name;
-    glm::vec3 pos;
+    glm::mat4 transform;
     int id;
     int parent = -1;
     int mesh = -1;

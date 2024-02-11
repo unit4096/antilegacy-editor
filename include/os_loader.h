@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <set>
 #include <utility>
+#include <glm/gtc/type_ptr.hpp>
 
 // int
 #include <primitives.h>
