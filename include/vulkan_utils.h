@@ -18,6 +18,8 @@
 #include <glm/glm.hpp>
 #endif //GLM
 
+#ifndef ALE_VK_UTILS
+#define ALE_VK_UTILS
 
 // Int
 #include <primitives.h>
@@ -57,7 +59,7 @@ static void pushBackDescriptorSetBinding(
 // ----
 
 
-VkPipelineShaderStageCreateInfo getShaderStageInfo(
+static VkPipelineShaderStageCreateInfo getShaderStageInfo(
 										VkShaderModule &module,
                                         VkShaderStageFlagBits stage,
                                         std::string& name) {
@@ -98,7 +100,7 @@ static VkVertexInputBindingDescription getVertBindingDescription(
 }
 
 
-VkPipelineVertexInputStateCreateInfo getVertexInputInfo(
+static VkPipelineVertexInputStateCreateInfo getVertexInputInfo(
                 const VkVertexInputBindingDescription& bindingDescription,
                 const std::vector<VkVertexInputAttributeDescription>& attributeDescriptions) {
     return {
@@ -155,7 +157,7 @@ static VkPipelineColorBlendStateCreateInfo getColorBlending(
 // Image creation
 // ----
 
-VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
+static VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
                                 VkFormat format, VkImageTiling tiling,
                                 VkImageUsageFlags usage) {
 
@@ -185,7 +187,7 @@ VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
 // Draw command 
 // ----
 
-VkRenderPassBeginInfo getRenderPassBegin(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D swapChainExtent) {
+static VkRenderPassBeginInfo getRenderPassBegin(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D swapChainExtent) {
 
     VkRect2D renderArea {
         .offset = {0, 0},
@@ -201,7 +203,7 @@ VkRenderPassBeginInfo getRenderPassBegin(VkRenderPass renderPass, VkFramebuffer 
     };
 };
 
-VkViewport getViewport(VkExtent2D swapChainExtent){
+static VkViewport getViewport(VkExtent2D swapChainExtent){
     return {
         .x = 0.0f,
         .y = 0.0f,
@@ -294,5 +296,4 @@ static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
 } // namespace vk
 } // namespace ale
 
-
-
+#endif ALE_VK_UTILS
