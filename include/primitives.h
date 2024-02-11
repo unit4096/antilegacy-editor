@@ -11,6 +11,7 @@
 #pragma once
 #include <memory>
 #include <vector>
+#include <string>
 #include <functional>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
@@ -20,7 +21,7 @@ namespace ale { }
 
 using namespace ale;
 
-// TOOD: add namespace 
+// TOOD: add namespace
 namespace ale {
 struct Model;
 struct ViewMesh;
@@ -36,13 +37,10 @@ struct Vertex {
     glm::vec3 normal = glm::vec3(0);
 
     bool operator==(const ale::Vertex& other) const {
-        return pos == other.pos && color == other.color && texCoord == other.texCoord;
+      return pos == other.pos && color == other.color &&
+             texCoord == other.texCoord;
     }
 };
-
-
-
-
 
 
 // An image struct with img. parameters and a raw pointer to data. Used for stbi
@@ -52,7 +50,6 @@ struct Image {
     int channels;
     std::vector<unsigned char> data;
 };
-
 
 
 // Basic mesh, contains arrays of indices and vertices
@@ -73,12 +70,14 @@ struct Node {
     std::vector<int> children{};
 };
 
+
 struct Model {
     std::vector<ViewMesh> meshes;
-    std::vector<Image> textures;    
+    std::vector<Image> textures;
     std::vector<Node> nodes;
     std::vector<int> rootNodes;
 };
+
 
 // Basic 2D vector from 2 floats. Can be used as a vector implementation wrapper
 struct v2f {
@@ -86,13 +85,16 @@ struct v2f {
     v2f(float _x, float _y):x(_x), y(_y){}
 };
 
+
 // Basic 2D vector from 2 doubles. Can be used as a vector implementation wrapper
 struct v2d {
     double x,y;
     v2d(double _x, double _y):x(_x), y(_y){}
 };
 
+
 } // namespace ale
+
 
 // A hash funciton to compare vertices. For removing duplicates in unordered_map
 namespace std {
