@@ -56,12 +56,11 @@ static void pushBackDescriptorSetBinding(
 // Vulkan pipeline creation
 // ----
 
-VkPipelineShaderStageCreateInfo getShaderStageInfo(VkShaderModule &module, VkShaderStageFlagBits stage, std::string& name);
 
 VkPipelineShaderStageCreateInfo getShaderStageInfo(
-                                                VkShaderModule &module,
-                                                VkShaderStageFlagBits stage,
-                                                std::string& name) {
+										VkShaderModule &module,
+                                        VkShaderStageFlagBits stage,
+                                        std::string& name) {
     return {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = stage,
@@ -178,6 +177,38 @@ VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
         .usage = usage,
         .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+};
+
+
+// ----
+// Draw command 
+// ----
+
+VkRenderPassBeginInfo getRenderPassBegin(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D swapChainExtent) {
+
+    VkRect2D renderArea {
+        .offset = {0, 0},
+        .extent = swapChainExtent,
+    };
+    
+    return {
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+        .pNext = VK_NULL_HANDLE,
+        .renderPass = renderPass,
+        .framebuffer = frameBuffer,
+        .renderArea = renderArea,
+    };
+};
+
+VkViewport getViewport(VkExtent2D swapChainExtent){
+    return {
+        .x = 0.0f,
+        .y = 0.0f,
+        .width = (float) swapChainExtent.width,
+        .height = (float) swapChainExtent.height,
+        .minDepth = 0.0f,
+        .maxDepth = 1.0f,
     };
 };
 
