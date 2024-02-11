@@ -1,4 +1,4 @@
-/* 
+/*
 This is a Vulkan renderer. This code is mostly salvaged from vulkan-tutorial.com
 and adapted to my needs. Since for now [03.12.2023] the editor is still in
 development, renederer code still somewhat resembles the original tutorial code.
@@ -110,12 +110,11 @@ public:
         ImGui::CreateContext();
         this->io = std::make_shared<ImGuiIO>(ImGui::GetIO());
     };
-                                                
-    
+
 
     void initWindow() {
         glfwInit();
-    
+
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
         window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
@@ -125,11 +124,11 @@ public:
         destructorStack.push([this](){
             glfwDestroyWindow(window);
             glfwTerminate();
-            return false;            
+            return false;
         });
-        
+
     }
-    
+
     void initRenderer() {
         initVulkan();
         initImGUI();
@@ -156,16 +155,16 @@ public:
 
         mainCamera->setForwardOrientation(data.yaw, data.pitch);
         // View matrix
-        if (mainCamera->mode == CameraMode::FREE) { 
+        if (mainCamera->mode == CameraMode::FREE) {
             glm::mat4x4 viewMatrix(1.0f);
-            
+
             float yawAng = glm::radians(data.yaw);
 
             // Generate pitch vector based on the yaw angle
             glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
             float pitchAng = glm::radians(data.pitch);
-            
-            // Apply yaw rotation            
+
+            // Apply yaw rotation
             viewMatrix = glm::rotate(viewMatrix, yawAng, global_up);
             // Apply pitch rotation
             viewMatrix = glm::rotate(viewMatrix, pitchAng, pitchVec);
@@ -182,7 +181,7 @@ public:
         ubo.proj = glm::perspective(glm::radians(data.fov),
                         swapChainExtent.width / (float) swapChainExtent.height,
                         data.nearPlane, data.farPlane);
-        ubo.proj[1][1] *= -1;                
+        ubo.proj[1][1] *= -1;
 
         ubo.light = _lightPosition;
     }
@@ -213,7 +212,7 @@ public:
 
         vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
 
-        
+
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
         VkSubmitInfo submitInfo{};
@@ -265,7 +264,7 @@ public:
         // Stop the device for cleanup
         vkDeviceWaitIdle(vkb_device);
 
-        // CLEAN IMGUI 
+        // CLEAN IMGUI
         // START
         ImGui_ImplVulkan_Shutdown();
         ImGui_ImplGlfw_Shutdown();
@@ -342,7 +341,7 @@ private:
 
     vkb::PhysicalDevice vkb_physicalDevice;
     vkb::Device vkb_device;
-    
+
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
@@ -407,7 +406,7 @@ private:
                 .format = VK_FORMAT_R32G32B32_SFLOAT,
                 .offset = offsetof(ale::Vertex, normal),
             }
-        };        
+        };
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
@@ -439,8 +438,14 @@ private:
 
     bool framebufferResized = false;
 
-    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
-        auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    static VkResult CreateDebugUtilsMessengerEXT(
+        VkInstance instance,
+        const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo,
+        const VkAllocationCallbacks *pAllocator,
+        VkDebugUtilsMessengerEXT *pDebugMessenger) {
+
+        auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+            instance, "vkCreateDebugUtilsMessengerEXT");
         if (func != nullptr) {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
         } else {
@@ -448,13 +453,16 @@ private:
         }
     }
 
-    static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
-        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    static void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+                                  VkDebugUtilsMessengerEXT debugMessenger,
+                                  const VkAllocationCallbacks *pAllocator) {
+
+        auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
+            instance, "vkDestroyDebugUtilsMessengerEXT");
         if (func != nullptr) {
             func(instance, debugMessenger, pAllocator);
         }
     }
-
 
     // FIXME: causes stack-use-after-return. investigate
     static void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
@@ -509,7 +517,7 @@ private:
         vkb::destroy_swapchain(vkb_swapchain);
     }
 
-    
+
     void recreateSwapChain() {
         int width = 0, height = 0;
         glfwGetFramebufferSize(window, &width, &height);
@@ -558,16 +566,16 @@ private:
 
 
         if (!instance_res) {
-            throw std::runtime_error("failed to create instance!");    
+            throw std::runtime_error("failed to create instance!");
         }
-        
+
         vkb_instance = instance_res.value();
 
         destructorStack.push([this](){
             vkb::destroy_instance(vkb_instance);
-            return false;            
+            return false;
         });
-        
+
     }
 
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
@@ -592,7 +600,7 @@ private:
             if (renderer_enableValidationLayers) {
                 DestroyDebugUtilsMessengerEXT(vkb_instance, debugMessenger, nullptr);
             }
-            return false;            
+            return false;
         });
     }
 
@@ -603,13 +611,13 @@ private:
 
         destructorStack.push([this](){
             vkb::destroy_surface(vkb_instance, surface);
-            return false;            
+            return false;
         });
     }
 
-    /* 
+    /*
     Picks a physical device according to its rating for the physicalDevice field.
-    TODO: Add overrides and handlers for manual device selection    
+    TODO: Add overrides and handlers for manual device selection
     */
     void pickPhysicalDevice() {
 
@@ -619,8 +627,8 @@ private:
         if (deviceCount == 0) {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
-        
-        vkb::PhysicalDeviceSelector phys_device_selector(vkb_instance); 
+
+        vkb::PhysicalDeviceSelector phys_device_selector(vkb_instance);
         auto physical_device_selector_return = phys_device_selector
                 .set_surface(surface)
                 .select();
@@ -635,23 +643,23 @@ private:
 
     void createLogicalDevice() {
         vkb::DeviceBuilder builder{vkb_physicalDevice};
-        
+
         auto dev_ret = builder.build();
 
         if (!dev_ret) {
-            throw std::runtime_error("failed to create logical device!");   
+            throw std::runtime_error("failed to create logical device!");
         }
 
         vkb_device = dev_ret.value();
 
         auto queue_graphics = vkb_device.get_queue(vkb::QueueType::graphics);
         if (!queue_graphics) {
-            throw std::runtime_error("failed to find graphics queue!");   
+            throw std::runtime_error("failed to find graphics queue!");
         }
 
         auto queue_present = vkb_device.get_queue(vkb::QueueType::present);
         if (!queue_present) {
-            throw std::runtime_error("failed to find present queue!");   
+            throw std::runtime_error("failed to find present queue!");
         }
 
         graphicsQueue = queue_graphics.value();
@@ -659,7 +667,7 @@ private:
 
         destructorStack.push([this](){
             vkb::destroy_device(vkb_device);
-            return false;            
+            return false;
         });
     }
 
@@ -667,7 +675,7 @@ private:
         vkb::SwapchainBuilder swapchain_builder{ vkb_device };
         auto swap_ret = swapchain_builder
                         .build();
-        
+
         if (!swap_ret){
             throw std::runtime_error("failed to create swap chain!");
         }
@@ -680,13 +688,13 @@ private:
 
         swapChainImages = vkb_swapchain.get_images().value();
         swapChainImageViews = vkb_swapchain.get_image_views().value();
-        
+
         swapChainImageFormat =  vkb_swapchain.image_format;
         swapChainExtent = vkb_swapchain.extent;
 
         // destructorStack.push([this](){
         //     vkb::destroy_swapchain(vkb_swapchain);
-        //     return false;            
+        //     return false;
         // });
     }
 
@@ -758,7 +766,7 @@ private:
         vk::pushBackDescriptorSetBinding(layoutBindings, 1,
                                          VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
                                          VK_SHADER_STAGE_FRAGMENT_BIT);
-                
+
         auto layoutInfo = vk::getDescriptorSetLayout(layoutBindings);
 
         if (vkCreateDescriptorSetLayout(vkb_device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
@@ -766,20 +774,20 @@ private:
         }
     }
 
-    void createGraphicsPipeline() {        
+    void createGraphicsPipeline() {
         auto vertShaderCode = Loader::getFileContent("shaders/vert.spv");
         auto fragShaderCode = Loader::getFileContent("shaders/frag.spv");
-        
+
         auto vertShaderModule = vk::createShaderModule(vkb_device, vertShaderCode);
         auto fragShaderModule = vk::createShaderModule(vkb_device, fragShaderCode);
 
-        std::string sMainStage = "main";  
+        std::string sMainStage = "main";
 
         auto vertShaderStageInfo = vk::getShaderStageInfo(vertShaderModule, VK_SHADER_STAGE_VERTEX_BIT, sMainStage);
         auto fragShaderStageInfo = vk::getShaderStageInfo(fragShaderModule, VK_SHADER_STAGE_FRAGMENT_BIT, sMainStage);
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
-        
+
         auto vertexInputInfo = vk::getVertexInputInfo(ale_VertexBindingDescription,
                                                     ale_VertexAttributeDescriptions);
         auto inputAssembly = vk::getDefaultInputAssembly();
@@ -792,7 +800,7 @@ private:
             .blendEnable = VK_FALSE,
             .colorWriteMask = 	VK_COLOR_COMPONENT_R_BIT |
 								VK_COLOR_COMPONENT_G_BIT |
-								VK_COLOR_COMPONENT_B_BIT | 
+								VK_COLOR_COMPONENT_B_BIT |
 								VK_COLOR_COMPONENT_A_BIT,
         };
 
@@ -819,8 +827,8 @@ private:
         };
 
         auto pipelineLayoutInfo = vk::getPipelineLayout(descriptorSetLayout, pushConstantRanges);
-        
-        if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) { 
+
+        if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 
@@ -921,7 +929,7 @@ private:
     }
 
     void createTextureImage() {
-        
+
         VkDeviceSize imageSize = image.w * image.h * 4;
 
         VkBuffer stagingBuffer;
@@ -933,7 +941,7 @@ private:
         vkMapMemory(vkb_device, stagingBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
             memcpy(data, &image.data.at(0), static_cast<size_t>(imageSize));
         vkUnmapMemory(vkb_device, stagingBufferMemory);
-        
+
         createImage(image.w, image.h, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
         transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -1105,7 +1113,7 @@ private:
         if (bufferSize <= 0) {
             throw std::runtime_error("Vertex buffer size is 0!");
         }
-        
+
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1136,7 +1144,7 @@ private:
     }
 
     void createIndexBuffer() {
-        
+
         VkDeviceSize bufferSize = 0;
         indexBufferCount = 0;
 
@@ -1148,10 +1156,10 @@ private:
         }
 
         for(auto m: model.meshes) {
-            bufferSize += sizeof(index) * m.indices.size();            
+            bufferSize += sizeof(index) * m.indices.size();
             indexBufferCount += m.indices.size();
         }
- 
+
         if (bufferSize <= 0) {
             throw std::runtime_error("Vertex buffer size is 0!");
         }
@@ -1184,7 +1192,7 @@ private:
                 memoryItr += memoryOffset;
                 idxOffset += model.meshes[i].indices.size();
             }
-                    
+
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
@@ -1405,14 +1413,14 @@ private:
             };
 
             float perObjColorData[4] = {0,0,0,0};
-            
+
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, pushConstantOffset, pushConstantSize, objTransformMatrix);
             vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 64, 16, perObjColorData);
 
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
-            VkViewport viewport = vk::getViewport(swapChainExtent);            
+            VkViewport viewport = vk::getViewport(swapChainExtent);
             vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
             VkRect2D scissor{};
@@ -1422,15 +1430,15 @@ private:
 
             VkBuffer vertexBuffers[] = {vertexBuffer};
             VkDeviceSize offsets[] = {0};
-            
+
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-            
+
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
 
-            vkCmdDrawIndexed(commandBuffer, indexBufferCount, 1, 0, 0, 0);            
+            vkCmdDrawIndexed(commandBuffer, indexBufferCount, 1, 0, 0, 0);
 
             // TODO: make implementation of imgui into a separate abstraction
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
@@ -1473,8 +1481,8 @@ private:
     void setStyleImGui() {
         //TODO: move this code to a config file
         ImGuiStyle &style = ImGui::GetStyle();
-        
-        
+
+
         style.WindowMinSize        = ImVec2( 160, 20 );
         // style.FramePadding         = ImVec2( 2, 1 );
         style.ItemSpacing          = ImVec2( 6, 2 );
@@ -1488,10 +1496,10 @@ private:
         style.GrabMinSize          = 14.0f;
         style.GrabRounding         = 16.0f;
         style.ScrollbarSize        = 12.0f;
-        style.ScrollbarRounding    = 16.0f;        
+        style.ScrollbarRounding    = 16.0f;
         style.ScaleAllSizes(4);
-        
-        float size_pixels = 20;        
+
+        float size_pixels = 20;
         ImFontConfig config;
         io->Fonts->Clear();
         io->Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
@@ -1503,7 +1511,7 @@ private:
         // Set up style
         ImGui::StyleColorsDark();
         setStyleImGui();
-        
+
         // FIXME: this pool definition a: is an overkill; b: does not use helpers
         VkDescriptorPoolSize pool_sizes[] =
         {
@@ -1554,7 +1562,7 @@ private:
         ImGui::NewFrame();
         ImGuizmo::BeginFrame();
         ImGuiIO& _io = ImGui::GetIO();
-        
+
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
 
@@ -1568,7 +1576,7 @@ private:
             glm::mat4 gridModelMat = glm::mat4(1);
 
             // Looks like ImGuizmo uses -y as up, so i need to flip the proj
-            glm::mat4 flippedProj = 
+            glm::mat4 flippedProj =
                         glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f))
                         * ubo.proj;
 
@@ -1596,7 +1604,7 @@ private:
             if (ImGui::BeginMenu("Edit")) {
                 if (ImGui::MenuItem("Test Item", "TEST*BINDING")) {}
                 ImGui::Separator();
-                if (ImGui::MenuItem("Test Item 2", "TEST+BINDING+2")) {}                
+                if (ImGui::MenuItem("Test Item 2", "TEST+BINDING+2")) {}
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("View")) {
@@ -1606,10 +1614,10 @@ private:
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
-        }        
+        }
 
         CameraData camData = mainCamera->getData();
-        
+
         {
 
             ImGui::Begin("View configs");
@@ -1705,7 +1713,7 @@ private:
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
         std::optional<unsigned int> computeFamily;
-        
+
         int i = 0;
         for (const auto& queueFamily : queueFamilies) {
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
@@ -1733,7 +1741,7 @@ private:
         if (!computeFamily.has_value()) {
             trc::log("No support for compute shaders detected!", trc::WARNING);
         }
-        
+
         return indices;
     }
 
