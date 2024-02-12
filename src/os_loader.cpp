@@ -3,7 +3,7 @@
 
 // ext
 
-/* 
+/*
 TinyOBJLoader and TinyGLTF must be included in a .cpp file. Thus, I use helper 
 functions as non-class members that do not expose TinyOBJLoader and TinyGLTF
 to the header.
@@ -19,7 +19,6 @@ to the header.
 
 using namespace ale;
 
-namespace geo = ale::geo;
 
 namespace trc = ale::Tracer;
 
@@ -28,7 +27,6 @@ const bool COMPRESS_VERTEX_DUPLICATES = false;
 Loader::Loader() { }   
 
 Loader::~Loader() { }
-
 
 std::vector<char> Loader::getFileContent(const std::string& file_path) {
     std::ifstream file(file_path, std::ios::ate | std::ios::binary);
@@ -84,7 +82,7 @@ int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
             vertex.texCoord = {
                 attrib.texcoords[2 * index.texcoord_index + 0],
                 1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-            };            
+            };
 
             vertex.color = {1.0f, 1.0f, 1.0f};
 
@@ -103,8 +101,8 @@ int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
 // Loads mesh data to ale::ViewMesh
 // TODO: refactor to make the code more readable
 int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
-                      const tinygltf::Mesh& in_mesh, 
-                      ale::ViewMesh& out_mesh) {
+                          const tinygltf::Mesh& in_mesh,
+                          ale::ViewMesh& out_mesh) {
 
     auto loadMeshAttribute = [&](tinygltf::Primitive& prim,
                              std::string attrName){
@@ -114,8 +112,8 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                     _getDataByAccessor(accessor, in_model));
     };
 
-    
-    for (auto primitive : in_mesh.primitives) {    
+
+    for (auto primitive : in_mesh.primitives) {
 
         int indicesIdx = primitive.indices;
         bool bHasIndices = false;
@@ -139,15 +137,15 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
         for (auto attr: primitive.attributes) {
             trc::log("This mesh has " + attr.first);
         }
-        
+
         std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
-        if (!primitive.attributes.contains("POSITION") || 
+        if (!primitive.attributes.contains("POSITION") ||
             !primitive.attributes.contains("TEXCOORD_0")) {
             trc::log("Mesh loader currently requres both positions and UV textures", trc::LogLevel::ERROR);
             return -1;
         }
-        
+
 
         const float* positions = nullptr;
         const float* uvPositions = nullptr;
@@ -174,30 +172,30 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                 out_mesh.maxPos.push_back(max);
             }
         }
-        
+
 
         for (size_t i = 0; i < posAccessor.count; ++i) {
 
             vertex.pos = {
                 positions[i * 3 + 0],
                 positions[i * 3 + 1],
-                positions[i * 3 + 2],                
+                positions[i * 3 + 2],
             };
             vertex.color = {1.0f, 1.0f, 1.0f};
 
 			float u_raw = uvPositions[i * 2 + 0];
 			float v_raw = uvPositions[i * 2 + 1];
-            float u, v;                   
+            float u, v;
 
             // Check if there are min and max UV values and normalize it
-            // FIXME: it is possible that the model does not use the entire UV 
+            // FIXME: it is possible that the model does not use the entire UV
             // space of the texture. Normalization code will not work in this case
             if (UVAccessor.minValues.size() > 1 && 
                 UVAccessor.maxValues.size() > 1) {
                 // Normalize if possible
                 float min_u = static_cast<float>(UVAccessor.minValues[0]);
                 float min_v = static_cast<float>(UVAccessor.minValues[1]);
-                
+
                 float max_u = static_cast<float>(UVAccessor.maxValues[0]);
                 float max_v = static_cast<float>(UVAccessor.maxValues[1]);
 
@@ -213,7 +211,7 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
 
             vertex.texCoord = {
                 u,
-				v,		
+				v,
             };
 
             if (normals) {
@@ -223,7 +221,7 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                     normals[i * 3 + 2]
                 };
             }
-                                
+
             // Checks whether the loader should remove vertex duplicates. Needed
             // for debug. Hopefully the compiler will optimize away this check
             // since the flag's value is const
@@ -233,7 +231,7 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                                                 out_mesh.vertices.size());
                     out_mesh.vertices.push_back(vertex);
                 }
-                out_mesh.indices.push_back(uniqueVertices[vertex]);    
+                out_mesh.indices.push_back(uniqueVertices[vertex]);
             } else {
                 out_mesh.vertices.push_back(vertex);
                 if (!bHasIndices) {
@@ -253,7 +251,7 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
 
 int Loader::_loadTexturesGLTF(const tinygltf::Model& in_model, ale::Model& out_model) {
 
-    for (auto tex: in_model.textures) {    
+    for (auto tex: in_model.textures) {
         if (tex.source > -1) {
             ale::Image _image;
             _loadTextureGLTF(in_model.images[tex.source], _image);
@@ -274,7 +272,7 @@ int Loader::_loadTextureGLTF(const tinygltf::Image& in_texture, ale::Image& out_
         trc::log("Invalid tex parameters, aborting", trc::LogLevel::ERROR);
         return -1;
     }
-    
+
     // image.component; // Defines the dimensions of each texel
     // image.bits // Defines the number of bits in each dimension
 
@@ -282,23 +280,20 @@ int Loader::_loadTextureGLTF(const tinygltf::Image& in_texture, ale::Image& out_
     // over image data
     out_texture.data = in_texture.image;
     out_texture.w = in_texture.width;
-    out_texture.h = in_texture.height;            
+    out_texture.h = in_texture.height;
     return 0;
 }
 
 int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
                            ale::Model& out_model ) {
-    
-    // trc::log("Not implemented!", trc::LogLevel::ERROR);
-    // return -1;
-    
+
     if (in_model.nodes.size() < 1) {
         trc::log("No nodes found", trc::LogLevel::ERROR);
         return -1;
     }
-    
+
     const auto &scene = in_model.scenes[in_model.defaultScene];
-    
+
     // TODO: Use iteration. It is safer than recursion
     for (size_t i = 0; i < scene.nodes.size(); i++) {
         _bindNodeGLTF(in_model, in_model.nodes[i], -1, i,  out_model);
@@ -309,33 +304,46 @@ int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
 }
 
 // Recursively builds node hierarchy
-void Loader::_bindNodeGLTF(const tinygltf::Model& in_model, 
+void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
                        const tinygltf::Node& n,
                        int parent, int current,  ale::Model& out_model ) {
-    
     ale::Node ale_node;
     ale_node.mesh = n.mesh;
-    if (n.translation.size() >= 3) {
-		
+
+    glm::mat4 newTransform = glm::mat4(0);
+
+    if (n.matrix.size() == 16) {
+        newTransform = glm::make_mat4(n.matrix.data());
+    }
+
+    if (n.translation.size() == 3) {
 		float x = n.translation[0];
         float y = n.translation[1];
 		float z = n.translation[2];
 
-        float newTransform[16] = {
-                1, 0, 0, 0,
-                z, 1, 0, 0,
-                y, 0, 1, 0,
-                x, 0, 0, 1,
-            };
-        ale_node.transform = glm::make_mat4(newTransform);
-    } else {
-		ale_node.transform = glm::mat4(0);
+        newTransform[1][0] = z;
+        newTransform[2][0] = y;
+        newTransform[3][0] = x;
+
     }
+
+    if (n.rotation.size() == 4) {
+        glm::quat rotation = glm::make_quat(n.rotation.data());
+        newTransform *= glm::mat4_cast(rotation);
+    }
+
+    if (n.scale.size() == 3) {
+
+        glm::vec3 scale = glm::make_vec3(n.scale.data());
+        newTransform = glm::scale(newTransform, scale);
+    }
+
+	ale_node.transform = newTransform;
     ale_node.name = n.name;
     ale_node.children = n.children;
     ale_node.id = current;
     ale_node.parent = parent;
-    
+
     out_model.nodes.push_back(ale_node);
 
     for (size_t i = 0; i < n.children.size(); i++) {
@@ -352,7 +360,7 @@ int _checkNodeCollisions(const ale::Model& in_model) {
 
     // Check by names
     for (auto node: in_model.nodes) {
-        
+
         if (nameMap.contains(node.name)) {
             trc::raw << "Node name collision detected!"<< "\n";
             trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
@@ -371,21 +379,21 @@ int _checkNodeCollisions(const ale::Model& in_model) {
             idMap[node.id] = 1;
         }
     }
-    
+
     trc::raw << "No collisions detected" << "\n";
     trc::raw << "nodes:"<< "\n";
 
     for (auto node: in_model.nodes) {
         trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
     }
-    
+
     return 0;
 }
 
 // Now loads one mesh and one texture from the .gltf file
 // TODO: Add loading full GLTF scenes
 int Loader::loadModelGLTF(const std::string model_path,
-                          ale::Model& out_model) { 
+                          ale::Model& out_model) {
 
     if (!Loader::isFileValid(model_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
@@ -414,25 +422,23 @@ int Loader::loadModelGLTF(const std::string model_path,
         out_model.meshes.push_back(_out_mesh);
     }
 
-
-    // TODO: Check for node index collisions. Nodes should not have the same indices
     _loadNodesGLTF(in_model, out_model);
 
 
     // The following code is here just to test re_mesh loading
-    
+
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     _populateREMesh(sampleMesh, reMesh);
-    
+
     trc::log("Finished loading model");
     return 0;
 }
 
-/* 
+/*
     WORK IN PROGRESS
-    Populates a geo::Mesh object using default view mesh. Assumes that the mesh 
-    is triangular and that each 3 indices form a face 
+    Populates a geo::Mesh object using default view mesh. Assumes that the mesh
+    is triangular and that each 3 indices form a face
 */
 bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
@@ -451,23 +457,23 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
         v->pos = _v.pos;
         v->color = _v.color;
-        v->texCoord = _v.texCoord;   
-    };    
+        v->texCoord = _v.texCoord;
+    };
 
-    auto bindEdge = [&](std::shared_ptr<geo::Edge> e, 
-                        std::shared_ptr<geo::Vert>& first, 
+    auto bindEdge = [&](std::shared_ptr<geo::Edge> e,
+                        std::shared_ptr<geo::Vert>& first,
                         std::shared_ptr<geo::Vert>& second,
                         std::shared_ptr<geo::Loop>& l
                         ){
         e->v1 = first;
         e->v2 = second;
 
-        first->edge = e;		
+        first->edge = e;
         bool isNew = true;
 
 		// Checks if there is an edge with this data in the hash table
         // Either hashes the new edge it or assigns an existing pointer
-        if (uniqueEdges.contains(*e.get())) {    
+        if (uniqueEdges.contains(*e.get())) {
 			isNew = false;
             e = uniqueEdges[*e.get()];
         } else {
@@ -493,15 +499,15 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         } else {
             e->loop = l;
         }
-        
+
 		return isNew;
     };
 
-    auto bindLoop = [&](std::shared_ptr<geo::Loop>& l, 
-                        std::shared_ptr<geo::Vert>& v,                
+    auto bindLoop = [&](std::shared_ptr<geo::Loop>& l,
+                        std::shared_ptr<geo::Vert>& v,
                         std::shared_ptr<geo::Edge>& e ){
         l->v = v;
-        l->e = e; 
+        l->e = e;
         l->radial_next = l;
         l->radial_prev = l;
     };
@@ -523,7 +529,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         std::shared_ptr v1 = std::make_shared<geo::Vert>();
         std::shared_ptr v2 = std::make_shared<geo::Vert>();
         std::shared_ptr v3 = std::make_shared<geo::Vert>();
-		
+
         // Create edges and loops for each pair of vertices
         // order: 1,2 2,3 3,1
 
