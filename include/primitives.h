@@ -1,3 +1,9 @@
+/*
+ * Structs for 3d objects and helper functions for Antilegacy Editor
+*/
+
+
+
 #ifndef GLM
 #define GLM
 
@@ -15,11 +21,19 @@
 #include <functional>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-
-namespace ale { }
+namespace ale {
+namespace geo {
+    template<typename T>
+    float* glmMatToPtr(T& mat) {
+        return glm::value_ptr(mat);
+    }
+} // namespace geo
+} // namespace ale
 
 using namespace ale;
+
 
 // TOOD: add namespace
 namespace ale {
@@ -68,6 +82,7 @@ struct Node {
     int parent = -1;
     int mesh = -1;
     std::vector<int> children{};
+    bool bVisible = true;
 };
 
 
