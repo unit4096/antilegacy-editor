@@ -99,6 +99,20 @@ struct UniformBufferObject {
 };
 
 
+struct MeshBufferData{
+    unsigned int size;
+    unsigned int offset;
+    glm::mat4 transform;
+};
+
+
+struct PushConstantData {
+    unsigned int offset;
+    unsigned int size;
+    VkShaderStageFlagBits stages;
+};
+
+
 class Renderer {
 public:
     Renderer(ale::Model _model):model(_model){
@@ -259,6 +273,56 @@ public:
 
     }
 
+    // Work in progress! Render individual nodes with position offsets
+    // as push constants
+
+    void renderNodes(const VkCommandBuffer commandBuffer, const ale::Model& model) {
+
+        /* trc::log("Not implemented!", trc::LogLevel::ERROR); */
+        /* return; */
+
+        for (auto nodeId : model.rootNodes) {
+            renderNode(commandBuffer, model.nodes[nodeId], model);
+        }
+    }
+
+    void renderNode(const VkCommandBuffer commandBuffer, const ale::Node& node, const ale::Model& model) {
+        float x = 0.0f;
+            float y = 0.0f;
+            float z = 0.0f;
+
+            // Per object transform
+            float objTransformMatrix[16] = {
+                1, 0, 0, 0,
+                z, 1, 0, 0,
+                y, 0, 1, 0,
+                x, 0, 0, 1,
+            };
+
+
+        for(auto nodeId : node.children) {
+            for (auto childNodeId : node.children) {
+                assert(childNodeId > -1);
+                renderNode(commandBuffer, model.nodes[childNodeId], model);
+            }
+
+            auto node = model.nodes[nodeId];
+            if (node.mesh > -1 && node.bVisible == true) {
+                // TODO: Move push constants here
+                float perObjColorData[4] = {1,1,1,1};
+                float* transform = ale::geo::glmMatToPtr(node.transform);
+                auto transRange = pushConstantRanges[0];
+                auto colorRange = pushConstantRanges[1];
+                x += 10;
+                vkCmdPushConstants(commandBuffer, pipelineLayout,transRange.stageFlags, transRange.offset,transRange.size,objTransformMatrix);
+                vkCmdPushConstants(commandBuffer, pipelineLayout,colorRange.stageFlags, colorRange.offset, colorRange.size, perObjColorData);
+
+                // Load node mesh
+                MeshBufferData meshData = meshBuffers[node.mesh];
+                vkCmdDrawIndexed(commandBuffer, meshData.size, 1, 0, 0, 0);
+            }
+        }
+    }
 
     void cleanup() {
         // Stop the device for cleanup
@@ -408,11 +472,30 @@ private:
             }
         };
 
+        // TODO: This seems like a specific config. Might be useful to
+        // move to a separate header
+        std::vector<VkPushConstantRange> pushConstantRanges = {
+            {
+                .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+                .offset = 0,
+                .size = 64,
+            },
+            {
+                .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+                .offset = 64,
+                .size = 16,
+            },
+        };
+
+
+
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
     VkBuffer indexBuffer;
     uint32_t indexBufferCount;
     VkDeviceMemory indexBufferMemory;
+
+    std::vector<MeshBufferData> meshBuffers;
 
     // Number of images in the swap chain
     int chainImageCount;
@@ -813,19 +896,6 @@ private:
 
         auto dynamicState = vk::getPipelineDynamicState(dynamicStates);
 
-        std::vector<VkPushConstantRange> pushConstantRanges = {
-            {
-                .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-                .offset = 0,
-                .size = 64,
-            },
-            {
-                .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-                .offset = 64,
-                .size = 16,
-            },
-        };
-
         auto pipelineLayoutInfo = vk::getPipelineLayout(descriptorSetLayout, pushConstantRanges);
 
         if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
@@ -855,7 +925,7 @@ private:
 
         vkDestroyShaderModule(vkb_device, fragShaderModule, nullptr);
         vkDestroyShaderModule(vkb_device, vertShaderModule, nullptr);
-    }
+}
 
     void createFramebuffers() {
         swapChainFramebuffers.resize(swapChainImageViews.size());
@@ -1117,25 +1187,35 @@ private:
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                 stagingBuffer, stagingBufferMemory);
 
         void* data;
         vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
 
-            // Iterator to calculate offsets for each mesh in the buffer
-            // char* has the "atomic" size ratio across all C/C++ standards
-            char* memoryItr = reinterpret_cast<char*>(data);
+        /// MEMORY MAPPED
 
-            // Loads vertices for all meshes into one buffer
-            for (auto m: model.meshes) {
-                size_t memoryOffset = sizeof(vert) * m.vertices.size();
-                memcpy(memoryItr, m.vertices.data(), memoryOffset);
-                memoryItr += memoryOffset;
-            }
+        // Iterator to calculate offsets for each mesh in the buffer
+        // char* has the "atomic" size ratio across all C/C++ standards
+        char* memoryItr = reinterpret_cast<char*>(data);
+
+        // Loads vertices for all meshes into one buffer
+        for (auto m: model.meshes) {
+            size_t memoryOffset = sizeof(vert) * m.vertices.size();
+            memcpy(memoryItr, m.vertices.data(), memoryOffset);
+            memoryItr += memoryOffset;
+        }
+
+        /// MEMORY UNMAPPED
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 vertexBuffer, vertexBufferMemory);
 
         copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
 
@@ -1190,6 +1270,12 @@ private:
 
                 memcpy(memoryItr, m.indices.data(), memoryOffset);
                 memoryItr += memoryOffset;
+
+                MeshBufferData meshData;
+                meshData.size = model.meshes[i].indices.size();
+                meshData.offset = memoryOffset;
+                meshBuffers.push_back(meshData);
+
                 idxOffset += model.meshes[i].indices.size();
             }
 
@@ -1396,7 +1482,7 @@ private:
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            // TODO: Implement push constant handles
+            // TODO: Move push constants to renderNode
             uint32_t pushConstantOffset = 0;
             uint32_t pushConstantSize = 64;
 
@@ -1431,13 +1517,14 @@ private:
             VkBuffer vertexBuffers[] = {vertexBuffer};
             VkDeviceSize offsets[] = {0};
 
+            // Bind all vertices to one buffer
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 
 
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-
+            
             vkCmdDrawIndexed(commandBuffer, indexBufferCount, 1, 0, 0, 0);
 
             // TODO: make implementation of imgui into a separate abstraction
