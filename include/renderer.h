@@ -272,14 +272,9 @@ public:
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 
     }
-
     // Work in progress! Render individual nodes with position offsets
-    // as push constants
-
+    // as push constants. Currently uses only local pos.
     void renderNodes(const VkCommandBuffer commandBuffer, const ale::Model& model) {
-
-        /* trc::log("Not implemented!", trc::LogLevel::ERROR); */
-        /* return; */
 
         for (auto nodeId : model.rootNodes) {
             renderNode(commandBuffer, model.nodes[nodeId], model);
@@ -287,40 +282,24 @@ public:
     }
 
     void renderNode(const VkCommandBuffer commandBuffer, const ale::Node& node, const ale::Model& model) {
-        float x = 0.0f;
-            float y = 0.0f;
-            float z = 0.0f;
 
-            // Per object transform
-            float objTransformMatrix[16] = {
-                1, 0, 0, 0,
-                z, 1, 0, 0,
-                y, 0, 1, 0,
-                x, 0, 0, 1,
-            };
+        if (node.mesh > -1 && node.bVisible == true) {
+            float perObjColorData[4] = {1,1,1,1};
+            glm::mat4 tr = node.transform;
+            float* transform = ale::geo::glmMatToPtr(tr);
+            auto transRange = pushConstantRanges[0];
+            auto colorRange = pushConstantRanges[1];
+            vkCmdPushConstants(commandBuffer, pipelineLayout,transRange.stageFlags, transRange.offset,transRange.size,transform);
+            vkCmdPushConstants(commandBuffer, pipelineLayout,colorRange.stageFlags, colorRange.offset, colorRange.size, perObjColorData);
 
+            // Load node mesh
+            MeshBufferData meshData = meshBuffers[node.mesh];
+            vkCmdDrawIndexed(commandBuffer, meshData.size, 1, 0, 0, 0);
+        }
 
-        for(auto nodeId : node.children) {
-            for (auto childNodeId : node.children) {
+        for(auto childNodeId: node.children) {
                 assert(childNodeId > -1);
                 renderNode(commandBuffer, model.nodes[childNodeId], model);
-            }
-
-            auto node = model.nodes[nodeId];
-            if (node.mesh > -1 && node.bVisible == true) {
-                // TODO: Move push constants here
-                float perObjColorData[4] = {1,1,1,1};
-                float* transform = ale::geo::glmMatToPtr(node.transform);
-                auto transRange = pushConstantRanges[0];
-                auto colorRange = pushConstantRanges[1];
-                x += 10;
-                vkCmdPushConstants(commandBuffer, pipelineLayout,transRange.stageFlags, transRange.offset,transRange.size,objTransformMatrix);
-                vkCmdPushConstants(commandBuffer, pipelineLayout,colorRange.stageFlags, colorRange.offset, colorRange.size, perObjColorData);
-
-                // Load node mesh
-                MeshBufferData meshData = meshBuffers[node.mesh];
-                vkCmdDrawIndexed(commandBuffer, meshData.size, 1, 0, 0, 0);
-            }
         }
     }
 
@@ -1482,27 +1461,6 @@ private:
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-            // TODO: Move push constants to renderNode
-            uint32_t pushConstantOffset = 0;
-            uint32_t pushConstantSize = 64;
-
-            float x = 0.0f;
-            float y = 0.0f;
-            float z = 0.0f;
-
-            // Per object transform
-            float objTransformMatrix[16] = {
-                1, 0, 0, 0,
-                z, 1, 0, 0,
-                y, 0, 1, 0,
-                x, 0, 0, 1,
-            };
-
-            float perObjColorData[4] = {0,0,0,0};
-
-            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, pushConstantOffset, pushConstantSize, objTransformMatrix);
-            vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, 64, 16, perObjColorData);
-
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
@@ -1521,11 +1479,8 @@ private:
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-
-
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
-            
-            vkCmdDrawIndexed(commandBuffer, indexBufferCount, 1, 0, 0, 0);
+            renderNodes(commandBuffer, model);
 
             // TODO: make implementation of imgui into a separate abstraction
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
