@@ -1601,6 +1601,28 @@ private:
 
     }
 
+    
+
+
+    void uboFlipProjection(UniformBufferObject& ubo) {
+        ubo.proj *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+    }
+
+    void drawImGuiGizmo(){
+        auto gizmoUbo = ubo;
+        uboFlipProjection(gizmoUbo);
+        float* _view = geo::glmMatToPtr(gizmoUbo.view);
+        float* _proj = geo::glmMatToPtr(gizmoUbo.proj);
+        float* _model = geo::glmMatToPtr(gizmoUbo.model);
+
+
+        auto enum_translate = ImGuizmo::OPERATION::TRANSLATE;
+        auto enum_worldspace = ImGuizmo::MODE::WORLD;
+
+        ImGuizmo::Manipulate(_view, _proj, enum_translate, enum_worldspace, _model);
+        /* ImGuizmo::DrawGrid(_view,_proj,_model, 1.0f); */
+    }
+
     void drawImGui() {
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -1611,34 +1633,7 @@ private:
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
 
-        {
-            float _view[16];
-            float _proj[16];
-            float _model[16];
-
-
-            // Model matrix for the grid
-            glm::mat4 gridModelMat = glm::mat4(1);
-
-            // Looks like ImGuizmo uses -y as up, so i need to flip the proj
-            glm::mat4 flippedProj =
-                        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f))
-                        * ubo.proj;
-
-
-            // Convert glm::mat4 to float[16]
-            int idx = 0;
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++){
-                    _view[idx] = ubo.view[i][j];
-                    _proj[idx] = flippedProj[i][j];
-                    _model[idx] = gridModelMat[i][j];
-                    idx++;
-                }
-            }
-
-            ImGuizmo::Manipulate(_view, _proj, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, _model);
-        }
+        drawImGuiGizmo();
 
         // ImGui::ShowDemoWindow();
 
