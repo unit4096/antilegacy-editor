@@ -362,7 +362,7 @@ int _checkNodeCollisions(const ale::Model& in_model) {
     for (auto node: in_model.nodes) {
 
         if (nameMap.contains(node.name)) {
-            trc::raw << "Node name collision detected!"<< "\n";
+            trc::log("Node name collision detected!",trc::LogLevel::DEBUG);
             trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
             return -1;
         } else {
@@ -372,7 +372,7 @@ int _checkNodeCollisions(const ale::Model& in_model) {
 
     for (auto node: in_model.nodes) {
         if (idMap.contains(node.id)) {
-            trc::raw << "Node id collision detected!"<< "\n";
+            trc::log("Node id collision detected!",trc::LogLevel::DEBUG);
             trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
             return -1;
         } else {
@@ -380,10 +380,11 @@ int _checkNodeCollisions(const ale::Model& in_model) {
         }
     }
 
-    trc::raw << "No collisions detected" << "\n";
+    trc::log("No collisions detected",trc::LogLevel::DEBUG);
     trc::raw << "nodes:"<< "\n";
 
     for (auto node: in_model.nodes) {
+        trc::log("List of model nodes: ",trc::LogLevel::DEBUG);
         trc::raw << "Node name: " << node.name << " | id: " << node.id << "\n";
     }
 
