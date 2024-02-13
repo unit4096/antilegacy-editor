@@ -204,10 +204,11 @@ public:
         vkWaitForFences(vkb_device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(vkb_device, vkb_swapchain, UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+        VkResult result = vkAcquireNextImageKHR(vkb_device, vkb_swapchain,UINT64_MAX,
+                                                imageAvailableSemaphores[currentFrame],
+                                                VK_NULL_HANDLE, &imageIndex);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-
             ImGui_ImplVulkan_SetMinImageCount(chainMinImageCount);
             recreateSwapChain();
             return;
@@ -226,40 +227,22 @@ public:
 
         vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
 
-
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        std::vector<VkSemaphore> waitSemaphores = {imageAvailableSemaphores[currentFrame]};
+        std::vector<VkPipelineStageFlags> stageMask = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        std::vector<VkCommandBuffer> commandBuffer = {commandBuffers[currentFrame]};
+        std::vector<VkSemaphore> signalSemaphores = {renderFinishedSemaphores[currentFrame]};
 
-        VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
-        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
-
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
-
-        VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
+        VkSubmitInfo submitInfo = vk::getSubmitInfo(waitSemaphores, stageMask, commandBuffer, signalSemaphores);
 
         if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFences[currentFrame]) != VK_SUCCESS) {
             throw std::runtime_error("failed to submit draw command buffer!");
         }
 
-        VkPresentInfoKHR presentInfo{};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        std::vector<VkSwapchainKHR> swapChains = {vkb_swapchain};
 
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
-
-        VkSwapchainKHR swapChains[] = {vkb_swapchain};
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = swapChains;
-
-        presentInfo.pImageIndices = &imageIndex;
+        VkPresentInfoKHR presentInfo = vk::getPresentInfoKHR(signalSemaphores, swapChains, imageIndex);
         result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
@@ -270,8 +253,8 @@ public:
         }
 
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
-
     }
+
     // Work in progress! Render individual nodes with position offsets
     // as push constants. Currently uses only local pos.
     void renderNodes(const VkCommandBuffer commandBuffer, const ale::Model& model) {
@@ -1608,6 +1591,16 @@ private:
         ubo.proj *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
     }
 
+    void drawImGuiGrid(){
+        auto gizmoUbo = ubo;
+        uboFlipProjection(gizmoUbo);
+        float* _view = geo::glmMatToPtr(gizmoUbo.view);
+        float* _proj = geo::glmMatToPtr(gizmoUbo.proj);
+        float* _model = geo::glmMatToPtr(gizmoUbo.model);
+
+        ImGuizmo::DrawGrid(_view,_proj,_model, 1.0f);
+    }
+
     void drawImGuiGizmo(){
         auto gizmoUbo = ubo;
         uboFlipProjection(gizmoUbo);
@@ -1620,7 +1613,6 @@ private:
         auto enum_worldspace = ImGuizmo::MODE::WORLD;
 
         ImGuizmo::Manipulate(_view, _proj, enum_translate, enum_worldspace, _model);
-        /* ImGuizmo::DrawGrid(_view,_proj,_model, 1.0f); */
     }
 
     void drawImGui() {

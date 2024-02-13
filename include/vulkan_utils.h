@@ -214,9 +214,54 @@ static VkViewport getViewport(VkExtent2D swapChainExtent){
     };
 };
 
-
 // }}}
 
+// Submit info
+// {{{
+
+static VkSubmitInfo getSubmitInfo(
+                        std::vector<VkSemaphore>& waitSemaphores,
+                        std::vector<VkPipelineStageFlags>& stageMask,
+                        std::vector<VkCommandBuffer>& commandBuffer,
+                        std::vector<VkSemaphore>& signalSemaphores
+                                  ) {
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+    submitInfo.waitSemaphoreCount = waitSemaphores.size();
+    submitInfo.pWaitSemaphores = waitSemaphores.data();
+    submitInfo.pWaitDstStageMask = stageMask.data();
+
+    submitInfo.commandBufferCount = commandBuffer.size();
+    submitInfo.pCommandBuffers = commandBuffer.data();
+
+    submitInfo.signalSemaphoreCount = signalSemaphores.size();
+    submitInfo.pSignalSemaphores = signalSemaphores.data();
+
+    return submitInfo;
+}
+
+
+static VkPresentInfoKHR getPresentInfoKHR(
+                            std::vector<VkSemaphore>& waitSemaphores,
+                            std::vector<VkSwapchainKHR>& swapChains,
+                            unsigned int& imageIndex){
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+    presentInfo.waitSemaphoreCount = waitSemaphores.size();
+    presentInfo.pWaitSemaphores = waitSemaphores.data();
+
+    presentInfo.swapchainCount = swapChains.size();
+    presentInfo.pSwapchains = swapChains.data();
+
+    presentInfo.pImageIndices = &imageIndex;
+
+    return presentInfo;
+}
+
+// }}}
 
 // ================
 // Getters for "default" vulkan structs. Exist to shrink boilerplate code
@@ -291,7 +336,6 @@ static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
 };
 
 // }}}
-    
 
 
 } // namespace vk
