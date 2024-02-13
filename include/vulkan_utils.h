@@ -214,6 +214,7 @@ static VkViewport getViewport(VkExtent2D swapChainExtent){
     };
 };
 
+
 // }}}
 
 
@@ -296,4 +297,4 @@ static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
 } // namespace vk
 } // namespace ale
 
-#endif ALE_VK_UTILS
+#endif //ALE_VK_UTILS
