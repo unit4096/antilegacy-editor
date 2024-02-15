@@ -16,10 +16,17 @@ template<typename T>
 sp<T> to_sp(T x) { return std::make_shared<T>(x);};
 
 template<typename T>
+sp<T> to_sp() { return std::make_shared<T>();};
+
+template<typename T>
 using up = std::unique_ptr<T>;
 
 template<typename T>
 up<T> to_up(T x) { return std::make_unique<T>(x);};
+
+template<typename T>
+
+up<T> to_up() { return std::make_unique<T>();};
 
 template<typename T>
 using wp = std::weak_ptr<T>;
