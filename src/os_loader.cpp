@@ -3,15 +3,12 @@
 
 // ext
 
-/*
-TinyOBJLoader and TinyGLTF must be included in a .cpp file. Thus, I use helper 
-functions as non-class members that do not expose TinyOBJLoader and TinyGLTF
-to the header.
-*/
-
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tol/tiny_obj_loader.h>
 
+// TINYOBJLOADER_IMPLEMENTATION, TINYGLTF_IMPLEMENTATION,
+// and STB_IMAGE_IMPLEMENTATION should
+// be defined inside a .cpp file
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -24,7 +21,7 @@ namespace trc = ale::Tracer;
 
 const bool COMPRESS_VERTEX_DUPLICATES = false;
 
-Loader::Loader() { }   
+Loader::Loader() { }
 
 Loader::~Loader() { }
 
@@ -87,7 +84,7 @@ int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
             vertex.color = {1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {
-                uniqueVertices[vertex] = 
+                uniqueVertices[vertex] =
                             static_cast<unsigned int>(_mesh.vertices.size());
                 _mesh.vertices.push_back(vertex);
             }
@@ -119,7 +116,7 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
         bool bHasIndices = false;
 
         if (indicesIdx != -1) {
-            bHasIndices = true;    
+            bHasIndices = true;
             const auto& accessor = in_model.accessors[indicesIdx];
 
             // FIXME: Implement type deduction, now just assumes that it is u short
