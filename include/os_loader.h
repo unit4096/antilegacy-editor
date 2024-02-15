@@ -4,7 +4,7 @@
 // ext
 #pragma once
 #include <vector>
-#include <functional>   
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <filesystem>
@@ -18,6 +18,8 @@
 #include <tracer.h>
 #include <tinygltf/tiny_gltf.h>
 #include <tol/tiny_obj_loader.h>
+#include <ale_geo_utils.h>
+#include <memory>
 
 namespace ale {
 
