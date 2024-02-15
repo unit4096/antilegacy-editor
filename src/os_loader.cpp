@@ -431,6 +431,23 @@ int Loader::loadModelGLTF(const std::string model_path,
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     _populateREMesh(sampleMesh, reMesh);
+    /*
+    trc::raw << reMesh.verts.size() << "\n";
+
+    for (auto v : reMesh.verts) {
+        std::vector<sp<geo::Loop>> out_loops = {};
+        bool res = geo::getBoundingLoops(v,out_loops);
+        // assert(res && out_loops.size() == 3);
+
+        trc::raw << res << " " << out_loops.size() << "\n";
+    }
+    glm::vec3 zero(0);
+    glm::vec3 forward(0,-1,0);
+    glm::vec3 section(0);
+    bool res = geo::rayIntersectsTriangle(zero, forward, reMesh.verts[0], section);
+
+     trc::raw << res << "\n"; */
+
 
     trc::log("Finished loading model");
     return 0;
@@ -447,24 +464,24 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     return 1;
 
 	// Hash tables for the mesh. Needed for debug, will optimize later
-    std::unordered_map<geo::Vert, std::shared_ptr<geo::Vert>> uniqueVerts;
-    std::unordered_map<geo::Edge, std::shared_ptr<geo::Edge>> uniqueEdges;
-	std::unordered_map<geo::Loop, std::shared_ptr<geo::Loop>> uniqueLoops;
-    std::unordered_map<geo::Face, std::shared_ptr<geo::Face>> uniqueFaces;
+    std::unordered_map<geo::Vert, sp<geo::Vert>> uniqueVerts;
+    std::unordered_map<geo::Edge, sp<geo::Edge>> uniqueEdges;
+	std::unordered_map<geo::Loop, sp<geo::Loop>> uniqueLoops;
+    std::unordered_map<geo::Face, sp<geo::Face>> uniqueFaces;
 
     // Helper binding funcitons to make the code DRY
 
-    auto bindVert = [&](std::shared_ptr<geo::Vert> v, unsigned int i){
+    auto bindVert = [&](sp<geo::Vert> v, unsigned int i){
         Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
         v->pos = _v.pos;
         v->color = _v.color;
         v->texCoord = _v.texCoord;
     };
 
-    auto bindEdge = [&](std::shared_ptr<geo::Edge> e,
-                        std::shared_ptr<geo::Vert>& first,
-                        std::shared_ptr<geo::Vert>& second,
-                        std::shared_ptr<geo::Loop>& l
+    auto bindEdge = [&](sp<geo::Edge> e,
+                        sp<geo::Vert>& first,
+                        sp<geo::Vert>& second,
+                        sp<geo::Loop>& l
                         ){
         e->v1 = first;
         e->v2 = second;
@@ -504,19 +521,19 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 		return isNew;
     };
 
-    auto bindLoop = [&](std::shared_ptr<geo::Loop>& l,
-                        std::shared_ptr<geo::Vert>& v,
-                        std::shared_ptr<geo::Edge>& e ){
+    auto bindLoop = [&](sp<geo::Loop>& l,
+                        sp<geo::Vert>& v,
+                        sp<geo::Edge>& e ){
         l->v = v;
         l->e = e;
         l->radial_next = l;
         l->radial_prev = l;
     };
 
-	auto bindFace = [&](std::shared_ptr<geo::Face>& f,
-						std::shared_ptr<geo::Loop>& l1,
-						std::shared_ptr<geo::Loop>& l2,
-						std::shared_ptr<geo::Loop>& l3) {
+	auto bindFace = [&](sp<geo::Face>& f,
+						sp<geo::Loop>& l1,
+						sp<geo::Loop>& l2,
+						sp<geo::Loop>& l3) {
 		f->loop = l1;
 
         l1->f = f;
@@ -527,63 +544,62 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
         // Create vertices
-        std::shared_ptr v1 = std::make_shared<geo::Vert>();
-        std::shared_ptr v2 = std::make_shared<geo::Vert>();
-        std::shared_ptr v3 = std::make_shared<geo::Vert>();
+        sp<geo::Vert> v1 = std::make_shared<geo::Vert>();
+        sp<geo::Vert> v2 = std::make_shared<geo::Vert>();
+        sp<geo::Vert> v3 = std::make_shared<geo::Vert>();
 
         // Create edges and loops for each pair of vertices
         // order: 1,2 2,3 3,1
 
         // 1,2
-        std::shared_ptr e1 = std::make_shared<geo::Edge>();
-        std::shared_ptr l1 = std::make_shared<geo::Loop>();
+        auto e1 = std::make_shared<geo::Edge>();
+        auto l1 = std::make_shared<geo::Loop>();
 
         // 2,3
-        std::shared_ptr e2 = std::make_shared<geo::Edge>();
-        std::shared_ptr l2 = std::make_shared<geo::Loop>();
+        auto e2 = std::make_shared<geo::Edge>();
+        auto l2 = std::make_shared<geo::Loop>();
 
         // 3,1
-        std::shared_ptr e3 = std::make_shared<geo::Edge>();
-        std::shared_ptr l3 = std::make_shared<geo::Loop>();
+        auto e3 = std::make_shared<geo::Edge>();
+        auto l3 = std::make_shared<geo::Loop>();
 
-		// Create face 
-        std::shared_ptr f = std::make_shared<geo::Face>();
+		// Create face
+        auto f = std::make_shared<geo::Face>();
 
 		// Create vectors for the binding loop
-		std::vector<std::shared_ptr<geo::Vert>> verts = {v1,v2,v3};
-		std::vector<std::shared_ptr<geo::Edge>> edges = {e1,e2,e3};
-		std::vector<std::shared_ptr<geo::Loop>> loops = {l1,l2,l3};		
+		std::vector<sp<geo::Vert>> verts = {v1,v2,v3};
+		std::vector<sp<geo::Edge>> edges = {e1,e2,e3};
+		std::vector<sp<geo::Loop>> loops = {l1,l2,l3};
 		std::vector<bool> isNewArr = {false,false,false};
 
-		for (size_t j = 0; j < 3; j++) {	
+		for (size_t j = 0; j < 3; j++) {
 			bindVert(verts[j], i + j);
 
 			// Previous and next indices for each j. Note that 2 loops to 0
 			int prev = (3 + (j - 1)) % 3;
 			int next = (j + 1) % 3;
-            
+
 			isNewArr[j] = bindEdge(edges[j], verts[j], verts[next], loops[j]);
         	bindLoop(loops[j], verts[j], edges[j]);
-			
-			// If this edge is new, add adjacent edges to it. 
+
+			// If this edge is new, add adjacent edges to it.
             // If not, add new edges
-			if (isNewArr[j]) {            
+			if (isNewArr[j]) {
 				edges[j]->v1_prev = edges[prev];
 				edges[j]->v2_next = edges[next];
 			} else {
-                std::shared_ptr<geo::Edge> tmpEdge = 
-                                                uniqueEdges[*edges[j].get()];
-                
+                sp<geo::Edge> tmpEdge = uniqueEdges[*edges[j].get()];
+
                 tmpEdge->v1_next = edges[prev];
                 tmpEdge->v2_prev = edges[next];
                 edges[j] = tmpEdge;
 			}
-			
+
 			// Bind loops to each other to form a face
 			loops[j]->next = loops[next];
 			loops[j]->prev = loops[prev];
 		}
-                
+
         // Bind the face afterwards
 		bindFace(f, l1, l2, l3);
 
@@ -598,17 +614,21 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         }
     }
 
-    trc::raw << "\n\n\n" 
+    for (auto v : uniqueVerts) {
+        _outMesh.verts.push_back(v.second);
+    }
+
+    trc::raw << "\n\n\n"
         << uniqueVerts.size() <<  " vertices" << "\n"
         << uniqueEdges.size() <<  " edges" << "\n"
         << uniqueLoops.size() <<  " loops" << "\n"
-        << uniqueFaces.size() <<  " faces" << "\n"        
-        << "REMesh E P characteristic: " 
-        << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size() 
+        << uniqueFaces.size() <<  " faces" << "\n"
+        << "REMesh E P characteristic: "
+        << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size()
         << "\n"
         << "\n";
-    
-    return 0;    
+
+    return 0;
 }
 
 
