@@ -494,10 +494,8 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         if (uniqueEdges.contains(*e.get())) {
 			isNew = false;
             e = uniqueEdges[*e.get()];
-        } else {
-            
         }
-	
+
 		auto _l = e->loop;
 
         if (_l != nullptr) {
@@ -512,7 +510,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
                     _l->radial_next = l;
                     break;
                 }
-            }    
+            }
 
         } else {
             e->loop = l;
@@ -544,27 +542,27 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
         // Create vertices
-        sp<geo::Vert> v1 = std::make_shared<geo::Vert>();
-        sp<geo::Vert> v2 = std::make_shared<geo::Vert>();
-        sp<geo::Vert> v3 = std::make_shared<geo::Vert>();
+        sp<geo::Vert> v1 = to_sp<geo::Vert>();
+        sp<geo::Vert> v2 = to_sp<geo::Vert>();
+        sp<geo::Vert> v3 = to_sp<geo::Vert>();
 
         // Create edges and loops for each pair of vertices
         // order: 1,2 2,3 3,1
 
         // 1,2
-        auto e1 = std::make_shared<geo::Edge>();
-        auto l1 = std::make_shared<geo::Loop>();
+        auto e1 = to_sp<geo::Edge>();
+        auto l1 = to_sp<geo::Loop>();
 
         // 2,3
-        auto e2 = std::make_shared<geo::Edge>();
-        auto l2 = std::make_shared<geo::Loop>();
+        auto e2 = to_sp<geo::Edge>();
+        auto l2 = to_sp<geo::Loop>();
 
         // 3,1
-        auto e3 = std::make_shared<geo::Edge>();
-        auto l3 = std::make_shared<geo::Loop>();
+        auto e3 = to_sp<geo::Edge>();
+        auto l3 = to_sp<geo::Loop>();
 
 		// Create face
-        auto f = std::make_shared<geo::Face>();
+        auto f = to_sp<geo::Face>();
 
 		// Create vectors for the binding loop
 		std::vector<sp<geo::Vert>> verts = {v1,v2,v3};
