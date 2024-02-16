@@ -453,12 +453,19 @@ int Loader::loadModelGLTF(const std::string model_path,
 /*
     WORK IN PROGRESS
     Populates a geo::Mesh object using default view mesh. Assumes that the mesh
-    is triangular and that each 3 indices form a face
+    is triangular and that each 3 indices form a face.
+
+    This function is more of a test chamber for the REMesh data structure.
+    I do not recommend to use it in a product code.
 */
 bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     trc::log("Not implemented!", trc::ERROR);
     return 1;
+
+    // Only accepts manifold meshes consisting of triangles
+    assert(_inpMesh.indices.size() % 3 == 0);
+
 
 	// Hash tables for the mesh. Needed for debug, will optimize later
     std::unordered_map<geo::Vert, sp<geo::Vert>> uniqueVerts;
@@ -468,6 +475,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     // Helper binding funcitons to make the code DRY
 
+    // Get ViewMesh vertex to populate basic fields
     auto bindVert = [&](sp<geo::Vert> v, unsigned int i){
         Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
         v->pos = _v.pos;
@@ -475,66 +483,125 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         v->texCoord = _v.texCoord;
     };
 
-    auto bindEdge = [&](sp<geo::Edge> e,
-                        sp<geo::Vert>& first,
-                        sp<geo::Vert>& second,
-                        sp<geo::Loop>& l
-                        ){
-        e->v1 = first;
-        e->v2 = second;
-
-        first->edge = e;
+    auto bindEdge = [&](sp<geo::Edge> e, sp<geo::Vert>& first,
+                        sp<geo::Vert>& second, sp<geo::Loop>& l){
+        geo::Edge checkEdge = *e.get();
         bool isNew = true;
 
 		// Checks if there is an edge with this data in the hash table
         // Either hashes the new edge it or assigns an existing pointer
-        if (uniqueEdges.contains(*e.get())) {
+        if (uniqueEdges.contains(checkEdge)) {
 			isNew = false;
             e = uniqueEdges[*e.get()];
-        }
-
-		auto _l = e->loop;
-
-        if (_l != nullptr) {
-
-            // Iterate over the loop until it hits the beginning
-            while (_l->radial_next != e->loop) {
-                // Close the loop if it isn't already
-                if (_l->radial_next == nullptr ) {
-                    // Add l as the end of the loop
-                    _l = _l->radial_next;
-                    _l->radial_prev = l;
-                    _l->radial_next = l;
-                    break;
-                }
-            }
-
         } else {
-            e->loop = l;
+            e->v1 = first;
+            e->v2 = second;
         }
 
 		return isNew;
     };
 
     auto bindLoop = [&](sp<geo::Loop>& l,
-                        sp<geo::Vert>& v,
-                        sp<geo::Edge>& e ){
+                        sp<geo::Vert>& v, sp<geo::Edge>& e ){
         l->v = v;
         l->e = e;
         l->radial_next = l;
         l->radial_prev = l;
     };
 
-	auto bindFace = [&](sp<geo::Face>& f,
-						sp<geo::Loop>& l1,
-						sp<geo::Loop>& l2,
-						sp<geo::Loop>& l3) {
+	auto bindFace = [&](sp<geo::Face>& f, sp<geo::Loop>& l1,
+						sp<geo::Loop>& l2, sp<geo::Loop>& l3) {
 		f->loop = l1;
 
         l1->f = f;
         l2->f = f;
         l3->f = f;
 	};
+
+    auto find_and_replace = [](sp<geo::Edge> e1, sp<geo::Edge> e2, sp<geo::Edge> ne) {
+        std::vector<sp<geo::Edge>> edges = {e1->e1_next,e1->e2_next,e1->e1_prev,e1->e2_prev};
+
+        int result = -1;
+        int counter = 0;
+
+        for(auto edge : edges) {
+            if (edge == e2) {
+                result = counter;
+                break;
+            }
+            counter++;
+        }
+
+        if (result == -1)  return false;
+
+        edges[result] = ne;
+
+        return true;
+    };
+
+    auto appendEdgeToVertCycle = [&](sp<geo::Vert> v, sp<geo::Edge> new_e) {
+        if (v->edge == nullptr) {
+            v->edge = new_e;
+        }
+        sp<geo::Edge> old_e = v->edge;
+
+        // Edge v links to should link back to v
+        assert(old_e->v2 == v || old_e->v1 == v);
+
+        auto e1_n = old_e->e1_next;
+        auto e2_n = old_e->e2_next;
+
+        auto link = old_e;
+
+        if (old_e->v1 == v) {
+            link = e1_n;
+        } else if (old_e->v2 == v){
+            link = e2_n;
+        } else {
+            return false;
+        }
+
+        // v is v1 for old edge
+        if (link == nullptr) {
+            // No adjacent edges
+            link = new_e;
+            link = new_e;
+        } else {
+            // Edge disk exists
+
+            if (!find_and_replace(old_e, link, new_e)) return false;
+            if (!find_and_replace(link, old_e, new_e)) return false;
+        }
+        return true;
+    };
+
+    // Edge cycles are a collection of loops connected to the sides
+    // of the current loop
+    // They are unordered
+    auto appenLoopToRadialLoopCycle = [](sp<geo::Edge> e, sp<geo::Loop> new_l) {
+        auto old_l = e->loop;
+        if (old_l->radial_next == nullptr && old_l->radial_prev == nullptr) {
+            old_l->radial_prev = new_l;
+            old_l->radial_next = new_l;
+        }
+        old_l->radial_next->prev = new_l;
+        old_l->radial_next = new_l;
+    };
+
+    // WIP
+    auto vertDiskHasEdge = [](sp<geo::Vert> v, sp<geo::Edge> e) {
+        if (v->edge == e) {
+            return true;
+        }
+
+        auto _e = v->edge;
+        while (_e->e1_next != v->edge) {
+            if (_e == e) {
+                return true;
+            }
+        }
+        return false;
+    };
 
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
@@ -567,32 +634,38 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 		std::vector<sp<geo::Loop>> loops = {l1,l2,l3};
 		std::vector<bool> isNewArr = {false,false,false};
 
+        for (size_t j = 0; j < 3; j++) {
+            bindVert(verts[j], i + j);
+        }
+
+        for (size_t j = 0; j < 3; j++) {
+        	bindLoop(loops[j], verts[j], edges[j]);
+        }
+
+        // FIXME: Rewrite with a general case
 		for (size_t j = 0; j < 3; j++) {
-			bindVert(verts[j], i + j);
 
 			// Previous and next indices for each j. Note that 2 loops to 0
 			int prev = (3 + (j - 1)) % 3;
 			int next = (j + 1) % 3;
 
+
 			isNewArr[j] = bindEdge(edges[j], verts[j], verts[next], loops[j]);
-        	bindLoop(loops[j], verts[j], edges[j]);
 
-			// If this edge is new, add adjacent edges to it.
-            // If not, add new edges
-			if (isNewArr[j]) {
-				edges[j]->v1_prev = edges[prev];
-				edges[j]->v2_next = edges[next];
-			} else {
-                sp<geo::Edge> tmpEdge = uniqueEdges[*edges[j].get()];
+            if (!isNewArr[j]) {
+                edges[j] = uniqueEdges[*edges[j].get()];
+                // Manage existing edge
+            } else if (vertDiskHasEdge(verts[j], edges[j])) {
+                appendEdgeToVertCycle(verts[j], edges[j]);
+            } else if (vertDiskHasEdge(verts[next], edges[j])) {
+                appendEdgeToVertCycle(verts[next], edges[j]);
+            } else {
+                appendEdgeToVertCycle(verts[j], edges[j]);
+                appendEdgeToVertCycle(verts[next], edges[j]);
+            }
 
-                tmpEdge->v1_next = edges[prev];
-                tmpEdge->v2_prev = edges[next];
-                edges[j] = tmpEdge;
-			}
-
-			// Bind loops to each other to form a face
-			loops[j]->next = loops[next];
-			loops[j]->prev = loops[prev];
+            appenLoopToRadialLoopCycle(edges[j], loops[j]);
+            edges[j]->loop = loops[j];
 		}
 
         // Bind the face afterwards
@@ -600,7 +673,6 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
         f->size = 3;
         uniqueFaces[*f.get()] = f;
-
 
         for (size_t j = 0; j < 3; j++) {
             uniqueLoops[*loops[j].get()] = loops[j];
@@ -610,7 +682,42 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     }
 
     for (auto v : uniqueVerts) {
-        _outMesh.verts.push_back(v.second);
+        sp<geo::Vert> _v = v.second;
+        assert(_v->edge != nullptr);
+        assert(_v->edge->v1 == _v);
+        _outMesh.verts.push_back(_v);
+    }
+
+    for (auto e : uniqueEdges) {
+        auto _e = e.second;
+        assert(_e->v1 != nullptr );
+        assert(_e->v2 != nullptr );
+        assert(_e->loop != nullptr);
+        assert(_e->e1_next != nullptr);
+        assert(_e->e2_prev!= nullptr);
+        assert(_e->e1_next != nullptr);
+        assert(_e->e2_prev!= nullptr);
+        _outMesh.edges.push_back(_e);
+    }
+
+    for (auto l : uniqueLoops) {
+        auto _l = l.second;
+        assert(_l->e != nullptr);
+        assert(_l->v != nullptr);
+        assert(_l->f != nullptr);
+        assert(_l->next->next->next == _l);
+        assert(_l->prev->prev->prev == _l);
+        _outMesh.loops.push_back(_l);
+    }
+
+    for (auto f : uniqueFaces) {
+        auto _f = f.second;
+        _outMesh.faces.push_back(_f);
+        auto l = _f->loop;
+        for (int i = 0 ; i < 3; i++) {
+            assert(l->f == _f);
+            l = l->next;
+        }
     }
 
     trc::raw << "\n\n\n"
@@ -620,6 +727,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         << uniqueFaces.size() <<  " faces" << "\n"
         << "REMesh E P characteristic: "
         << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size()
+        << "All asserts passed somehow!" << "\n"
         << "\n"
         << "\n";
 
@@ -633,7 +741,7 @@ bool Loader::loadTexture(const char* path, Image& img) {
     img.h = 0;
     img.w = 0;
     img.channels = 0;
-    img.data.resize(0);    
+    img.data.resize(0);
 
     // Load the image using stbi
     unsigned char* _data = stbi_load(path, &img.w,
@@ -643,10 +751,10 @@ bool Loader::loadTexture(const char* path, Image& img) {
         trc::log("Cannot get texture!", trc::LogLevel::ERROR);
         return 1;
     }
-    // STBI_rgb_alpha forces the images to be loaded with an alpha channel. 
+    // STBI_rgb_alpha forces the images to be loaded with an alpha channel.
     // Hence, the in-line int 4
     size_t size = img.w * img.h * 4;
-    
+
     // A byte after the last byte in the array
     const unsigned char* _end = _data + size;
 
@@ -682,7 +790,7 @@ int Loader::_loadTinyGLTFModel(tinygltf::Model& gltfModel, const std::string& fi
         throw std::runtime_error("Could not parse a GLTF model!");
         return -1;
     }
-    
+
     trc::log("This GLTF Model is valid");
     return 0;
 }
@@ -702,7 +810,7 @@ int Loader::getFlaggedArgument(const std::string flag, std::string& result) {
 
     if (cmdOptionExists("-f")) {
         std::string file = getCmdOption("-f");
-        trc::log("Loaded argument: " + file);         
+        trc::log("Loaded argument: " + file);
         if (Loader::isFileValid(file)) {
             trc::log("File can be loaded: " + file);
             result = file;
@@ -715,12 +823,12 @@ int Loader::getFlaggedArgument(const std::string flag, std::string& result) {
         trc::log("No files specified, attempting to load the default file", trc::DEBUG);
         return -1;
     }
-    
+
 
     return 0;
 }
 
-// I borrowed this code from here: 
+// I borrowed this code from here:
 // https://stackoverflow.com/questions/865668/parsing-command-line-arguments-in-c
 // Command line input is used only for debugging now. If this changes, I will
 // use or implement a proper library
@@ -751,11 +859,11 @@ bool Loader::isFileValid(std::string file_path) {
 
     if (std::filesystem::exists(filePath)) {
         if (Loader::_canReadFile(filePath)) {
-            return true;    
+            return true;
         }
     }
     return false;
-    
+
 }
 
 bool Loader::_canReadFile(std::filesystem::path p) {
@@ -771,7 +879,7 @@ bool Loader::_canReadFile(std::filesystem::path p) {
 }
 
 // Load raw data from buffer by accessor
-const unsigned char* Loader::_getDataByAccessor(tinygltf::Accessor accessor, 
+const unsigned char* Loader::_getDataByAccessor(tinygltf::Accessor accessor,
                                                 const tinygltf::Model& model) {
 
     const auto& bufferView = model.bufferViews[accessor.bufferView];
@@ -781,7 +889,7 @@ const unsigned char* Loader::_getDataByAccessor(tinygltf::Accessor accessor,
 }
 
 void Loader::_generateVertexNormals(ale::ViewMesh &_mesh) {
-    
+
     if (_mesh.indices.size() % 3 != 0) {
         trc::log("Cannot calculate normals, input mesh is not manifold!", trc::ERROR);
         return;
@@ -791,13 +899,13 @@ void Loader::_generateVertexNormals(ale::ViewMesh &_mesh) {
         int i1 = _mesh.indices[i + 0];
         int i2 = _mesh.indices[i + 1];
         int i3 = _mesh.indices[i + 2];
-        
+
         glm::vec3 pos1 = _mesh.vertices[i1].pos;
         glm::vec3 pos2 = _mesh.vertices[i2].pos;
         glm::vec3 pos3 = _mesh.vertices[i3].pos;
 
         glm::vec3 v1 = pos2 - pos1;
-        glm::vec3 v2 = pos3 - pos1;        
+        glm::vec3 v2 = pos3 - pos1;
 
         glm::vec3 normal = glm::normalize(glm::cross(v1,v2));
 
@@ -808,7 +916,7 @@ void Loader::_generateVertexNormals(ale::ViewMesh &_mesh) {
 }
 
 
-// Returns a number of ints 
+// Returns a number of ints
 const int Loader::_getNumEdgesInMesh(const ViewMesh &_mesh) {
     std::set<std::pair<int,int>> uniqueEdges;
 
@@ -830,4 +938,4 @@ const int Loader::_getNumEdgesInMesh(const ViewMesh &_mesh) {
     }
 
     return uniqueEdges.size();
-} 
+}

@@ -1,13 +1,12 @@
-/* 
-    This is a mesh implementation that uses Radial Edge Structure for 
+/*
+    This is a mesh implementation that uses Radial Edge Structure for
     fast manipulation of non-manifold meshes. It omits the shell structure since
     solid modeling is out of scope of the editor.
 
-    Main inspiration and reference for this data structure: 
+    Main inspiration and reference for this data structure:
     https://wiki.blender.org/wiki/Source/Modeling/BMesh/Design
     [23.12.2023] Source code of the original data structure (well-documented!):
     https://github.com/blender/blender/blob/main/source/blender/bmesh/bmesh_class.hh
-
 */
 
 #ifndef ALE_REMESH
@@ -20,12 +19,11 @@
 
 #ifndef GLM
 #define GLM
-
 #include <glm/glm.hpp>
-
 #endif // GLM
 
-
+// int
+#include <ale_memory.h>
 
 
 namespace ale {
@@ -40,12 +38,12 @@ struct Loop;
 struct Face;
 
 // TODO: this is a boilerplate mesh class, it must be extended
-class REMesh {    
+class REMesh {
 public:
-    std::vector<std::shared_ptr<Face>> faces;
-    std::vector<std::shared_ptr<Edge>> edges;
-    std::vector<std::shared_ptr<Loop>> loops;
-    std::vector<std::shared_ptr<Vert>> verts;
+    std::vector<sp<Face>> faces;
+    std::vector<sp<Edge>> edges;
+    std::vector<sp<Loop>> loops;
+    std::vector<sp<Vert>> verts;
 };
 
 struct Vert {
@@ -53,8 +51,8 @@ struct Vert {
     glm::vec3 color;
     glm::vec2 texCoord;
     // An edge in the disk loop
-    std::shared_ptr<Edge> edge;
-    
+    sp<Edge> edge;
+
     // Compares vertices. Only position is important for RE Vertices
     bool operator==(const Vert& other) const {
         return pos == other.pos;
@@ -63,12 +61,12 @@ struct Vert {
 
 struct Edge {
     // Origin and destination vertices
-    std::shared_ptr<Vert> v1, v2;
-    std::shared_ptr<Loop> loop; 
-    
-    // These four edges are links to vertex "disks". I deprecated DiskLink 
+    sp<Vert> v1, v2;
+    sp<Loop> loop;
+
+    // These four edges are links to vertex "disks". I deprecated DiskLink
     // structures as there is no visible need for them now
-    std::shared_ptr<Edge> v1_prev, v1_next, v2_prev, v2_next;
+    sp<Edge> e1_prev, e1_next, e2_prev, e2_next;
 
     bool operator==(const Edge& other) const {
 
@@ -78,7 +76,7 @@ struct Edge {
 
         return (
                    (*v1.get() == *other.v1.get()  &&
-                    *v2.get() == *other.v2.get()) || 
+                    *v2.get() == *other.v2.get()) ||
                    (*v1.get() == *other.v2.get()  &&
                     *v2.get() == *other.v1.get())
                 );
@@ -89,14 +87,14 @@ struct Edge {
 
 // Loop node around the face
 struct Loop {
-    std::shared_ptr<Vert> v;
-    std::shared_ptr<Edge> e;
+    sp<Vert> v;
+    sp<Edge> e;
     // The face the loop belongs to
-    std::shared_ptr<Face> f;
+    sp<Face> f;
     // Loops connected to the edge
-    std::shared_ptr<Loop> radial_prev, radial_next;
+    sp<Loop> radial_prev, radial_next;
     // Loops forming a face
-    std::shared_ptr<Loop> prev, next;
+    sp<Loop> prev, next;
 
     bool operator==(const Loop& other) const {
 		Loop* p1 = prev == nullptr ? prev.get() : nullptr;
@@ -116,9 +114,9 @@ struct Loop {
 };
 
 
-struct Face {    
+struct Face {
     // A pointer to the first loop node
-    std::shared_ptr<Loop> loop;    
+    sp<Loop> loop;
     glm::vec3 nor;
     unsigned int size;
 
@@ -135,14 +133,14 @@ struct Face {
 namespace std {
     // A hash function for a geometry vertex. So far only the geometry matters
     template<> struct hash<ale::geo::Vert> {
-        size_t operator()(ale::geo::Vert const& vertex) const {            
+        size_t operator()(ale::geo::Vert const& vertex) const {
             return hash<glm::vec3>()(vertex.pos);
         }
     };
 }
 
 namespace std {
-    /* 
+    /*
     A hash function for an edge. There should not exist edges that share
     the same vertices. Note that this DOES NOT check for null pointers.
     This hash function is *order independent*.
@@ -157,7 +155,7 @@ namespace std {
 }
 
 namespace std {
-    // A hash function for a loop. There should not exist loops that link 
+    // A hash function for a loop. There should not exist loops that link
     // to the same loop nodes
     template<> struct hash<ale::geo::Loop> {
         size_t operator()(ale::geo::Loop const& loop) const {
