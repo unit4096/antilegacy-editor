@@ -34,6 +34,7 @@ namespace geo {
 
 struct Vert;
 struct Edge;
+struct VertDiskLink;
 struct Loop;
 struct Face;
 
@@ -59,14 +60,16 @@ struct Vert {
     }
 };
 
+struct VertDiskLink {
+    sp<Edge> prev, next;
+};
+
 struct Edge {
     // Origin and destination vertices
     sp<Vert> v1, v2;
     sp<Loop> loop;
-
-    // These four edges are links to vertex "disks". I deprecated DiskLink
-    // structures as there is no visible need for them now
-    sp<Edge> e1_prev, e1_next, e2_prev, e2_next;
+    sp<VertDiskLink> d1, d2;
+    int dbID = -1;
 
     bool operator==(const Edge& other) const {
 

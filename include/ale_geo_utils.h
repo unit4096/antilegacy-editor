@@ -15,10 +15,15 @@
 #include <primitives.h>
 #include <re_mesh.h>
 #include <ale_memory.h>
+#include <tracer.h>
 
 #ifndef ALE_GEO_UTILS
 
+
+namespace trc = ale::Tracer;
+
 namespace ale {
+
 namespace geo {
 
 static bool getBoundingLoops(const sp<Vert>& vert,
@@ -49,6 +54,152 @@ static bool getBoundingLoops(const sp<Vert>& vert,
 
     return true;
 }
+
+
+static bool addEToD1(sp<geo::Edge> e_old, sp<geo::Edge> e_new) {
+    assert(e_old);
+    assert(e_new);
+    auto d1 = e_old->d1;
+    auto e_next = d1->next;
+
+    d1->next = e_new;
+
+    if (e_next->d1->prev == e_old) {
+        e_next->d1->prev = e_new;
+    } else if (e_next->d2->prev == e_old) {
+        e_next->d2->prev = e_new;
+    } else {
+        trc::log("It does not link back!", trc::LogLevel::ERROR);
+        return false;
+    }
+    return true;
+};
+
+static bool addEToD2(sp<geo::Edge> e_old, sp<geo::Edge> e_new) {
+    assert(e_old);
+    assert(e_new);
+    auto d2 = e_old->d2;
+    auto e_next = d2->next;
+
+    d2->next = e_new;
+
+    if (e_next->d1->prev == e_old) {
+        e_next->d1->prev = e_new;
+    } else if (e_next->d2->prev == e_old) {
+        e_next->d2->prev = e_new;
+    } else {
+        trc::log("It does not link back!", trc::LogLevel::ERROR);
+        return false;
+    }
+    return true;
+};
+
+// Edge cycles are a collection of loops connected to the sides
+// of the current loop
+// They are unordered
+static void appenLoopToRadialLoopCycle(sp<geo::Edge> e, sp<geo::Loop> new_l) {
+    auto old_l = e->loop;
+    if (old_l->radial_next == nullptr && old_l->radial_prev == nullptr) {
+        old_l->radial_prev = new_l;
+        old_l->radial_next = new_l;
+    }
+    old_l->radial_next->prev = new_l;
+    old_l->radial_next = new_l;
+};
+
+static bool isV1InE(sp<geo::Vert> v, sp<geo::Edge> e) {
+
+    assert(e);
+    assert(e->v1 == v || e->v2 == v);
+    return e->v1 == v;
+};
+
+static bool dHasE(sp<geo::VertDiskLink> d, sp<geo::Edge> e) {
+    return d->next == e || d->prev == e;
+};
+
+static auto getNextDInLoop(sp<geo::Edge> e, sp<geo::VertDiskLink> d) {
+    trc::raw << &d << " ";
+    assert(e);
+    assert(d);
+    sp<geo::VertDiskLink> res = nullptr;
+
+    auto next = d->next;
+
+    if (next->d1->prev == e) {
+        res = next->d1;
+        return res;
+    }
+
+    if (next->d2->prev == e) {
+        res = next->d2;
+        return res;
+    }
+
+    trc::log("NO BACK LINK FOUND!", trc::ERROR);
+    return res;
+};
+
+static bool vLoopHasE(sp<geo::Vert> v, sp<geo::Edge> e) {
+    assert(e);
+    assert(v->edge);
+
+    // If an edge exists, it should have a link to at least one vertex
+    assert(v->edge->d1 || v->edge->d2);
+
+
+    auto _e = v->edge;
+    if (_e == e) {
+        return true;
+    }
+
+    auto d = _e->d1;
+
+    if (!isV1InE(v,_e)) {
+        d = _e->d2;
+    }
+
+    auto eItr = _e;
+    auto dItr = d;
+
+    if (d->next == e) {
+        return true;
+    }
+
+    dItr = getNextDInLoop(eItr, dItr);
+
+    int limit = 5;
+
+    while (dItr->next != _e) {
+        if (limit == 0) {
+            trc::log("LiMIT REACHED! ", trc::ERROR);
+            return false;
+        }
+
+        if (dItr->next == e) {
+            return true;
+        }
+
+        dItr = getNextDInLoop(eItr, dItr);
+        eItr = dItr->prev;
+        limit--;
+    }
+
+    return false;
+};
+
+static void addEToVertL(sp<geo::Vert> v, sp<geo::Edge> e_new) {
+    if (geo::isV1InE(v,e_new)) {
+        geo::addEToD1(v->edge, e_new);
+    } else {
+        geo::addEToD2(v->edge, e_new);
+    }
+}
+static bool edgeExists(sp<geo::Edge> e,
+                       std::unordered_map<geo::Edge, sp<geo::Edge>>& map) {
+    return map.contains(*e.get());
+};
+
 
 // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
