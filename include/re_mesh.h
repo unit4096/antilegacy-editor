@@ -20,10 +20,13 @@
 #ifndef GLM
 #define GLM
 #include <glm/glm.hpp>
+#define  GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 #endif // GLM
 
 // int
 #include <ale_memory.h>
+#include <tracer.h>
 
 
 namespace ale {
@@ -38,14 +41,6 @@ struct VertDiskLink;
 struct Loop;
 struct Face;
 
-// TODO: this is a boilerplate mesh class, it must be extended
-class REMesh {
-public:
-    std::vector<sp<Face>> faces;
-    std::vector<sp<Edge>> edges;
-    std::vector<sp<Loop>> loops;
-    std::vector<sp<Vert>> verts;
-};
 
 struct Vert {
     glm::vec3 pos;
@@ -53,6 +48,7 @@ struct Vert {
     glm::vec2 texCoord;
     // An edge in the disk loop
     sp<Edge> edge;
+    int dbID = -1;
 
     // Compares vertices. Only position is important for RE Vertices
     bool operator==(const Vert& other) const {
@@ -72,11 +68,6 @@ struct Edge {
     int dbID = -1;
 
     bool operator==(const Edge& other) const {
-
-        if (!v1 && !v2 && !other.v1 && !other.v2) {
-            return false;
-        }
-
         return (
                    (*v1.get() == *other.v1.get()  &&
                     *v2.get() == *other.v2.get()) ||
@@ -98,6 +89,7 @@ struct Loop {
     sp<Loop> radial_prev, radial_next;
     // Loops forming a face
     sp<Loop> prev, next;
+    int dbID = -1;
 
     bool operator==(const Loop& other) const {
 		Loop* p1 = prev == nullptr ? prev.get() : nullptr;
@@ -128,6 +120,31 @@ struct Face {
     }
 };
 
+
+// TODO: this is a boilerplate mesh class, it must be extended
+class REMesh {
+public:
+    ~REMesh() {
+        for (auto e : edges) {
+            e->loop = nullptr;
+        }
+        for (auto l : loops) {
+            l->next = nullptr;
+            l->prev = nullptr;
+            l->radial_next = nullptr;
+            l->radial_prev = nullptr;
+            l->f = nullptr;
+        }
+
+        for (auto f : faces) {
+            f->loop = nullptr;
+        }
+    }
+    std::vector<sp<Face>> faces;
+    std::vector<sp<Edge>> edges;
+    std::vector<sp<Loop>> loops;
+    std::vector<sp<Vert>> verts;
+};
 
 } // namespace geo
 } // namespace ale
