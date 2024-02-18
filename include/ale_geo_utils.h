@@ -195,11 +195,21 @@ static void addEToVertL(sp<geo::Vert> v, sp<geo::Edge> e_new) {
         geo::addEToD2(v->edge, e_new);
     }
 }
-static bool edgeExists(sp<geo::Edge> e,
-                       std::unordered_map<geo::Edge, sp<geo::Edge>>& map) {
-    return map.contains(*e.get());
-};
 
+
+static void addLoopToEdge(sp<geo::Edge> e, sp<geo::Loop> l) {
+    if (!e->loop) {
+        l->radial_next = l;
+        l->radial_prev = l;
+        e->loop = l;
+        return;
+    }
+
+    auto _l = e->loop;
+    _l->radial_prev->radial_next = l;
+    _l->radial_prev = l;
+    e->loop = l;
+}
 
 // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 
