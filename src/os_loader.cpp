@@ -1,6 +1,7 @@
 #pragma once
 #include "os_loader.h"
 
+
 // ext
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -183,7 +184,6 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
 			float u_raw = uvPositions[i * 2 + 0];
 			float v_raw = uvPositions[i * 2 + 1];
             float u, v;
-
             // Check if there are min and max UV values and normalize it
             // FIXME: it is possible that the model does not use the entire UV
             // space of the texture. Normalization code will not work in this case
@@ -428,22 +428,21 @@ int Loader::loadModelGLTF(const std::string model_path,
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     _populateREMesh(sampleMesh, reMesh);
-    /*
+    
     trc::raw << reMesh.verts.size() << "\n";
 
-    for (auto v : reMesh.verts) {
+/*     for (auto v : reMesh.verts) {
         std::vector<sp<geo::Loop>> out_loops = {};
         bool res = geo::getBoundingLoops(v,out_loops);
-        // assert(res && out_loops.size() == 3);
+        assert(res && out_loops.size() == 3);
 
         trc::raw << res << " " << out_loops.size() << "\n";
-    }
+    } */
     glm::vec3 zero(0);
     glm::vec3 forward(0,-1,0);
     glm::vec3 section(0);
-    bool res = geo::rayIntersectsTriangle(zero, forward, reMesh.verts[0], section);
-
-     trc::raw << res << "\n"; */
+    // bool res = geo::rayIntersectsTriangle(zero, forward, reMesh.verts[0], section);
+    //  trc::raw << res << "\n";
 
 
     trc::log("Finished loading model");
@@ -452,8 +451,8 @@ int Loader::loadModelGLTF(const std::string model_path,
 
 /*
     WORK IN PROGRESS
-    Populates a geo::Mesh object using default view mesh. Assumes that the mesh
-    is triangular and that each 3 indices form a face.
+    Populates a geo::Mesh object using default view mesh.
+    Assumes that the mesh is triangular and that each 3 indices form a face.
 
     This function is more of a test chamber for the REMesh data structure.
     I do not recommend to use it in a product code.
@@ -500,6 +499,10 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         l3->f = f;
 	};
 
+    auto try_get_edge = [&](sp<geo::Edge> e) {
+        return uniqueEdges.contains(*e.get()) ? uniqueEdges[*e.get()] : e;
+    };
+
 
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
@@ -536,6 +539,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         for (size_t j = 0; j < 3; j++) {
             bindVert(verts[j], i + j);
             uniqueVerts[*verts[j].get()] = verts[j];
+            verts[j]->dbID = j + i;
         }
 
         for (size_t j = 0; j < 3; j++) {
@@ -558,55 +562,55 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             // Assume this is a new edge
             // Loop edge to itself
             auto e_n = edges[next];
+            e_n->v1 = verts[next];
+            e_n->v2 = verts[prev];
             auto e_p = edges[prev];
+            e_p->v1 = verts[prev];
+            e_p->v2 = verts[j];
 
-            /*
-            if (uniqueEdges.contains(*e_n.get())) {
-                e_n = uniqueEdges[*e_n.get()];
-            }
 
-            if (uniqueEdges.contains(*e_p.get())) {
-                e_p = uniqueEdges[*e_p.get()];
-            }
-            */
-
-            edges[j]->d1->prev = e_p;
-            edges[j]->d1->next = e_p;
-            // Loop edge to the next edge
-            edges[j]->d2->prev = e_n;
-            edges[j]->d2->next = e_n;
+            edges[j]->d1->next = try_get_edge(e_n);
+            edges[j]->d2->prev = try_get_edge(e_p);
             edges[j]->dbID = i + j;
+
+            loops[j]->prev    = loops[prev];
+            loops[j]->next    = loops[next];
+            loops[prev]->prev = loops[next];
+            loops[prev]->next = loops[j];
+            loops[next]->prev = loops[j];
+            loops[next]->next = loops[prev];
         }
 
-        // FIXME: Rewrite with a general case
 		for (size_t j = 0; j < 3; j++) {
+			int prev = (3 + (j - 1)) % 3;
 			int next = (j + 1) % 3;
 
             // Check if we have an edge with these vertices in the hash table
 			exists[j] = uniqueEdges.contains(*edges[j].get());
-            exists[next] = uniqueEdges.contains(*edges[j].get());
 
             auto _v = verts[j];
             auto _e = edges[j];
             auto _v_n = verts[next];
             auto _e_n = edges[next];
-
-            /* bool b_v1 = geo::vLoopHasE(_v, _e); */
-            /* bool b_v2 = geo::vLoopHasE(_v_n, _e); */
-
+            auto _e_p = edges[prev];
 
 
             if (exists[j]) {
                 // If an edge exists, get it from the table
-                edges[j] = uniqueEdges[*edges[j].get()];
+                _e = uniqueEdges[*edges[j].get()];
+                assert(_e->d2->prev || _e->d2->next);
 
                 // Manage existing edge
-                geo::addEToVertL(_v, _e);
-                geo::addEToVertL(_v_n, _e);
+                _e->d1->prev = try_get_edge(_e_p);
+                _e->d2->next = try_get_edge(_e_n);
+                uniqueEdges[*_e.get()] = _e;
             }
+
+            geo::addLoopToEdge(_e, loops[j]);
 
             // Update the edge table with the new edge
             uniqueEdges[*_e.get()] = _e;
+            uniqueLoops[*loops[j].get()] = loops[j];
 		}
 
         // Bind the face afterwards
@@ -627,12 +631,15 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         auto _e = e.second;
         assert(_e->v1);
         assert(_e->v2);
-        /* assert(_e->loop); */
+        assert(_e->loop);
         assert(_e->d1);
         assert(_e->d2);
+
+        e.second = try_get_edge(_e);
+
         _outMesh.edges.push_back(_e);
     }
-/*
+
     for (auto l : uniqueLoops) {
         auto _l = l.second;
         assert(_l->e);
@@ -653,7 +660,6 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             l = l->next;
         }
     }
-    */
 
     trc::raw << "\n\n\n"
         << uniqueVerts.size() <<  " vertices" << "\n"
@@ -661,7 +667,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         << uniqueLoops.size() <<  " loops" << "\n"
         << uniqueFaces.size() <<  " faces" << "\n"
         << "REMesh E P characteristic: "
-        << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size()
+        << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size() << "\n"
         << "All asserts passed somehow!" << "\n"
         << "\n"
         << "\n";
