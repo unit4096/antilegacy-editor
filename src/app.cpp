@@ -6,13 +6,14 @@ App::App(AppConfigData config) {
 }
 
 
-/* 
-    Runs the editor. It connects every other class whether it is window creation
-    or input management. 
-    As of [14.01.2024] it is intentionally verboose for the ease of development
+/*
+    Runs the editor. It connects every other class
+    whether it is window creation or input management.
+    As of [14.01.2024] it is intentionally verboose
+    for the ease of development
 */
 int App::run() {
- 
+
     try {
 
         // Time management for framerate control
@@ -27,26 +28,26 @@ int App::run() {
             trc::LogLevel::INFO,
             trc::LogLevel::WARNING,
             trc::LogLevel::ERROR,
-        };    
+        };
         trc::SetLogLevels(logLevels);
 
         std::string model_path = "./models/fox/Fox.gltf";
 
         // Loader handles system IO
         ale::Loader loader;
-        
+
         loader.recordCommandLineArguments(_config.argc, _config.argv);
         loader.getFlaggedArgument("-f", model_path);
 
-        /* 
-        Model object that represents a scene with multiple nodes, 
+        /*
+        Model object that represents a scene with multiple nodes,
         meshes, and textures
         */
         ale::Model model;
 
         // // You can use this to load a custom texture
         // loader.loadTexture("RELATIVE_PATH_TO_TEX", image);
-        
+
         // Load a GLTF model
         if (loader.loadModelGLTF(model_path, model)) {
             trc::log("Cannot load model by path: " + model_path, trc::ERROR);
@@ -65,16 +66,16 @@ int App::run() {
         // TODO: possibly move window management outside the renderer
         renderer.initWindow();
         input.init(renderer.getWindow());
-        
+
         // Make the default mode to be FREE
         mainCam->toggleMode();
         // Set initial camera position
-        
+
 
         // Dynamically set camera position by mesh bounding box
 
         assert(model.meshes.size() > 0);
-        
+
         // Uses AABB of the first mesh
         if (model.meshes[0].minPos.size() >= 3) {
             assert(model.meshes[0].minPos.size() ==
@@ -89,7 +90,7 @@ int App::run() {
             mainCam->setPosition(glm::vec3(0, middleY, -frontEdge));
         } else {
             mainCam->setPosition(glm::vec3(0, 50, 150));
-        }        
+        }
 
         mainCam->setSpeed(1.0f);
 
@@ -98,7 +99,7 @@ int App::run() {
 
 
         std::chrono::duration<double> deltaTime;
-        
+
         float cameraSpeedAdjusted = 1.0f;
 
         float mouseSensitivity = 0.06f;
@@ -124,8 +125,8 @@ int App::run() {
         input.bindFunction(ale::InputAction::CAMERA_MOVE_R, moveR, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_U, moveY, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
-        
-        // Bind global camera to the inner camera object 
+
+        // Bind global camera to the inner camera object
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
 
@@ -137,26 +138,26 @@ int App::run() {
             // Delta time for editor calculations
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
-            
+
             cameraSpeedAdjusted = mainCam->getSpeed() * deltaTime.count() * 100 / 8;
 
             // polling events, callbacks fired
             glfwPollEvents();
-            
+
             // Key camera input
             input.executeActiveKeyActions();
 
             // Mouse camera input
-            input.executeActiveMouseAcitons();            
-            ale::v2d mouseMovement = input.getLastDeltaMouseOffset();            
+            input.executeActiveMouseAcitons();
+            ale::v2d mouseMovement = input.getLastDeltaMouseOffset();
             ale::v2f camYawPitch = mainCam->getYawPitch();
             camYawPitch.x-= mouseMovement.x * mouseSensitivity;
             camYawPitch.y-= mouseMovement.y * mouseSensitivity;
             mainCam->setYawPitch(camYawPitch.x,camYawPitch.y);
 
-            // Drawing the results of the input   
+            // Drawing the results of the input
             renderer.drawFrame();
-            
+
             // Smooth framerate
             auto thisFrameEnd = std::chrono::steady_clock::now();
             auto frameDuration = duration_cast<std::chrono::duration<double>>(thisFrameEnd - thisFrame);
@@ -166,7 +167,7 @@ int App::run() {
             std::this_thread::sleep_for(elapsed);
         }
         renderer.cleanup();
-        
+
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return -1;
