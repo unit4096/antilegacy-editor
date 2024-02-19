@@ -1,4 +1,5 @@
 // Function for geometry manipulation
+// TODO: add function descriptions
 
 //ext
 #pragma once
@@ -23,24 +24,24 @@
 namespace trc = ale::Tracer;
 
 namespace ale {
-
 namespace geo {
 
-static bool getBoundingLoops(const sp<Vert>& vert,
-                      std::vector<sp<Loop>>& out_loops) {
+// Get Face bounding loops
+[[maybe_unused]]
+static bool getBoundingLoops(const Face* face,
+                      std::vector<Loop*>& out_loops) {
+
     // The vert is not attached to any edge. Something is
     // very wrong with your topology
-    assert(vert->edge);
 
-    auto e = vert->edge;
 
-    if (e->loop == nullptr) {
+    if (face->loop == nullptr) {
         // This edge does not belong to any face
         return false;
     }
 
     out_loops = {};
-    auto l = e->loop;
+    auto l = face->loop;
     auto lItr = l;
     assert(lItr->next);
     out_loops.push_back(lItr);
@@ -55,49 +56,12 @@ static bool getBoundingLoops(const sp<Vert>& vert,
     return true;
 }
 
-
-static bool addEToD1(sp<geo::Edge> e_old, sp<geo::Edge> e_new) {
-    assert(e_old);
-    assert(e_new);
-    auto d1 = e_old->d1;
-    auto e_next = d1->next;
-
-    d1->next = e_new;
-
-    if (e_next->d1->prev == e_old) {
-        e_next->d1->prev = e_new;
-    } else if (e_next->d2->prev == e_old) {
-        e_next->d2->prev = e_new;
-    } else {
-        trc::log("It does not link back!", trc::LogLevel::ERROR);
-        return false;
-    }
-    return true;
-};
-
-static bool addEToD2(sp<geo::Edge> e_old, sp<geo::Edge> e_new) {
-    assert(e_old);
-    assert(e_new);
-    auto d2 = e_old->d2;
-    auto e_next = d2->next;
-
-    d2->next = e_new;
-
-    if (e_next->d1->prev == e_old) {
-        e_next->d1->prev = e_new;
-    } else if (e_next->d2->prev == e_old) {
-        e_next->d2->prev = e_new;
-    } else {
-        trc::log("It does not link back!", trc::LogLevel::ERROR);
-        return false;
-    }
-    return true;
-};
+/*
 
 // Edge cycles are a collection of loops connected to the sides
 // of the current loop
 // They are unordered
-static void appenLoopToRadialLoopCycle(sp<geo::Edge> e, sp<geo::Loop> new_l) {
+static void appenLoopToRadialLoopCycle(geo::Edge* e, geo::Loop* new_l) {
     auto old_l = e->loop;
     if (old_l->radial_next == nullptr && old_l->radial_prev == nullptr) {
         old_l->radial_prev = new_l;
@@ -106,23 +70,15 @@ static void appenLoopToRadialLoopCycle(sp<geo::Edge> e, sp<geo::Loop> new_l) {
     old_l->radial_next->prev = new_l;
     old_l->radial_next = new_l;
 };
-
-static bool isV1InE(sp<geo::Vert> v, sp<geo::Edge> e) {
-
-    assert(e);
-    assert(e->v1 == v || e->v2 == v);
-    return e->v1 == v;
-};
-
-static bool dHasE(sp<geo::VertDiskLink> d, sp<geo::Edge> e) {
+static bool dHasE(geo::Disk* d, geo::Edge* e) {
     return d->next == e || d->prev == e;
 };
 
-static auto getNextDInLoop(sp<geo::Edge> e, sp<geo::VertDiskLink> d) {
+static auto getNextDInLoop(geo::Edge* e, sp<geo::Disk* d) {
     trc::raw << &d << " ";
     assert(e);
     assert(d);
-    sp<geo::VertDiskLink> res = nullptr;
+    geo::Disk> res = nullptr;
 
     auto next = d->next;
 
@@ -140,7 +96,7 @@ static auto getNextDInLoop(sp<geo::Edge> e, sp<geo::VertDiskLink> d) {
     return res;
 };
 
-static bool vLoopHasE(sp<geo::Vert> v, sp<geo::Edge> e) {
+static bool vLoopHasE(geo::Vert> v, sp<geo::Edge> e) {
     assert(e);
     assert(v->edge);
 
@@ -188,7 +144,7 @@ static bool vLoopHasE(sp<geo::Vert> v, sp<geo::Edge> e) {
     return false;
 };
 
-static void addEToVertL(sp<geo::Vert> v, sp<geo::Edge> e_new) {
+static void addEToVertL(geo::Vert> v, sp<geo::Edge> e_new) {
     if (geo::isV1InE(v,e_new)) {
         geo::addEToD1(v->edge, e_new);
     } else {
@@ -196,8 +152,11 @@ static void addEToVertL(sp<geo::Vert> v, sp<geo::Edge> e_new) {
     }
 }
 
+*/
 
-static void addLoopToEdge(sp<geo::Edge> e, sp<geo::Loop> l) {
+// Append a geo::Loop to the geo::Edge's radial loop cycle
+[[maybe_unused]]
+static void addLoopToEdge(geo::Edge* e, geo::Loop* l) {
     if (!e->loop) {
         l->radial_next = l;
         l->radial_prev = l;
@@ -212,17 +171,19 @@ static void addLoopToEdge(sp<geo::Edge> e, sp<geo::Loop> l) {
 }
 
 // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
-
-static bool rayIntersectsTriangle(glm::vec3 rayOrigin,
-                         glm::vec3 rayDir,
-                         const sp<Vert>& triangle,
-                         glm::vec3& out_intersection_point) {
+// Checks intersection of a ray and a triangle
+// FIXME: not tested properly
+[[maybe_unused]]
+static bool rayIntersectsTriangle(const glm::vec3& rayOrigin,
+                                 const glm::vec3& rayDir,
+                                 const Face* face,
+                                 glm::vec3& out_intersection_point) {
 
     constexpr float epsilon = std::numeric_limits<float>::epsilon();
 
-    std::vector<sp<Loop>> loops = {};
+    std::vector<Loop*> loops = {};
 
-    bool bHasLoops = getBoundingLoops(triangle, loops);
+    bool bHasLoops = getBoundingLoops(face, loops);
 
     // Works only with triangle faces
     assert(bHasLoops && loops.size() == 3);
@@ -264,7 +225,6 @@ static bool rayIntersectsTriangle(glm::vec3 rayOrigin,
     else
         return false;
 }
-
 
 } // namespace geo
 } // namespace ale

@@ -37,7 +37,7 @@ namespace geo {
 
 struct Vert;
 struct Edge;
-struct VertDiskLink;
+struct Disk;
 struct Loop;
 struct Face;
 
@@ -47,7 +47,7 @@ struct Vert {
     glm::vec3 color;
     glm::vec2 texCoord;
     // An edge in the disk loop
-    sp<Edge> edge;
+    Edge *edge;
     int dbID = -1;
 
     // Compares vertices. Only position is important for RE Vertices
@@ -56,46 +56,52 @@ struct Vert {
     }
 };
 
-struct VertDiskLink {
-    sp<Edge> prev, next;
-};
 
 struct Edge {
     // Origin and destination vertices
-    sp<Vert> v1, v2;
-    sp<Loop> loop;
-    sp<VertDiskLink> d1, d2;
+    Vert *v1, *v2;
+    Loop *loop;
+    Disk *d1, *d2;
     int dbID = -1;
 
     bool operator==(const Edge& other) const {
         return (
-                   (*v1.get() == *other.v1.get()  &&
-                    *v2.get() == *other.v2.get()) ||
-                   (*v1.get() == *other.v2.get()  &&
-                    *v2.get() == *other.v1.get())
+                   (*v1 == *other.v1  &&
+                    *v2 == *other.v2) ||
+                   (*v1 == *other.v2  &&
+                    *v2 == *other.v1)
                 );
     }
 
 };
 
+struct Disk {
+    Edge *prev, *next;
+    // Compares vertices. Only position is important for RE Vertices
+    bool operator==(const Disk& other) const {
+        return *prev == *other.next &&
+               *next == *other.next;
+    }
+};
+
 
 // Loop node around the face
 struct Loop {
-    sp<Vert> v;
-    sp<Edge> e;
+    Vert *v;
+    Edge *e;
     // The face the loop belongs to
-    sp<Face> f;
+    Face *f;
     // Loops connected to the edge
-    sp<Loop> radial_prev, radial_next;
+    Loop *radial_prev, *radial_next;
     // Loops forming a face
-    sp<Loop> prev, next;
+    Loop *prev, *next;
     int dbID = -1;
 
     bool operator==(const Loop& other) const {
-		Loop* p1 = prev == nullptr ? prev.get() : nullptr;
-		Loop* n1 = next == nullptr ? next.get() : nullptr;
-		Loop* p2 = other.prev == nullptr ? other.prev.get() : nullptr;
-		Loop* n2 = other.next ? other.next.get() : nullptr;
+		Loop* p1 = prev == nullptr ? prev : nullptr;
+		Loop* n1 = next == nullptr ? next : nullptr;
+		Loop* p2 = other.prev == nullptr ? other.prev : nullptr;
+		Loop* n2 = other.next ? other.next : nullptr;
 
 		bool pair1 = !p1 && !p2;
 		bool pair2 = !n1 && !n2;
@@ -111,12 +117,12 @@ struct Loop {
 
 struct Face {
     // A pointer to the first loop node
-    sp<Loop> loop;
-    glm::vec3 nor;
+    Loop *loop;
+    glm::vec3 *nor;
     unsigned int size;
 
 	bool operator==(const Face& other) const {
-        return (*loop->v.get() == *other.loop->v.get());
+        return (*loop->v == *other.loop->v);
     }
 };
 
@@ -125,25 +131,30 @@ struct Face {
 class REMesh {
 public:
     ~REMesh() {
-        for (auto e : edges) {
-            e->loop = nullptr;
+        for (auto f: faces) {
+            delete f;
         }
-        for (auto l : loops) {
-            l->next = nullptr;
-            l->prev = nullptr;
-            l->radial_next = nullptr;
-            l->radial_prev = nullptr;
-            l->f = nullptr;
+        for (auto e: edges) {
+            delete e->d1;
+            delete e->d2;
+            delete e;
+        }
+        for (auto l: loops) {
+            delete l;
+        }
+        for (auto v: verts) {
+            delete v;
+        }
+        for (auto d: disks) {
+            delete d;
         }
 
-        for (auto f : faces) {
-            f->loop = nullptr;
-        }
     }
-    std::vector<sp<Face>> faces;
-    std::vector<sp<Edge>> edges;
-    std::vector<sp<Loop>> loops;
-    std::vector<sp<Vert>> verts;
+    std::vector<Face*> faces;
+    std::vector<Edge*> edges;
+    std::vector<Loop*> loops;
+    std::vector<Vert*> verts;
+    std::vector<Disk*> disks;
 };
 
 } // namespace geo
@@ -152,7 +163,7 @@ public:
 
 namespace std {
     // A hash function for a geometry vertex. So far only the geometry matters
-    template<> struct hash<ale::geo::Vert> {
+    template<> struct hash<ale::geo::Vert>{
         size_t operator()(ale::geo::Vert const& vertex) const {
             return hash<glm::vec3>()(vertex.pos);
         }
@@ -165,11 +176,11 @@ namespace std {
     the same vertices. Note that this DOES NOT check for null pointers.
     This hash function is *order independent*.
     */
-    template<> struct hash<ale::geo::Edge> {
+    template<> struct hash<ale::geo::Edge>{
         size_t operator()(ale::geo::Edge const& edge) const {
             // Hashes positions of two edges
-            return hash<ale::geo::Vert>()(*edge.v1.get()) ^
-				   hash<ale::geo::Vert>()(*edge.v2.get());
+            return hash<ale::geo::Vert>()(*edge.v1) ^
+				   hash<ale::geo::Vert>()(*edge.v2);
         }
     };
 }
@@ -177,9 +188,9 @@ namespace std {
 namespace std {
     // A hash function for a loop. There should not exist loops that link
     // to the same loop nodes
-    template<> struct hash<ale::geo::Loop> {
+        template<> struct hash<ale::geo::Loop>{
         size_t operator()(ale::geo::Loop const& loop) const {
-            return  (size_t)loop.prev.get() + ((size_t)loop.next.get() << 3);
+            return  (size_t)loop.prev + ((size_t)loop.next << 3);
         }
     };
 }
@@ -187,9 +198,24 @@ namespace std {
 namespace std {
     // A hash function for a face. There should not exist faces with the same
     // start loops
-    template<> struct hash<ale::geo::Face> {
+    template<> struct hash<ale::geo::Face>{
         size_t operator()(ale::geo::Face const& face) const {
-            return hash<size_t>()((size_t)face.loop.get());
+            return hash<size_t>()((size_t)face.loop);
+        }
+    };
+}
+
+
+namespace std {
+    /*
+    A hash function for a Disk link. There should not exist disks that share
+    the same edges.
+    */
+    template<> struct hash<ale::geo::Disk>{
+        size_t operator()(ale::geo::Disk const& disk) const {
+            // Hashes positions of two edges
+            return hash<ale::geo::Edge>()(*disk.prev) +
+				   (hash<ale::geo::Edge>()(*disk.next) << 3);
         }
     };
 }

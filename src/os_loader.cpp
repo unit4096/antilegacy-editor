@@ -1,6 +1,4 @@
-#pragma once
 #include "os_loader.h"
-
 
 // ext
 
@@ -428,22 +426,35 @@ int Loader::loadModelGLTF(const std::string model_path,
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     _populateREMesh(sampleMesh, reMesh);
-    
+/*
     trc::raw << reMesh.verts.size() << "\n";
 
-/*     for (auto v : reMesh.verts) {
-        std::vector<sp<geo::Loop>> out_loops = {};
-        bool res = geo::getBoundingLoops(v,out_loops);
+    for (auto f : reMesh.faces) {
+        std::vector<geo::Loop*> out_loops = {};
+        bool res = geo::getBoundingLoops(f,out_loops);
         assert(res && out_loops.size() == 3);
 
         trc::raw << res << " " << out_loops.size() << "\n";
-    } */
-    glm::vec3 zero(0);
-    glm::vec3 forward(0,-1,0);
-    glm::vec3 section(0);
-    // bool res = geo::rayIntersectsTriangle(zero, forward, reMesh.verts[0], section);
-    //  trc::raw << res << "\n";
+    }
 
+    auto firstVec = reMesh.verts[0];
+    firstVec->pos.x/= 2;
+    firstVec->pos.y/= 2;
+    firstVec->pos.z/= 2;
+    firstVec->pos.y-=10;
+
+
+    glm::vec3 origin = firstVec->pos;
+    glm::vec3 forward(1,-1,1);
+    glm::vec3 section(0);
+
+    int counter = 0;
+    for (auto f : reMesh.faces) {
+        bool res = geo::rayIntersectsTriangle(origin, forward, f, section);
+        trc::raw << "check " << counter << "result" <<  res << "\n";
+        counter++;
+    }
+*/
 
     trc::log("Finished loading model");
     return 0;
@@ -456,6 +467,11 @@ int Loader::loadModelGLTF(const std::string model_path,
 
     This function is more of a test chamber for the REMesh data structure.
     I do not recommend to use it in a product code.
+
+    [18.02.2024] Looks like I hit the limits for smart pointers here.
+    Falling back to raw pointers for flexibility
+    Need to find a better memory management solution
+
 */
 bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
@@ -465,114 +481,126 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     // Only accepts manifold meshes consisting of triangles
     assert(_inpMesh.indices.size() % 3 == 0);
 
-
 	// Hash tables for the mesh. Needed for debug, will optimize later
-    std::unordered_map<geo::Vert, sp<geo::Vert>> uniqueVerts;
-    std::unordered_map<geo::Edge, sp<geo::Edge>> uniqueEdges;
-	std::unordered_map<geo::Loop, sp<geo::Loop>> uniqueLoops;
-    std::unordered_map<geo::Face, sp<geo::Face>> uniqueFaces;
+    std::unordered_map<geo::Vert, geo::Vert*> uniqueVerts;
+    std::unordered_map<geo::Edge, geo::Edge*> uniqueEdges;
+	std::unordered_map<geo::Loop, geo::Loop*> uniqueLoops;
+    std::unordered_map<geo::Face, geo::Face*> uniqueFaces;
+    std::unordered_map<geo::Disk, geo::Disk*> uniqueDisks;
 
     // Helper binding funcitons to make the code DRY
 
     // Get ViewMesh vertex to populate basic fields
-    auto bindVert = [&](sp<geo::Vert> v, unsigned int i){
+    auto bindVert = [&](geo::Vert& v, unsigned int i){
         Vertex _v = _inpMesh.vertices[_inpMesh.indices[i]];
-        v->pos = _v.pos;
-        v->color = _v.color;
-        v->texCoord = _v.texCoord;
+        v.pos = _v.pos;
+        v.color = _v.color;
+        v.texCoord = _v.texCoord;
     };
 
-    auto bindLoop = [&](sp<geo::Loop>& l,
-                        sp<geo::Vert>& v, sp<geo::Edge>& e ){
+    auto bindLoop = [&](geo::Loop* l,
+                        geo::Vert* v, geo::Edge* e ){
         l->v = v;
         l->e = e;
+        // No loop == loops to itself
         l->radial_next = l;
         l->radial_prev = l;
     };
 
-	auto bindFace = [&](sp<geo::Face>& f, sp<geo::Loop>& l1,
-						sp<geo::Loop>& l2, sp<geo::Loop>& l3) {
+	auto bindFace = [&](geo::Face* f, geo::Loop* l1,
+						geo::Loop* l2, geo::Loop* l3) {
 		f->loop = l1;
-
         l1->f = f;
         l2->f = f;
         l3->f = f;
 	};
 
-    auto try_get_edge = [&](sp<geo::Edge> e) {
-        return uniqueEdges.contains(*e.get()) ? uniqueEdges[*e.get()] : e;
+    auto try_get_edge = [&](geo::Edge* e) {
+        if (uniqueEdges.contains(*e)) {
+            auto result = uniqueEdges[*e];
+            return result;
+        } else {
+            return e;
+        }
     };
-
 
     // Iterate over each face
     for (unsigned int i = 0; i < _inpMesh.indices.size(); i+=3) {
-        // Create vertices
-        sp<geo::Vert> v1 = to_sp<geo::Vert>();
-        sp<geo::Vert> v2 = to_sp<geo::Vert>();
-        sp<geo::Vert> v3 = to_sp<geo::Vert>();
 
-        // Create edges and loops for each pair of vertices
-        // order: 1,2 2,3 3,1
-        // Do not bind the elements to each other just yet
-
-        // 1,2
-        auto e1 = to_sp<geo::Edge>();
-        auto l1 = to_sp<geo::Loop>();
-
-        // 2,3
-        auto e2 = to_sp<geo::Edge>();
-        auto l2 = to_sp<geo::Loop>();
-
-        // 3,1
-        auto e3 = to_sp<geo::Edge>();
-        auto l3 = to_sp<geo::Loop>();
-
-		// Create face
-        auto f = to_sp<geo::Face>();
-
-		// Create vectors for the binding loop
-		std::vector<sp<geo::Vert>> verts = {v1,v2,v3};
-		std::vector<sp<geo::Edge>> edges = {e1,e2,e3};
-		std::vector<sp<geo::Loop>> loops = {l1,l2,l3};
-		std::vector<bool> exists = {false,false,false};
+		std::vector<geo::Vert*> verts = {nullptr,nullptr,nullptr};
+		std::vector<geo::Edge*> edges = {nullptr,nullptr,nullptr};
+		std::vector<geo::Loop*> loops = {nullptr,nullptr,nullptr};
+        std::vector<bool> contains = {false,false,false};
 
         for (size_t j = 0; j < 3; j++) {
-            bindVert(verts[j], i + j);
-            uniqueVerts[*verts[j].get()] = verts[j];
-            verts[j]->dbID = j + i;
+            geo::Vert v;
+
+            bindVert(v, i + j);
+            if (uniqueVerts.contains(v)) {
+                verts[j] = uniqueVerts[v];
+            } else {
+                verts[j] = new geo::Vert(v);
+                uniqueVerts[v] = verts[j];
+            }
+        }
+
+        // Bind edges and disks
+
+        for (size_t j = 0; j < 3; j++) {
+			int next = (j + 1) % 3;
+            geo::Edge e;
+            e.v1 = verts[j];
+            e.v2 = verts[next];
+
+            if (uniqueEdges.contains(e)) {
+                edges[j] = uniqueEdges[e];
+                contains[j] = true;
+            } else {
+                edges[j] = new geo::Edge(e);
+            }
+
+            verts[j]->edge = edges[j];
+            edges[j]->v1 = verts[j];
+            edges[j]->v2 = verts[next];
         }
 
         for (size_t j = 0; j < 3; j++) {
-        	bindLoop(loops[j], verts[j], edges[j]);
+			int next = (j + 1) % 3;
+			int prev = (3 + (j - 1)) % 3;
+
+            if (contains[j]) {
+                edges[j]->d1->next = try_get_edge(edges[prev]);
+                edges[j]->d2->prev = try_get_edge(edges[next]);
+            } else {
+                edges[j]->d1 = new geo::Disk();
+                edges[j]->d2 = new geo::Disk();
+                edges[j]->d1->prev = try_get_edge(edges[next]);
+                edges[j]->d2->next = try_get_edge(edges[prev]);
+            }
         }
+
+        // Time to create face boundary loooops
+
+        // They are always new
+        auto l1 = new geo::Loop();
+        auto l2 = new geo::Loop();
+        auto l3 = new geo::Loop();
+        auto f = new geo::Face();
+
+        loops = {l1,l2,l3};
+
+
+
 
         for (int j = 0; j < 3; j++) {
 			int next = (j + 1) % 3;
 			int prev = (3 + (j - 1)) % 3;
 
-            edges[j]->v1 = verts[j];
-            edges[j]->v2 = verts[next];
-            verts[j]->edge = edges[j];
+            // Populate basic loop data
+        	bindLoop(loops[j], verts[j], edges[j]);
 
-            // Link the edge to itself
-            edges[j]->d1 = to_sp<geo::VertDiskLink>();
-            edges[j]->d2 = to_sp<geo::VertDiskLink>();
-
-
-            // Assume this is a new edge
-            // Loop edge to itself
-            auto e_n = edges[next];
-            e_n->v1 = verts[next];
-            e_n->v2 = verts[prev];
-            auto e_p = edges[prev];
-            e_p->v1 = verts[prev];
-            e_p->v2 = verts[j];
-
-
-            edges[j]->d1->next = try_get_edge(e_n);
-            edges[j]->d2->prev = try_get_edge(e_p);
-            edges[j]->dbID = i + j;
-
+            // Bind all three loops together
+            // FIXME: Seems like an overkill tho
             loops[j]->prev    = loops[prev];
             loops[j]->next    = loops[next];
             loops[prev]->prev = loops[next];
@@ -581,47 +609,29 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             loops[next]->next = loops[prev];
         }
 
+        for (size_t j = 0; j < 3; j++) {
+            edges[j] = try_get_edge(edges[j]);
+        }
+
 		for (size_t j = 0; j < 3; j++) {
-			int prev = (3 + (j - 1)) % 3;
-			int next = (j + 1) % 3;
 
-            // Check if we have an edge with these vertices in the hash table
-			exists[j] = uniqueEdges.contains(*edges[j].get());
-
-            auto _v = verts[j];
             auto _e = edges[j];
-            auto _v_n = verts[next];
-            auto _e_n = edges[next];
-            auto _e_p = edges[prev];
-
-
-            if (exists[j]) {
-                // If an edge exists, get it from the table
-                _e = uniqueEdges[*edges[j].get()];
-                assert(_e->d2->prev || _e->d2->next);
-
-                // Manage existing edge
-                _e->d1->prev = try_get_edge(_e_p);
-                _e->d2->next = try_get_edge(_e_n);
-                uniqueEdges[*_e.get()] = _e;
-            }
-
             geo::addLoopToEdge(_e, loops[j]);
 
             // Update the edge table with the new edge
-            uniqueEdges[*_e.get()] = _e;
-            uniqueLoops[*loops[j].get()] = loops[j];
+            uniqueEdges[*_e] = _e;
+            uniqueLoops[*loops[j]] = loops[j];
 		}
 
         // Bind the face afterwards
 		bindFace(f, l1, l2, l3);
 
         f->size = 3;
-        uniqueFaces[*f.get()] = f;
+        uniqueFaces[*f] = f;
     }
 
     for (auto v : uniqueVerts) {
-        sp<geo::Vert> _v = v.second;
+        auto _v = v.second;
         assert(_v->edge);
         assert(_v->edge->v1 == _v);
         _outMesh.verts.push_back(_v);
@@ -658,6 +668,15 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         for (int i = 0 ; i < 3; i++) {
             assert(l->f == _f);
             l = l->next;
+        }
+    }
+
+    for (auto d : uniqueDisks) {
+        auto _d = d.second;
+        if (!_d->prev || !_d->next) {
+            delete _d;
+        } else {
+            _outMesh.disks.push_back(_d);
         }
     }
 
