@@ -422,39 +422,10 @@ int Loader::loadModelGLTF(const std::string model_path,
 
 
     // The following code is here just to test re_mesh loading
-
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     _populateREMesh(sampleMesh, reMesh);
-/*
-    trc::raw << reMesh.verts.size() << "\n";
 
-    for (auto f : reMesh.faces) {
-        std::vector<geo::Loop*> out_loops = {};
-        bool res = geo::getBoundingLoops(f,out_loops);
-        assert(res && out_loops.size() == 3);
-
-        trc::raw << res << " " << out_loops.size() << "\n";
-    }
-
-    auto firstVec = reMesh.verts[0];
-    firstVec->pos.x/= 2;
-    firstVec->pos.y/= 2;
-    firstVec->pos.z/= 2;
-    firstVec->pos.y-=10;
-
-
-    glm::vec3 origin = firstVec->pos;
-    glm::vec3 forward(1,-1,1);
-    glm::vec3 section(0);
-
-    int counter = 0;
-    for (auto f : reMesh.faces) {
-        bool res = geo::rayIntersectsTriangle(origin, forward, f, section);
-        trc::raw << "check " << counter << "result" <<  res << "\n";
-        counter++;
-    }
-*/
 
     trc::log("Finished loading model");
     return 0;
@@ -475,10 +446,9 @@ int Loader::loadModelGLTF(const std::string model_path,
 */
 bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
-    trc::log("Not implemented!", trc::ERROR);
-    return 1;
-
     // Only accepts manifold meshes consisting of triangles
+    assert(_inpMesh.vertices.size() >= 3);
+    assert(_inpMesh.indices.size() >= 3);
     assert(_inpMesh.indices.size() % 3 == 0);
 
 	// Hash tables for the mesh. Needed for debug, will optimize later
@@ -532,6 +502,9 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 		std::vector<geo::Loop*> loops = {nullptr,nullptr,nullptr};
         std::vector<bool> contains = {false,false,false};
 
+
+        // Create and bind verts
+
         for (size_t j = 0; j < 3; j++) {
             geo::Vert v;
 
@@ -544,7 +517,7 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             }
         }
 
-        // Bind edges and disks
+        // Bind edges
 
         for (size_t j = 0; j < 3; j++) {
 			int next = (j + 1) % 3;
@@ -563,6 +536,8 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             edges[j]->v1 = verts[j];
             edges[j]->v2 = verts[next];
         }
+
+        // Bind disks
 
         for (size_t j = 0; j < 3; j++) {
 			int next = (j + 1) % 3;
@@ -589,9 +564,6 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
         loops = {l1,l2,l3};
 
-
-
-
         for (int j = 0; j < 3; j++) {
 			int next = (j + 1) % 3;
 			int prev = (3 + (j - 1)) % 3;
@@ -609,9 +581,6 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             loops[next]->next = loops[prev];
         }
 
-        for (size_t j = 0; j < 3; j++) {
-            edges[j] = try_get_edge(edges[j]);
-        }
 
 		for (size_t j = 0; j < 3; j++) {
 
@@ -643,7 +612,11 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         assert(_e->v2);
         assert(_e->loop);
         assert(_e->d1);
+        assert(_e->d1->next);
+        assert(_e->d1->prev);
         assert(_e->d2);
+        assert(_e->d2->next);
+        assert(_e->d2->prev);
 
         e.second = try_get_edge(_e);
 
@@ -655,6 +628,10 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         assert(_l->e);
         assert(_l->v);
         assert(_l->f);
+        assert(_l->radial_next != _l);
+        assert(_l->radial_prev != _l);
+        assert(_l->radial_prev->radial_prev == _l);
+        assert(_l->radial_next->radial_next == _l);
         assert(_l->next->next->next == _l);
         assert(_l->prev->prev->prev == _l);
         _outMesh.loops.push_back(_l);
@@ -679,17 +656,17 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             _outMesh.disks.push_back(_d);
         }
     }
-
-    trc::raw << "\n\n\n"
+    /*
+    trc::raw << "\n"
         << uniqueVerts.size() <<  " vertices" << "\n"
         << uniqueEdges.size() <<  " edges" << "\n"
         << uniqueLoops.size() <<  " loops" << "\n"
         << uniqueFaces.size() <<  " faces" << "\n"
-        << "REMesh E P characteristic: "
+        << "REMesh E.P. characteristic: "
         << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size() << "\n"
         << "All asserts passed somehow!" << "\n"
-        << "\n"
         << "\n";
+    */
 
     return 0;
 }
