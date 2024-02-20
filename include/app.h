@@ -32,6 +32,7 @@
 #include <renderer.h>
 #include <tracer.h>
 #include <os_loader.h>
+#include <re_mesh.h>
 
 
 namespace ale {
