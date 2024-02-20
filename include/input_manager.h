@@ -30,6 +30,9 @@ enum InputAction {
     CAMERA_MOVE_R,
     CAMERA_MOVE_U,
     CAMERA_MOVE_D,
+    FUNC_1,
+    FUNC_2,
+    FUNC_3,
 };
 
 class InputManager {
