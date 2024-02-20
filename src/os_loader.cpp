@@ -446,6 +446,8 @@ int Loader::loadModelGLTF(const std::string model_path,
 */
 bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
+    const bool TEST_2_MANIFOLD = false;
+
     // Only accepts manifold meshes consisting of triangles
     assert(_inpMesh.vertices.size() >= 3);
     assert(_inpMesh.indices.size() >= 3);
@@ -612,14 +614,14 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         assert(_e->v2);
         assert(_e->loop);
         assert(_e->d1);
-        assert(_e->d1->next);
-        assert(_e->d1->prev);
         assert(_e->d2);
-        assert(_e->d2->next);
-        assert(_e->d2->prev);
 
-        e.second = try_get_edge(_e);
-
+        if (TEST_2_MANIFOLD) {
+            assert(_e->d2->next);
+            assert(_e->d2->prev);
+            assert(_e->d1->next);
+            assert(_e->d1->prev);
+        }
         _outMesh.edges.push_back(_e);
     }
 
@@ -628,12 +630,15 @@ bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         assert(_l->e);
         assert(_l->v);
         assert(_l->f);
-        assert(_l->radial_next != _l);
-        assert(_l->radial_prev != _l);
-        assert(_l->radial_prev->radial_prev == _l);
-        assert(_l->radial_next->radial_next == _l);
-        assert(_l->next->next->next == _l);
-        assert(_l->prev->prev->prev == _l);
+
+        if (TEST_2_MANIFOLD) {
+            assert(_l->radial_next != _l);
+            assert(_l->radial_prev != _l);
+            assert(_l->radial_prev->radial_prev == _l);
+            assert(_l->radial_next->radial_next == _l);
+            assert(_l->next->next->next == _l);
+            assert(_l->prev->prev->prev == _l);
+        }
         _outMesh.loops.push_back(_l);
     }
 
