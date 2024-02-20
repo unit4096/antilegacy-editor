@@ -53,11 +53,7 @@ initialization and switches to 1.3 structures whenever they are availible
 #include <vulkan_utils.h>
 #include <os_loader.h>
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_glfw.h>
-#include <imgui/imgui_impl_vulkan.h>
-#include <imgui/ImGuizmo.h>
-
+#include <ale_imgui_interface.h>
 namespace trc = ale::Tracer;
 
 namespace ale {
