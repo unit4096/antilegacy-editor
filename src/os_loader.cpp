@@ -424,7 +424,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     // The following code is here just to test re_mesh loading
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
-    _populateREMesh(sampleMesh, reMesh);
+    populateREMesh(sampleMesh, reMesh);
 
 
     trc::log("Finished loading model");
@@ -444,7 +444,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     Need to find a better memory management solution
 
 */
-bool Loader::_populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
+bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
     const bool TEST_2_MANIFOLD = false;
 
