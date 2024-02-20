@@ -1,7 +1,7 @@
 /*
-    This is a mesh implementation that uses Radial Edge Structure for
-    fast manipulation of non-manifold meshes. It omits the shell structure since
-    solid modeling is out of scope of the editor.
+    This is a mesh implementation that uses Radial Edge Structure
+    for fast manipulation of non-manifold meshes. It omits the shell
+    structure since solid modeling is out of scope of the editor.
 
     Main inspiration and reference for this data structure:
     https://wiki.blender.org/wiki/Source/Modeling/BMesh/Design
