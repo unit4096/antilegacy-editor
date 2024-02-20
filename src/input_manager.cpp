@@ -18,6 +18,9 @@ void InputManager::init(GLFWwindow* window) {
 	_bindKey(GLFW_KEY_D,InputAction::CAMERA_MOVE_R);
 	_bindKey(GLFW_KEY_Q,InputAction::CAMERA_MOVE_U);
 	_bindKey(GLFW_KEY_Z,InputAction::CAMERA_MOVE_D);
+	_bindKey(GLFW_KEY_1,InputAction::FUNC_1);
+	_bindKey(GLFW_KEY_2,InputAction::FUNC_2);
+	_bindKey(GLFW_KEY_3,InputAction::FUNC_3);
 
     glfwSetKeyCallback(window, _keyCallback);
 }
@@ -25,7 +28,7 @@ void InputManager::init(GLFWwindow* window) {
 // types: GLFW_PRESS GLFW_RELEASE GLFW_REPEAT
 void InputManager::_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     InputManager* manager = (InputManager*)glfwGetWindowUserPointer(window);
-    
+
     if (manager->_inputKeyBindings.contains(key) && action == GLFW_PRESS) {
         auto _action = manager->_inputKeyBindings[key];
         manager->_executeAction(_action);
@@ -49,17 +52,17 @@ bool InputManager::_isKeyPressed(GLFWwindow* window, int key){
 // Binds a lambda funciton to an editor action. For now the function should have
 // a declaration `void func_name(void)`, but it can use context data
 // TODO: implement a more verbose distinction between input methods (i.e. enum)
-void InputManager::bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous) {    
+void InputManager::bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous) {
     if (isContinuous) {
         _functionContBindings[_action] = _function;
     } else {
-        _callbackBindings[_action] = _function;        
+        _callbackBindings[_action] = _function;
     }
 }
 
 bool InputManager::isActionActive(InputAction _action){
     return false;
-} 
+}
 
 // Allows to execute active continuous actions (like camera controls)
 // Should be called from the main loop/input thread
