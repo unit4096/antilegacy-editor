@@ -42,7 +42,6 @@ private:
     CameraData _data;
 public:
     CameraMode mode;
-    
     glm::vec3 targetPos;
     Camera();
     ~Camera();
@@ -64,7 +63,10 @@ public:
     void moveLeftLocal(const float speed);
     void moveRightLocal(const float speed);
     void movePosGlobal(const glm::vec3 movementVector, const float speed);
+
+    glm::vec3 getPos();
 }; // class Camera
+
 
 } // namespace ale
 

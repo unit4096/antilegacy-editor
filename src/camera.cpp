@@ -132,3 +132,7 @@ void Camera::moveRightLocal(const float speed) {
 void Camera::movePosGlobal(const glm::vec3 movementVector, const float speed) {
     this->_data.position = this->_data.position + (movementVector * speed);
 }
+
+glm::vec3 Camera::getPos() {
+    return this->_data.position;
+}
