@@ -17,6 +17,7 @@
 
 #include <primitives.h>
 #include <tracer.h>
+#include <ale_imgui_interface.h>
 
 namespace trc = ale::Tracer;
 
@@ -39,7 +40,7 @@ class InputManager {
 private:
     // NOTE: [03.12.2023] I use `map` instead of `unordered_map` for better
     // traversal time complexity and cache coherency.
-    // It is possible to use a `vector` to store keys of the `unordered_map`, 
+    // It is possible to use a `vector` to store keys of the `unordered_map`,
     // but now readability is more important than O(1)
 
     // A map of (KEY,ACTION) bindings
@@ -71,9 +72,9 @@ public:
     void bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous = false);
     bool isActionActive(InputAction _action);
     v2d getLastDeltaMouseOffset();
+    v2d getMousePos();
 };
 
-    
 } // namespace ale
 
 #endif //ALE_INPUT_MANAGER

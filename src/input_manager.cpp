@@ -86,16 +86,27 @@ v2d InputManager::getLastDeltaMouseOffset() {
     return v2d(_lastDeltaX,_lastDeltaY);
 }
 
+v2d InputManager::getMousePos() {
+    return v2d(_lastPosX, _lastPosY);
+}
+
 // Executes mouse actions
 // TODO: add mouse mode checks, enable only when over the model window
 bool InputManager::executeActiveMouseAcitons() {
+
+    auto io = ImGui::GetIO();
+    if (io.WantCaptureMouse) {
+        return true;
+    }
+
+
     double xpos, ypos;
-    
+
     int state = glfwGetMouseButton(_window_p, GLFW_MOUSE_BUTTON_LEFT);
 
     _lastDeltaX = 0;
     _lastDeltaY = 0;
-    
+
     // Calculates the delta offset for mouse movement
     if (state == GLFW_PRESS) {
         glfwGetCursorPos(_window_p, &xpos, &ypos);
