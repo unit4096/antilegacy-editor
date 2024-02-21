@@ -60,7 +60,9 @@ void InputManager::bindFunction(InputAction _action, std::function<void()> _func
     }
 }
 
+// FIXME: Implement this function or delete the declaration
 bool InputManager::isActionActive(InputAction _action){
+    trc::log("Not implemented!", trc::ERROR);
     return false;
 }
 
