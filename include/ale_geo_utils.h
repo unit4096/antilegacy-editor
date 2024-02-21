@@ -20,7 +20,6 @@
 
 #ifndef ALE_GEO_UTILS
 
-
 namespace trc = ale::Tracer;
 
 namespace ale {
