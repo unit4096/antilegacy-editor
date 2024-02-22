@@ -16,10 +16,10 @@ It lists minimal editing functionality for the editor to be considered a finishe
   - [ ] Create scene file
   - [ ] Serialize scene file
   - [ ] Export model
-  - [ ] Import resources
-    - [ ] Textures
+  - [x] Import resources
+    - [x] Textures
     - [ ] Rigs
-    - [ ] Meshes
+    - [x] Meshes
 
 - [ ] View
   - [ ] Camera movement
@@ -29,7 +29,7 @@ It lists minimal editing functionality for the editor to be considered a finishe
       - [ ] Fix camera direction along global XYZ
       - [x] manually set angle
     - [ ] Movement
-      - [ ] free movement
+      - [x] free movement
       - [x] along global XYZ
       - [ ] along local XYZ
       - [ ] fix camera position
@@ -63,13 +63,13 @@ It lists minimal editing functionality for the editor to be considered a finishe
 
 - [ ] Dynamic lighting
   - [ ] Create lights
-    - [ ] Direct
+    - [x] Direct
     - [ ] Diffuse
   - [ ] configure lights
     - [ ] Intencity 
     - [ ] Diffusion
     - [ ] Source size
-    - [ ] Position
+    - [x] Position
     - [ ] Direction
 
 - [ ] Rigging & skinning
@@ -83,10 +83,8 @@ It lists minimal editing functionality for the editor to be considered a finishe
     - [ ] Modify weight values
 
 - [ ] UI
-  - [ ] Gizmos
+  - [x] Gizmos
   - [ ] Debug
-  - [ ] 
 
 ## Backlog
 - [ ] Editor API for multiple renderers
-- [ ] 
