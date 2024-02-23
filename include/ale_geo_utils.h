@@ -24,7 +24,6 @@ namespace trc = ale::Tracer;
 
 namespace ale {
 namespace geo {
-
 /*
     Following functions manage REMesh primitives.
 */
