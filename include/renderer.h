@@ -54,6 +54,7 @@ initialization and switches to 1.3 structures whenever they are availible
 #include <os_loader.h>
 
 #include <ale_imgui_interface.h>
+#include <ui_manager.h>
 namespace trc = ale::Tracer;
 
 namespace ale {
@@ -347,6 +348,10 @@ public:
 
     GLFWwindow* getWindow() {
         return window;
+    }
+
+    UniformBufferObject getUbo(){
+        return ubo;
     }
 
 private:
@@ -1580,36 +1585,6 @@ private:
 
     }
 
-    
-
-
-    void uboFlipProjection(UniformBufferObject& ubo) {
-        ubo.proj *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
-    }
-
-    void drawImGuiGrid(){
-        auto gizmoUbo = ubo;
-        uboFlipProjection(gizmoUbo);
-        float* _view = geo::glmMatToPtr(gizmoUbo.view);
-        float* _proj = geo::glmMatToPtr(gizmoUbo.proj);
-        float* _model = geo::glmMatToPtr(gizmoUbo.model);
-
-        ImGuizmo::DrawGrid(_view,_proj,_model, 1.0f);
-    }
-
-    void drawImGuiGizmo(){
-        auto gizmoUbo = ubo;
-        uboFlipProjection(gizmoUbo);
-        float* _view = geo::glmMatToPtr(gizmoUbo.view);
-        float* _proj = geo::glmMatToPtr(gizmoUbo.proj);
-        float* _model = geo::glmMatToPtr(gizmoUbo.model);
-
-
-        auto enum_translate = ImGuizmo::OPERATION::TRANSLATE;
-        auto enum_worldspace = ImGuizmo::MODE::WORLD;
-
-        ImGuizmo::Manipulate(_view, _proj, enum_translate, enum_worldspace, _model);
-    }
 
     void drawImGui() {
         ImGui_ImplVulkan_NewFrame();
@@ -1621,7 +1596,7 @@ private:
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
 
-        drawImGuiGizmo();
+        ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, ubo.model);
 
         // ImGui::ShowDemoWindow();
 
