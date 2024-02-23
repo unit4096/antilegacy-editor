@@ -118,6 +118,32 @@ int App::run() {
         auto moveL = [&]() {    mainCam->moveLeftLocal(cameraSpeedAdjusted);};
         auto moveR = [&]() {   mainCam->moveRightLocal(cameraSpeedAdjusted);};
 
+
+        ale::geo::REMesh reMesh;
+        loader.populateREMesh(model.meshes[0], reMesh);
+
+        // This function tests raycasts from the middle of the screen
+        auto raycast = [&]() {
+            bool result = false;
+            glm::vec3 forward = mainCam->getForwardOrientation();
+
+            forward *= -1;
+
+            glm::vec3 out_intersection_point = glm::vec3(0);
+
+            for (auto f : reMesh.faces) {
+                result = geo::rayIntersectsTriangle(
+                                    mainCam->getPos(),
+                                    forward,
+                                    f, out_intersection_point);
+                if (result) {
+                    break;
+                }
+            }
+
+            ale::Tracer::raw << "Raycast result: " << result << "\n";
+        };
+
         // Bind lambda functions to keyboard actions
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F, moveF, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_B, moveB, true);
@@ -125,7 +151,7 @@ int App::run() {
         input.bindFunction(ale::InputAction::CAMERA_MOVE_R, moveR, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_U, moveY, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
-
+        input.bindFunction(ale::InputAction::FUNC_1,raycast, false);
         // Bind global camera to the inner camera object
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
@@ -163,8 +189,11 @@ int App::run() {
             auto frameDuration = duration_cast<std::chrono::duration<double>>(thisFrameEnd - thisFrame);
 
             // Sleep for = cap time - frame duration (to avoid FPS spikes)
-            const std::chrono::duration<double, std::milli> elapsed = fps_cap - frameDuration;
-            std::this_thread::sleep_for(elapsed);
+            const std::chrono::duration<double, std::milli> remainder = fps_cap - frameDuration;
+            // NOTE: on some hardware enabled VSync will slow down the
+            // system to sleep_for + VSync wait. In this case just
+            // disable this fps cap
+            std::this_thread::sleep_for(remainder);
         }
         renderer.cleanup();
 
