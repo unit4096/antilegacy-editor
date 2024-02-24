@@ -1595,6 +1595,13 @@ private:
 
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
+        auto v1 = model.meshes[0].vertices[0].pos;
+        auto v2 = model.meshes[0].vertices[1].pos;
+        auto v3 = model.meshes[0].vertices[2].pos;
+        auto pvm =  ale::UIManager::getFlippedProjection(ubo.proj) * ubo.view * ubo.model;
+        ale::UIManager::drawWorldSpaceLine(v1,v2, pvm);
+        ale::UIManager::drawWorldSpaceLine(v2,v3, pvm);
+        ale::UIManager::drawWorldSpaceLine(v3,v1, pvm);
 
         ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, ubo.model);
 

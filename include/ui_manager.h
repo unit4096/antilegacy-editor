@@ -3,18 +3,20 @@
 #ifndef ALE_UI_MANAGER
 #define ALE_UI_MANAGER
 
+// ext
 #ifndef GLM
 #define GLM
-// ext
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #endif // GLM
+#include <vector>
+
 
 // int
 #include <ale_imgui_interface.h>
 #include <primitives.h>
-#include <vector>
-
 #include <tracer.h>
+#include <ale_geo_utils.h>
 
 
 namespace ale {
@@ -26,6 +28,7 @@ public:
     static void drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2, const glm::mat4& mvp);
     static void drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model);
     static void flipProjection(glm::mat4& proj);
+    static glm::mat4 getFlippedProjection(const glm::mat4& proj);
 
 };
 

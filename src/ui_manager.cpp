@@ -11,12 +11,20 @@ void UIManager::DrawUiBg() {
 
 }
 
+
+// Flips passed projection
 void UIManager::flipProjection(glm::mat4& proj) {
         proj *=  glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
 }
 
+
+// Returns a flipped version of the projection
+glm::mat4 UIManager::getFlippedProjection(const glm::mat4& proj) {
+        return proj * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+}
+
 glm::vec2 UIManager::worldToScreen(const glm::mat4& modelViewProjection,
-                        const glm::vec3& pos) {
+                                   const glm::vec3& pos) {
 
     ImGuiIO& io = ImGui::GetIO();
     // Transform world position to clip space
@@ -34,6 +42,16 @@ glm::vec2 UIManager::worldToScreen(const glm::mat4& modelViewProjection,
 
 void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
                                    const glm::mat4& mvp) {
+
+    std::vector<glm::vec4> frustum = geo::getFrustumPlanes(mvp);
+    trc::raw << "Frust size: " << frustum.size() << "\n";
+
+
+    if (!geo::isPointInFrustum(pos1, frustum) &&
+        !geo::isPointInFrustum(pos2, frustum)) {
+        return;
+    }
+
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
     glm::vec2 screenPos1 = worldToScreen(mvp, pos1);
     glm::vec2 screenPos2 = worldToScreen(mvp, pos2);

@@ -24,6 +24,64 @@ namespace trc = ale::Tracer;
 
 namespace ale {
 namespace geo {
+
+/*
+    Following functions are generic geometry functions
+*/
+
+
+
+
+// Generates frustum planes for a ModelViewProjection matrix
+// w is for normals
+[[maybe_unused]]
+static std::vector<glm::vec4> getFrustumPlanes(const glm::mat4& mvp) {
+    std::vector<glm::vec4> frustum;
+    frustum.resize(6);
+
+    auto mvpRow2 = glm::vec4(mvp[1][0],mvp[1][1],mvp[1][2],mvp[1][3]);
+    auto mvpRow3 = glm::vec4(mvp[2][0],mvp[2][1],mvp[2][2],mvp[2][3]);
+    auto mvpRow4 = glm::vec4(mvp[3][0],mvp[3][1],mvp[3][2],mvp[3][3]);
+
+    frustum[0] = mvpRow4 - mvpRow2;
+    frustum[1] = mvpRow4 + mvpRow2;
+    frustum[2] = mvpRow4 + mvpRow3;
+    frustum[3] = mvpRow4 - mvpRow3;
+    frustum[4] = mvpRow4 - mvpRow4;
+    frustum[5] = mvpRow4 + mvpRow4;
+
+    // Normalize the planes
+    for (int i = 0; i < 6; ++i) {
+        frustum[i] = glm::normalize(frustum[i]);
+    }
+    return frustum;
+}
+
+// Gets the distance from a point to a plane (not absolute)
+[[maybe_unused]]
+static float getDistanceToPlane(const glm::vec3& point, const glm::vec4& plane) {
+    auto planePos = glm::vec3(plane.x, plane.y, plane.z);
+    return glm::dot(point, planePos) + plane.w;
+
+}
+
+// Checks if a point is contained inside frustum planes
+[[maybe_unused]]
+static bool isPointInFrustum(glm::vec3 point,
+                             std::vector<glm::vec4>& frustum) {
+    for (auto plane : frustum) {
+        auto distance = getDistanceToPlane(point, plane);
+        trc::raw << "distance: " << distance << "\n";
+        // I am not sure why it works this way and not the way around
+        if (getDistanceToPlane(point, plane) > 0.0f) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
 /*
     Following functions manage REMesh primitives.
 */
