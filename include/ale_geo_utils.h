@@ -70,8 +70,6 @@ static float getDistanceToPlane(const glm::vec3& point, const glm::vec4& plane) 
 static bool isPointInFrustum(glm::vec3 point,
                              std::vector<glm::vec4>& frustum) {
     for (auto plane : frustum) {
-        auto distance = getDistanceToPlane(point, plane);
-        trc::raw << "distance: " << distance << "\n";
         // I am not sure why it works this way and not the way around
         if (getDistanceToPlane(point, plane) > 0.0f) {
             return false;
