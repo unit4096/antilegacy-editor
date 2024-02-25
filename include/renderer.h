@@ -47,6 +47,7 @@ initialization and switches to 1.3 structures whenever they are availible
 // int
 #include <vkbootstrap/VkBootstrap.h>
 
+// TODO: use custom memory handlers
 #include <primitives.h>
 #include <camera.h>
 #include <tracer.h>
@@ -159,9 +160,10 @@ public:
         CameraData data = mainCamera->getData();
 
         // TODO: get this data from the node transform matrix
+
         // Model matrix
         ubo.model = glm::rotate(glm::mat4(1.0f),
-                                glm::radians(0.0f),
+                                glm::radians(1.5f),
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
         mainCamera->setForwardOrientation(data.yaw, data.pitch);
@@ -354,6 +356,18 @@ public:
         return ubo;
     }
 
+
+    enum UI_DRAW_TYPE {
+        LINE,
+        VERT,
+        UI_DRAW_TYPE_MAX,
+    };
+
+    void pushToUIDrawQueue(        std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>  pair) {
+        uiDrawQueue.push_back(pair);
+    }
+
+
 private:
     GLFWwindow* window;
 
@@ -465,8 +479,16 @@ private:
     int chainImageCount;
     int chainMinImageCount;
 
+    // Some UI variables
+
     // Shared pointer to ImGui IO
     std::shared_ptr<ImGuiIO> io;
+
+
+    // An array of vertices to draw for ImGui
+    std::vector<std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>> uiDrawQueue;
+
+    // end UI
 
     std::vector<VkBuffer> uniformBuffers;
     std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -1595,14 +1617,39 @@ private:
 
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
-        auto v1 = model.meshes[0].vertices[0].pos;
-        auto v2 = model.meshes[0].vertices[1].pos;
-        auto v3 = model.meshes[0].vertices[2].pos;
-        auto pvm =  ale::UIManager::getFlippedProjection(ubo.proj) * ubo.view * ubo.model;
-        ale::UIManager::drawWorldSpaceLine(v1,v2, pvm);
-        ale::UIManager::drawWorldSpaceLine(v2,v3, pvm);
-        ale::UIManager::drawWorldSpaceLine(v3,v1, pvm);
 
+        auto pvm = ale::UIManager::getFlippedProjection(ubo.proj) * ubo.view * ubo.model;
+
+
+        // TODO: Make draw buffer more flexible
+        for(auto pair: uiDrawQueue) {
+            auto vec = pair.first;
+            auto mode = pair.second;
+
+            // Not enough points to draw a line
+            if (vec.size() < 2) {
+                continue;
+            }
+
+            if (mode == UI_DRAW_TYPE::LINE) {
+                for (int i = 1; i < vec.size(); i++) {
+                    ale::UIManager::drawWorldSpaceLine(vec[i-1], vec[i], pvm);
+                }
+            }
+
+            if (mode == UI_DRAW_TYPE::VERT && (vec.size() % 3 == 0)) {
+                for (int i = 0; i < vec.size(); i+=3) {
+                    ale::UIManager::drawWorldSpaceVert(vec[i+0],
+                                                       vec[i+1],
+                                                       vec[i+2], pvm);
+                }
+            }
+
+        }
+
+        /* ale::UIManager::drawWorldSpaceVert(v1, v2, v3, pvm); */
+
+        // TODO: replace this with the object's position
         ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, ubo.model);
 
         // ImGui::ShowDemoWindow();

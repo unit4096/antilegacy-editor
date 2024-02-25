@@ -1,5 +1,6 @@
 #include <ui_manager.h>
 
+
 using namespace ale;
 
 void UIManager::DrawUiBg() {
@@ -44,9 +45,8 @@ void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
                                    const glm::mat4& mvp) {
 
     std::vector<glm::vec4> frustum = geo::getFrustumPlanes(mvp);
-    trc::raw << "Frust size: " << frustum.size() << "\n";
 
-
+    // Some "lazy" frustum culling
     if (!geo::isPointInFrustum(pos1, frustum) &&
         !geo::isPointInFrustum(pos2, frustum)) {
         return;
@@ -58,6 +58,32 @@ void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
     ImVec2 p1(screenPos1.x, screenPos1.y);
     ImVec2 p2(screenPos2.x, screenPos2.y);
     listBg->AddLine(p1, p2, IM_COL32(255, 255, 255, 255), 5);
+}
+
+// FIXME: frustum culling does not work as intended
+void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
+                                   const glm::vec3& pos2,
+                                   const glm::vec3& pos3,
+                                   const glm::mat4& mvp) {
+
+
+    std::vector<glm::vec4> frustum = geo::getFrustumPlanes(mvp);
+    // Some "lazy" frustum culling
+    if (!geo::isPointInFrustum(pos1, frustum) ||
+        !geo::isPointInFrustum(pos2, frustum) ||
+        !geo::isPointInFrustum(pos3, frustum)
+        ) {
+        return;
+    }
+
+    ImDrawList* listBg = ImGui::GetBackgroundDrawList();
+    glm::vec2 screenPos1 = worldToScreen(mvp, pos1);
+    glm::vec2 screenPos2 = worldToScreen(mvp, pos2);
+    glm::vec2 screenPos3 = worldToScreen(mvp, pos3);
+    ImVec2 p1(screenPos1.x, screenPos1.y);
+    ImVec2 p2(screenPos2.x, screenPos2.y);
+    ImVec2 p3(screenPos3.x, screenPos3.y);
+    listBg->AddTriangle(p1, p2, p3, IM_COL32(255, 255, 255, 255), 5);
 }
 
 static void drawImGuiGrid(){
