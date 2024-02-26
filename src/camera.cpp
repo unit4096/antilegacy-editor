@@ -77,6 +77,7 @@ glm::vec3 Camera::getForwardOrientation() {
     return this->_data.front;
 }
 
+// FIXME: _data.front appears to be not normalized and possibly incorrect
 // Sets the orientation vector of the camera by yaw and pitch (in degrees)
 void Camera::setForwardOrientation(float yaw, float pitch) {
 
@@ -90,7 +91,10 @@ void Camera::setForwardOrientation(float yaw, float pitch) {
     forwardVector.y = sinPitchRad;
     forwardVector.z = cosPitchRad * cosYawRad;
 
-    this->_data.front = glm::normalize(forwardVector);
+
+    auto res = glm::normalize(forwardVector);
+
+    this->_data.front = res;
 }
 
 // Sets the orientation vector of the camera by a 3D vector
