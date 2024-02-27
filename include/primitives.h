@@ -44,6 +44,12 @@ struct Node;
 struct NodeData;
 struct Transform;
 
+struct MVP {
+    glm::mat4 m;
+    glm::mat4 v;
+    glm::mat4 p;
+};
+
 struct Transform {
     glm::vec3 pos;
     glm::quat rot;
