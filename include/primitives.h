@@ -42,6 +42,13 @@ struct ViewMesh;
 struct Vertex;
 struct Node;
 struct NodeData;
+struct Transform;
+
+struct Transform {
+    glm::vec3 pos;
+    glm::quat rot;
+    glm::mat4 sca;
+};
 
 // A vertex with a position, a vertex color, and UV coordinates
 struct Vertex {
