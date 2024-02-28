@@ -1,4 +1,4 @@
-;/*
+/*
 This is a Vulkan renderer. This code is mostly salvaged from vulkan-tutorial.com
 and adapted to my needs. Since for now [03.12.2023] the editor is still in
 development, renederer code still somewhat resembles the original tutorial code.
@@ -155,6 +155,7 @@ public:
     void setCamera() {
         // NOTE: for now the "up" axis is Y
         const glm::vec3 global_up = glm::vec3(0,1,0);
+
 
         CameraData data = mainCamera->getData();
 
@@ -1624,27 +1625,33 @@ private:
         MVP pvm {
             .m = ubo.model,
             .v = ubo.view,
+            // Imgui works with -Y as up, ALE works with Y as up
             .p = ale::UIManager::getFlippedProjection(ubo.proj)
         };
 
-        /* auto pvm = ale::UIManager::getFlippedProjection(ubo.proj) * ubo.view * ubo.model; */
-
+        // Immeditate mode shape rendering using ImGui
         // TODO: Make draw buffer more flexible
         for(auto pair: uiDrawQueue) {
             auto vec = pair.first;
             auto mode = pair.second;
+
+            if (mode == UI_DRAW_TYPE::CIRCLE && (vec.size() == 1)) {
+                    ale::UIManager::drawWorldSpaceCircle(vec[0], pvm);
+            }
 
             // Not enough points to draw a line
             if (vec.size() < 2) {
                 continue;
             }
 
+            // Connect all points in one line
             if (mode == UI_DRAW_TYPE::LINE) {
                 for (int i = 1; i < vec.size(); i++) {
                     ale::UIManager::drawWorldSpaceLine(vec[i-1], vec[i], pvm);
                 }
             }
 
+            // Vertices need 3 and only 3 points
             if (mode == UI_DRAW_TYPE::VERT && (vec.size() % 3 == 0)) {
                 for (int i = 0; i < vec.size(); i+=3) {
                     ale::UIManager::drawWorldSpaceVert(vec[i+0],
@@ -1652,6 +1659,8 @@ private:
                                                        vec[i+2], pvm);
                 }
             }
+
+
 
         }
 

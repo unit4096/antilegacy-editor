@@ -27,10 +27,10 @@ public:
     static glm::vec2 worldToScreen(const glm::mat4& modelViewProjection, const glm::vec3& pos);
     static void drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2, const MVP& mvpMat);
     static void drawWorldSpaceVert(const glm::vec3& pos1, const glm::vec3& pos2, const glm::vec3& pos3, const MVP& mvpMat);
+    static void drawWorldSpaceCircle(const glm::vec3& pos, const MVP& mvp);
     static void drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model);
     static void flipProjection(glm::mat4& proj);
     static glm::mat4 getFlippedProjection(const glm::mat4& proj);
-    void drawWorldSpaceCircle(const glm::vec3& pos, const glm::mat4& mvp);
 };
 
 

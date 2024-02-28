@@ -3,6 +3,8 @@
 
 using namespace ale;
 
+const float VIEW_LIMIT = VIEW_LIMIT;
+
 void UIManager::DrawUiBg() {
 
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
@@ -55,46 +57,31 @@ bool isBehind(glm::mat4 viewMatrix, glm::vec3 point, float limit = 0) {
     // Camera world space position
     auto camPos  = glm::vec3(inv[3]);
 
+    // Invert the vector for correct orientation
+    camNorm*=-1;
+
     // Dot product of point direction relative to camera
     auto dot = glm::dot(glm::normalize(point-camPos),camNorm);
 
-    return dot > limit;
+    return dot < limit;
 }
 
 
 void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
-                                   const MVP& mvpMat) {
+                                   const MVP& mvp) {
+    auto pvm = mvp.p * mvp.v * mvp.m;
 
-    auto mvp = mvpMat.p * mvpMat.v * mvpMat.m;
-
-    std::vector<glm::vec4> frustum = geo::getFrustumPlanes(mvp);
-
-    // Some "lazy" frustum culling
-    if (!geo::isPointInFrustum(pos1, frustum) &&
-        !geo::isPointInFrustum(pos2, frustum)) {
+    if (isBehind(mvp.v,pos1, VIEW_LIMIT) ||
+        isBehind(mvp.v,pos2, VIEW_LIMIT)) {
         return;
     }
 
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
-    glm::vec2 screenPos1 = worldToScreen(mvp, pos1);
-    glm::vec2 screenPos2 = worldToScreen(mvp, pos2);
+    glm::vec2 screenPos1 = worldToScreen(pvm, pos1);
+    glm::vec2 screenPos2 = worldToScreen(pvm, pos2);
     ImVec2 p1(screenPos1.x, screenPos1.y);
     ImVec2 p2(screenPos2.x, screenPos2.y);
     listBg->AddLine(p1, p2, IM_COL32(255, 255, 255, 255), 5);
-}
-
-
-void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
-                                     const glm::mat4& mvp) {
-
-
-
-    ImDrawList* listBg = ImGui::GetBackgroundDrawList();
-
-    glm::vec2 screenPos = worldToScreen(mvp, pos);
-    ImVec2 center(screenPos.x, screenPos.y);
-    auto color = IM_COL32(255, 255, 255, 255);
-    listBg->AddCircleFilled(center, 5, color);
 }
 
 
@@ -106,9 +93,9 @@ void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
                                    const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (isBehind(mvp.v,pos1, 0.3f) ||
-        isBehind(mvp.v,pos2, 0.3f) ||
-        isBehind(mvp.v,pos3, 0.3f)) {
+    if (isBehind(mvp.v,pos1, VIEW_LIMIT) ||
+        isBehind(mvp.v,pos2, VIEW_LIMIT) ||
+        isBehind(mvp.v,pos3, VIEW_LIMIT)) {
         return;
     }
 
@@ -120,6 +107,23 @@ void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
     ImVec2 p2(screenPos2.x, screenPos2.y);
     ImVec2 p3(screenPos3.x, screenPos3.y);
     listBg->AddTriangle(p1, p2, p3, IM_COL32(255, 255, 255, 255), 5);
+}
+
+
+void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
+                                     const MVP& mvp) {
+    auto pvm = mvp.p * mvp.v * mvp.m;
+
+    if (isBehind(mvp.v,pos, VIEW_LIMIT)) {
+        return;
+    }
+
+    ImDrawList* listBg = ImGui::GetBackgroundDrawList();
+
+    glm::vec2 screenPos = worldToScreen(pvm, pos);
+    ImVec2 center(screenPos.x, screenPos.y);
+    auto color = IM_COL32(255, 255, 255, 255);
+    listBg->AddCircleFilled(center, 5, color);
 }
 
 
