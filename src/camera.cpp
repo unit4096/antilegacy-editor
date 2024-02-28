@@ -182,9 +182,7 @@ void Camera::setPos(glm::vec3 newPos) {
 
 // Moves the camera in the direction of the forward orientation vector
 void Camera::moveForwardLocal(const float speed) {
-    glm::vec3 _forward = _data.front;
-    _forward.x = -_forward.x;
-    _data.transform.pos +=  _forward * speed;
+    _data.transform.pos +=  _data.front * speed;
 }
 
 // Moves the camera in the direction opposite to the forward orientation vector
@@ -194,16 +192,12 @@ void Camera::moveBackwardLocal(const float speed) {
 
 // Moves the camera left from the forward direction
 void Camera::moveLeftLocal(const float speed) {
-    glm::vec3 _forward = _data.front;
-    _forward.x = -_forward.x;
-    _data.transform.pos += speed * -glm::normalize(glm::cross(_forward, _data.up));
+    _data.transform.pos += speed * -glm::normalize(glm::cross(_data.front, _data.up));
 }
 
 // Moves the camera right from the forward direction
 void Camera::moveRightLocal(const float speed) {
-    glm::vec3 _forward = _data.front;
-    _forward.x = -_forward.x;
-    _data.transform.pos += speed * glm::normalize(glm::cross(_forward, _data.up));
+    _data.transform.pos += speed * glm::normalize(glm::cross(_data.front, _data.up));
 }
 
 // Moves the camera in the direction of the specified vector
