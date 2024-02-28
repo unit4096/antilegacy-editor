@@ -116,7 +116,7 @@ void Camera::setOrientation(float yaw, float pitch) {
     // Pitch vec is not always parallel to any axis
     auto pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
 
-    // Yaw, them pitch, then translation
+    // Yaw, then pitch, then translation
     mat = glm::rotate(mat, yawAng, GLOBAL_UP);
     mat = glm::rotate(mat, pitchAng, pitchVec);
     mat = glm::translate(mat, -_data.transform.pos);
