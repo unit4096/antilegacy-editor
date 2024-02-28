@@ -154,13 +154,11 @@ public:
     // TODO: this whole function should go to the camera class
     void setCamera() {
         // NOTE: for now the "up" axis is Y
-        const glm::vec3 global_up = glm::vec3(0,1,0);
-
-
-        CameraData data = mainCamera->getData();
+        const glm::vec3 GLOBAL_UP = glm::vec3(0,1,0);
+        auto yawPitch = mainCamera->getYawPitch();
+        auto camPos = mainCamera->getPos();
 
         // TODO: get this data from the node transform matrix
-
         // Model matrix
         ubo.model = glm::rotate(glm::mat4(1.0f),
                                 glm::radians(1.5f),
@@ -168,31 +166,28 @@ public:
 
         // View matrix
         if (mainCamera->mode == CameraMode::FREE) {
-            glm::mat4x4 viewMatrix(1.0f);
+            glm::mat4x4 view(1.0f);
 
-            float yawAng = glm::radians(data.yaw);
+            float yawAng = glm::radians(yawPitch.x);
 
             // Generate pitch vector based on the yaw angle
             glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
-            float pitchAng = glm::radians(data.pitch);
+            float pitchAng = glm::radians(yawPitch.y);
 
-            // Apply yaw rotation
-            viewMatrix = glm::rotate(viewMatrix, yawAng, global_up);
-            // Apply pitch rotation
-            viewMatrix = glm::rotate(viewMatrix, pitchAng, pitchVec);
-            // Apply translation
-            viewMatrix = glm::translate(viewMatrix, -data.transform.pos);
+            view = glm::rotate(view, yawAng, GLOBAL_UP);
+            view = glm::rotate(view, pitchAng, pitchVec);
+            view = glm::translate(view, -camPos);
 
-            ubo.view = viewMatrix;
+            ubo.view = view;
         } else {
-            ubo.view = glm::lookAt(data.transform.pos, mainCamera->getTarget(), global_up);
+            ubo.view = glm::lookAt(camPos, mainCamera->getTarget(), GLOBAL_UP);
         }
 
-
         // Porjection matrix
-        ubo.proj = glm::perspective(glm::radians(data.fov),
+        ubo.proj = glm::perspective(glm::radians(mainCamera->getFov()),
                         swapChainExtent.width / (float) swapChainExtent.height,
-                        data.nearPlane, data.farPlane);
+                        mainCamera->getPlaneNear(), mainCamera->getPlaneFar());
+
         ubo.proj[1][1] *= -1;
 
         ubo.light = _lightPosition;
