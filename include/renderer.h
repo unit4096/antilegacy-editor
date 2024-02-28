@@ -141,10 +141,12 @@ public:
 
     }
 
+
     void initRenderer() {
         initVulkan();
         initImGUI();
     }
+
 
     void bindCamera(std::shared_ptr<Camera> cam) {
         this->mainCamera = cam;
@@ -200,7 +202,6 @@ public:
         VkResult result = vkAcquireNextImageKHR(vkb_device, vkb_swapchain,UINT64_MAX,
                                                 imageAvailableSemaphores[currentFrame],
                                                 VK_NULL_HANDLE, &imageIndex);
-
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             ImGui_ImplVulkan_SetMinImageCount(chainMinImageCount);
             recreateSwapChain();
@@ -244,14 +245,12 @@ public:
         } else if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
-
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
     // Work in progress! Render individual nodes with position offsets
     // as push constants. Currently uses only local pos.
     void renderNodes(const VkCommandBuffer commandBuffer, const ale::Model& model) {
-
         for (auto nodeId : model.rootNodes) {
             renderNode(commandBuffer, model.nodes[nodeId], model);
         }
@@ -260,7 +259,9 @@ public:
     void renderNode(const VkCommandBuffer commandBuffer, const ale::Node& node, const ale::Model& model) {
 
         if (node.mesh > -1 && node.bVisible == true) {
+            // Get unique node id
             float objId = static_cast<float>(node.id);
+            // Assign a unique "color" by object's id
             float perObjColorData[4] = {objId,1,1,1};
             glm::mat4 tr = node.transform;
             float* transform = ale::geo::glmMatToPtr(tr);
