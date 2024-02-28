@@ -33,6 +33,7 @@
 #include <tracer.h>
 #include <os_loader.h>
 #include <re_mesh.h>
+#include <ui_manager.h>
 
 
 namespace ale {
