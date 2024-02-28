@@ -23,7 +23,6 @@ namespace ale {
 
 class UIManager {
 public:
-    static void DrawUiBg();
     static glm::vec2 worldToScreen(const glm::mat4& modelViewProjection, const glm::vec3& pos);
     static void drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2, const MVP& mvpMat);
     static void drawWorldSpaceVert(const glm::vec3& pos1, const glm::vec3& pos2, const glm::vec3& pos3, const MVP& mvpMat);

@@ -5,15 +5,6 @@ using namespace ale;
 
 const float VIEW_LIMIT = VIEW_LIMIT;
 
-void UIManager::DrawUiBg() {
-
-    ImDrawList* listBg = ImGui::GetBackgroundDrawList();
-    ImVec2 p3(600,100);
-    ImVec2 p4(1000,1000);
-    listBg->AddLine(p3, p4, IM_COL32(255, 255, 255, 255), 5);
-
-}
-
 
 // Flips passed projection
 void UIManager::flipProjection(glm::mat4& proj) {
