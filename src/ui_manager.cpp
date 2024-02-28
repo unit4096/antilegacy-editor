@@ -41,8 +41,31 @@ glm::vec2 UIManager::worldToScreen(const glm::mat4& modelViewProjection,
     return glm::vec2(screenX, screenY);
 }
 
+// A simple function that indicates if a point is "in front" enough
+// of the camera. Used mostly to avoid inversing geometry behind the
+// camera. More sophisticated methods will be used in the user-space
+// functions
+bool isBehind(glm::mat4 viewMatrix, glm::vec3 point, float limit = 0) {
+
+    // Inverse view matrix for world space camera orientation
+    auto inv = glm::inverse(viewMatrix);
+
+    // Camera forward vector
+    auto camNorm = glm::vec3(inv[2]);
+    // Camera world space position
+    auto camPos  = glm::vec3(inv[3]);
+
+    // Dot product of point direction relative to camera
+    auto dot = glm::dot(glm::normalize(point-camPos),camNorm);
+
+    return dot > limit;
+}
+
+
 void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
-                                   const glm::mat4& mvp) {
+                                   const MVP& mvpMat) {
+
+    auto mvp = mvpMat.p * mvpMat.v * mvpMat.m;
 
     std::vector<glm::vec4> frustum = geo::getFrustumPlanes(mvp);
 
@@ -60,35 +83,50 @@ void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
     listBg->AddLine(p1, p2, IM_COL32(255, 255, 255, 255), 5);
 }
 
-// FIXME: frustum culling does not work as intended
+
+void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
+                                     const glm::mat4& mvp) {
+
+
+
+    ImDrawList* listBg = ImGui::GetBackgroundDrawList();
+
+    glm::vec2 screenPos = worldToScreen(mvp, pos);
+    ImVec2 center(screenPos.x, screenPos.y);
+    auto color = IM_COL32(255, 255, 255, 255);
+    listBg->AddCircleFilled(center, 5, color);
+}
+
+
+// Draw a vertex by world space coords
+// Debug function, not pretty, not fast
 void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
                                    const glm::vec3& pos2,
                                    const glm::vec3& pos3,
-                                   const glm::mat4& mvp) {
+                                   const MVP& mvp) {
+    auto pvm = mvp.p * mvp.v * mvp.m;
 
-
-    std::vector<glm::vec4> frustum = geo::getFrustumPlanes(mvp);
-    // Some "lazy" frustum culling
-    if (!geo::isPointInFrustum(pos1, frustum) ||
-        !geo::isPointInFrustum(pos2, frustum) ||
-        !geo::isPointInFrustum(pos3, frustum)
-        ) {
+    if (isBehind(mvp.v,pos1, 0.3f) ||
+        isBehind(mvp.v,pos2, 0.3f) ||
+        isBehind(mvp.v,pos3, 0.3f)) {
         return;
     }
 
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
-    glm::vec2 screenPos1 = worldToScreen(mvp, pos1);
-    glm::vec2 screenPos2 = worldToScreen(mvp, pos2);
-    glm::vec2 screenPos3 = worldToScreen(mvp, pos3);
+    glm::vec2 screenPos1 = worldToScreen(pvm, pos1);
+    glm::vec2 screenPos2 = worldToScreen(pvm, pos2);
+    glm::vec2 screenPos3 = worldToScreen(pvm, pos3);
     ImVec2 p1(screenPos1.x, screenPos1.y);
     ImVec2 p2(screenPos2.x, screenPos2.y);
     ImVec2 p3(screenPos3.x, screenPos3.y);
     listBg->AddTriangle(p1, p2, p3, IM_COL32(255, 255, 255, 255), 5);
 }
 
+
 static void drawImGuiGrid(){
     ale::Tracer::log("Not implemented!", ale::Tracer::ERROR);
 }
+
 
 void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model){
     UIManager::flipProjection(proj);
@@ -101,6 +139,7 @@ void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& mode
 
     ImGuizmo::Manipulate(_view, _proj, enum_translate, enum_worldspace, _model);
 }
+
 
 void drawCoreUI() {
 

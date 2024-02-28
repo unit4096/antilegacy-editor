@@ -5,10 +5,11 @@
 #pragma once
 #ifndef GLM
 #define GLM
-
 #include <glm/glm.hpp>
-
 #endif // GLM
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/intersect.hpp>
 
 #include <limits>
 
@@ -30,38 +31,35 @@ namespace geo {
 */
 
 
-
-
+// FIXME: This function does not return corect output
 // Generates frustum planes for a ModelViewProjection matrix
-// w is for normals
 [[maybe_unused]]
 static std::vector<glm::vec4> getFrustumPlanes(const glm::mat4& mvp) {
+    glm::transpose(mvp);
     std::vector<glm::vec4> frustum;
     frustum.resize(6);
 
-    auto mvpRow2 = glm::vec4(mvp[1][0],mvp[1][1],mvp[1][2],mvp[1][3]);
-    auto mvpRow3 = glm::vec4(mvp[2][0],mvp[2][1],mvp[2][2],mvp[2][3]);
-    auto mvpRow4 = glm::vec4(mvp[3][0],mvp[3][1],mvp[3][2],mvp[3][3]);
+    // Right
+    frustum[0] = glm::vec4(mvp[3] - mvp[0]);
+    // Left
+    frustum[1] = glm::vec4(mvp[3] + mvp[0]);
+    // Bottom
+    frustum[2] = glm::vec4(mvp[3] + mvp[1]);
+    // Top
+    frustum[3] = glm::vec4(mvp[3] - mvp[1]);
+    // Far
+    frustum[4] = glm::vec4(mvp[3] - mvp[2]);
+    // Near
+    frustum[5] = glm::vec4(mvp[3] + mvp[2]);
 
-    frustum[0] = mvpRow4 - mvpRow2;
-    frustum[1] = mvpRow4 + mvpRow2;
-    frustum[2] = mvpRow4 + mvpRow3;
-    frustum[3] = mvpRow4 - mvpRow3;
-    frustum[4] = mvpRow4 - mvpRow4;
-    frustum[5] = mvpRow4 + mvpRow4;
-
-    // Normalize the planes
-    for (int i = 0; i < 6; ++i) {
-        frustum[i] = glm::normalize(frustum[i]);
-    }
     return frustum;
 }
 
 // Gets the distance from a point to a plane (not absolute)
 [[maybe_unused]]
 static float getDistanceToPlane(const glm::vec3& point, const glm::vec4& plane) {
-    auto planePos = glm::vec3(plane.x, plane.y, plane.z);
-    return glm::dot(point, planePos) + plane.w;
+    auto norm = glm::vec3(plane.x, plane.y, plane.z);
+    return glm::dot(point, norm) + plane.w;
 
 }
 
@@ -69,12 +67,11 @@ static float getDistanceToPlane(const glm::vec3& point, const glm::vec4& plane) 
 [[maybe_unused]]
 static bool isPointInFrustum(glm::vec3 point,
                              std::vector<glm::vec4>& frustum) {
-    for (auto plane : frustum) {
-        // I am not sure why it works this way and not the way around
-        if (getDistanceToPlane(point, plane) > 0.0f) {
-            return false;
-        }
+for (auto plane : frustum) {
+    if (getDistanceToPlane(point, plane) > 0.0f) {
+        return false;
     }
+}
     return true;
 }
 
@@ -109,7 +106,6 @@ static void addLoopToEdge(geo::Edge* e, geo::Loop* l) {
         return;
     }
     // There is a radial cycle and it is not just one loop
-
 
     // Insert l between e->loop and its radial_next
     l->radial_prev = _l;
@@ -150,14 +146,12 @@ static bool getBoundingLoops(const Face* face,
 
 // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
 // Checks intersection of a ray and a triangle
-// FIXME: not tested properly
 [[maybe_unused]]
 static bool rayIntersectsTriangle(const glm::vec3& rayOrigin,
                                  const glm::vec3& rayDir,
                                  const Face* face,
-                                 glm::vec3& out_intersection_point) {
-
-    constexpr float epsilon = std::numeric_limits<float>::epsilon();
+                                 glm::vec2& out_intersection_point,
+                                 float& distance) {
 
     std::vector<Loop*> loops = {};
 
@@ -170,44 +164,7 @@ static bool rayIntersectsTriangle(const glm::vec3& rayOrigin,
     glm::vec3 b = loops[1]->v->pos;
     glm::vec3 c = loops[2]->v->pos;
 
-    glm::vec3 edge1 = b - a;
-    glm::vec3 edge2 = c - a;
-    glm::vec3 ray_cross_e2 = glm::cross(rayDir, edge2);
-    float det = glm::dot(edge1, ray_cross_e2);
-
-    // This ray is parallel to this triangle.
-    if (det > -epsilon && det < epsilon) {
-        return false;
-    }
-
-    float inv_det = 1.0 / det;
-    glm::vec3 s = rayOrigin - a;
-    float u = inv_det * glm::dot(s, ray_cross_e2);
-
-    if (u < 0 || u > 1) {
-        return false;
-    }
-
-    glm::vec3 s_cross_e1 = glm::cross(s, edge1);
-    float v = inv_det * glm::dot(rayDir, s_cross_e1);
-
-    if (v < 0 || u + v > 1) {
-        return false;
-    }
-
-    // At this stage we can compute t to find out
-    // where the intersection point is on the line.
-    float t = inv_det * glm::dot(edge2, s_cross_e1);
-
-    if (t > epsilon) {
-        out_intersection_point = rayOrigin + rayDir * t;
-        return true;
-    }
-
-    // This means that there is a line
-    // intersection but not a ray intersection.
-    else
-        return false;
+    return glm::intersectRayTriangle(rayOrigin, rayDir, a, b, c, out_intersection_point,distance);
 }
 
 } // namespace geo

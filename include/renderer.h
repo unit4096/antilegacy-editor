@@ -1,4 +1,4 @@
-/*
+;/*
 This is a Vulkan renderer. This code is mostly salvaged from vulkan-tutorial.com
 and adapted to my needs. Since for now [03.12.2023] the editor is still in
 development, renederer code still somewhat resembles the original tutorial code.
@@ -154,7 +154,6 @@ public:
     // TODO: this whole function should go to the camera class
     void setCamera() {
         // NOTE: for now the "up" axis is Y
-
         const glm::vec3 global_up = glm::vec3(0,1,0);
 
         CameraData data = mainCamera->getData();
@@ -166,7 +165,6 @@ public:
                                 glm::radians(1.5f),
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
-        mainCamera->setForwardOrientation(data.yaw, data.pitch);
         // View matrix
         if (mainCamera->mode == CameraMode::FREE) {
             glm::mat4x4 viewMatrix(1.0f);
@@ -182,11 +180,11 @@ public:
             // Apply pitch rotation
             viewMatrix = glm::rotate(viewMatrix, pitchAng, pitchVec);
             // Apply translation
-            viewMatrix = glm::translate(viewMatrix, -data.position);
+            viewMatrix = glm::translate(viewMatrix, -data.transform.pos);
 
             ubo.view = viewMatrix;
         } else {
-            ubo.view = glm::lookAt(data.position, mainCamera->targetPos, global_up);
+            ubo.view = glm::lookAt(data.transform.pos, mainCamera->getTarget(), global_up);
         }
 
 
@@ -360,11 +358,16 @@ public:
     enum UI_DRAW_TYPE {
         LINE,
         VERT,
+        CIRCLE,
         UI_DRAW_TYPE_MAX,
     };
 
     void pushToUIDrawQueue(        std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>  pair) {
         uiDrawQueue.push_back(pair);
+    }
+
+    void flushUIDrawQueue() {
+        uiDrawQueue.clear();
     }
 
 
@@ -1618,8 +1621,13 @@ private:
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
 
-        auto pvm = ale::UIManager::getFlippedProjection(ubo.proj) * ubo.view * ubo.model;
+        MVP pvm {
+            .m = ubo.model,
+            .v = ubo.view,
+            .p = ale::UIManager::getFlippedProjection(ubo.proj)
+        };
 
+        /* auto pvm = ale::UIManager::getFlippedProjection(ubo.proj) * ubo.view * ubo.model; */
 
         // TODO: Make draw buffer more flexible
         for(auto pair: uiDrawQueue) {
@@ -1679,9 +1687,9 @@ private:
 
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
-            ImGui::SliderFloat("X", &camData.position.x, -10.0f, 10.0f);
-            ImGui::SliderFloat("Y", &camData.position.y, -10.0f, 10.0f);
-            ImGui::SliderFloat("Z", &camData.position.z, -10.0f, 10.0f);
+            ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
+            ImGui::SliderFloat("Y", &camData.transform.pos.y, -10.0f, 10.0f);
+            ImGui::SliderFloat("Z", &camData.transform.pos.z, -10.0f, 10.0f);
             ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
 
             ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
@@ -1711,6 +1719,7 @@ private:
             ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
             ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
             ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
+
             ImGui::End();
         }
 

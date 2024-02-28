@@ -5,10 +5,11 @@
 // ext
 #ifndef GLM
 #define GLM
-
 #include <glm/glm.hpp>
-
 #endif // GLM
+
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 // int
 #include <primitives.h>
@@ -22,9 +23,19 @@ enum class CameraMode {
     ARCBALL
 };
 
+// ale::Camera direction
+enum class CameraDirection {
+    FORWARD,
+    BACK,
+    LEFT,
+    RIGHT,
+    UP,
+    DOWN,
+};
+
 // Struct for the ale::Camera class
-struct CameraData {    
-    glm::vec3 position;
+struct CameraData {
+    Transform transform;
     glm::vec3 front, up;
     glm::vec3 worldUp;
     float fov;
@@ -33,40 +44,73 @@ struct CameraData {
     float speed, sensitivity;
 };
 
-
-// FIXME: this class needs heavy refactoring. Make yaw and pitch functions that
-// return and set camera orientation. No reason to keep two data structures 
-// for the same thing
 class Camera {
 private:
     CameraData _data;
+    const glm::vec3 GLOBAL_UP = glm::vec3(0,1,0);
+    const glm::vec3 GLOBAL_FORWARD = glm::vec3(0,0,-1);
+    const glm::vec3 GLOBAL_RIGHT = glm::vec3(1,0,0);
+    void _setOrientationInternal(glm::quat newRotation);
+    void _setDirVecInternal(glm::quat rotation);
+    void _setYawPitchInternal(glm::quat rotation);
+    glm::vec3 _targetPos;
 public:
     CameraMode mode;
-    glm::vec3 targetPos;
     Camera();
     ~Camera();
-    void toggleMode();
-    CameraData getData();
-    v2f getYawPitch();
-    void setYawPitch(float yaw, float pitch);
+
+    // Generic data set (use with utmost care)
+
     void setData(CameraData data);
+    CameraData getData();
+
+    // View data
+
+    float getFov();
+    void setFov(float fov);
+    float getPlaneFar();
+    void setPlaneFar(float plane);
+    float getPlaneNear();
+    void setPlaneNear(float plane);
+
+    // ARCBALL or FREE modes
+    void toggleMode();
+
+    // Camera orientation (rotation) in global space
+
+    void setOrientation(float yaw, float pitch);
+    void setOrientation(glm::quat orientation);
+    void setOrientation(glm::mat4 rotatioh);
+    // FIXME: custom data types of this sort are no good
+    v2f getYawPitch();
+    glm::quat getOrientation();
+    // Normalized vector with the direction of the camera
+    glm::vec3 getForwardVec();
+
+    // Camera position
+
+    void setPos(glm::vec3 newPos);
+    glm::vec3 getPos();
+
+    // Camera control variables
+
     float getSpeed();
     void setSpeed(float speed);
     float getSensitivity();
     void setSensitivity(float sensitivity);
-    glm::vec3 getForwardOrientation();
-    void setForwardOrientation(float yaw, float pitch);
-    void setForwardOrientation(glm::vec3 front);
-    void setPosition(glm::vec3 newPos);
+
+    // Movement commands
+
     void moveForwardLocal(const float speed);
     void moveBackwardLocal(const float speed);
     void moveLeftLocal(const float speed);
     void moveRightLocal(const float speed);
     void movePosGlobal(const glm::vec3 movementVector, const float speed);
 
-    glm::vec3 getPos();
-}; // class Camera
+    void setTarget(glm::vec3 target);
+    glm::vec3 getTarget();
 
+}; // class Camera
 
 } // namespace ale
 

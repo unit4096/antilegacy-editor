@@ -87,17 +87,16 @@ int App::run() {
             float middleY = (model.meshes[0].minPos[1] +
                              model.meshes[0].maxPos[1]) / 2;
 
-            mainCam->setPosition(glm::vec3(0, middleY, -frontEdge));
+            mainCam->setPos(glm::vec3(0, middleY, -frontEdge));
         } else {
-            mainCam->setPosition(glm::vec3(0, 50, 150));
+            mainCam->setPos(glm::vec3(0, 50, 150));
         }
 
         mainCam->setSpeed(1.0f);
 
         // Further code tests camera movement
-        // TODO: move this code from the main file, provide better handling for bindings
-
-
+        // TODO: move this code from the main file,
+        // provide better handling for bindings
         std::chrono::duration<double> deltaTime;
 
         float cameraSpeedAdjusted = 1.0f;
@@ -122,26 +121,62 @@ int App::run() {
         ale::geo::REMesh reMesh;
         loader.populateREMesh(model.meshes[0], reMesh);
 
-        // This function tests raycasts from the middle of the screen
+        // Removes extra digits after comma in floats
+        auto r = [](float x) {
+            // 1000 -> 3 digits
+            const int THING = 1000;
+            return floorf(x * THING) / THING;
+        };
+
+
+        // Test function
+        // Selects a triangle in the middle of the screen and
+        // adds it to the ui draw buffer
         auto raycast = [&]() {
             bool result = false;
-            glm::vec3 forward = mainCam->getForwardOrientation();
+            glm::vec3 camPos = mainCam->getPos();
+            glm::vec3 fwd = mainCam->getForwardVec();
 
-            forward *= -1;
+            trc::raw << r(fwd.x) << ","
+                     << r(fwd.y) <<  ","
+                     << r(fwd.z) << " -forward \n";
 
-            glm::vec3 out_intersection_point = glm::vec3(0);
+            trc::raw << r(camPos.x) <<  ","
+                     << r(camPos.y) << ","
+                     << r(camPos.z) << " -pos\n";
 
+            glm::vec2 out_intersection_point = glm::vec2(0);
+
+            // assert(forward == glm::normalize(forward));
+
+            float distance = -1;
             for (auto f : reMesh.faces) {
-                result = geo::rayIntersectsTriangle(
-                                    mainCam->getPos(),
-                                    forward,
-                                    f, out_intersection_point);
+                result = geo::rayIntersectsTriangle( camPos, fwd,
+                                                f, out_intersection_point,
+                                                distance);
                 if (result) {
+                    std::vector<geo::Loop*> out_loops = {};
+                    geo::getBoundingLoops(f, out_loops);
+                    std::vector<glm::vec3> loopVec = {};
+                    loopVec.resize(3);
+
+                    for (auto l : out_loops) {
+                        loopVec.push_back(l->v->pos);
+                    }
+
+                    renderer.pushToUIDrawQueue({loopVec,Renderer::VERT});
+                    // renderer.pushToUIDrawQueue({loopVec,Renderer::VERT});
                     break;
                 }
             }
-
             ale::Tracer::raw << "Raycast result: " << result << "\n";
+            ale::Tracer::raw << "Distance: " << distance << "\n";
+        };
+
+        // Removes all primitives from the buffer
+        auto flushBuffer = [&](){
+            renderer.flushUIDrawQueue();
+
         };
 
         // Bind lambda functions to keyboard actions
@@ -152,7 +187,9 @@ int App::run() {
         input.bindFunction(ale::InputAction::CAMERA_MOVE_U, moveY, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
         input.bindFunction(ale::InputAction::FUNC_1,raycast, false);
+        input.bindFunction(ale::InputAction::FUNC_2,flushBuffer, false);
         // Bind global camera to the inner camera object
+
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
 
@@ -179,7 +216,8 @@ int App::run() {
             ale::v2f camYawPitch = mainCam->getYawPitch();
             camYawPitch.x-= mouseMovement.x * mouseSensitivity;
             camYawPitch.y-= mouseMovement.y * mouseSensitivity;
-            mainCam->setYawPitch(camYawPitch.x,camYawPitch.y);
+
+            mainCam->setOrientation(camYawPitch.x,camYawPitch.y);
 
             // Drawing the results of the input
             renderer.drawFrame();
