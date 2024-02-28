@@ -124,8 +124,8 @@ int App::run() {
         // Removes extra digits after comma in floats
         auto r = [](float x) {
             // 1000 -> 3 digits
-            const int THING = 1000;
-            return floorf(x * THING) / THING;
+            const int DIGITS = 1000;
+            return floorf(x * DIGITS) / DIGITS;
         };
 
 
@@ -147,8 +147,6 @@ int App::run() {
 
             glm::vec2 out_intersection_point = glm::vec2(0);
 
-            // assert(forward == glm::normalize(forward));
-
             float distance = -1;
             for (auto f : reMesh.faces) {
                 result = geo::rayIntersectsTriangle( camPos, fwd,
@@ -165,7 +163,6 @@ int App::run() {
                     }
 
                     renderer.pushToUIDrawQueue({loopVec,Renderer::VERT});
-                    // renderer.pushToUIDrawQueue({loopVec,Renderer::VERT});
                     break;
                 }
             }
