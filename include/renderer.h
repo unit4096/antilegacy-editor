@@ -129,7 +129,7 @@ public:
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Vulkan", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Antilegacy editor", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
@@ -1655,17 +1655,10 @@ private:
                                                        vec[i+2], pvm);
                 }
             }
-
-
-
         }
-
-        /* ale::UIManager::drawWorldSpaceVert(v1, v2, v3, pvm); */
 
         // TODO: replace this with the object's position
         ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, ubo.model);
-
-        // ImGui::ShowDemoWindow();
 
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("File")) {
@@ -1689,7 +1682,6 @@ private:
         CameraData camData = mainCamera->getData();
 
         {
-
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
             ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
