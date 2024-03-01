@@ -17,7 +17,7 @@
 // int
 
 namespace ale {
-    
+
 namespace Tracer {
 
 
@@ -40,12 +40,10 @@ static void SetLogLevels(std::vector<LogLevel> lvls);
 
 // Prints passed std::source_location object
 static std::string _getLocation(const std::source_location loc) {
-    std::string result = " [Location: ";
+    std::string result = "  ~at: ";
     result.append(loc.file_name());
-    result.append(":" + std::to_string(loc.line()) + ":"
-                  + std::to_string(loc.column()) + " ");
+    result.append(":" + std::to_string(loc.line()) + " ");
     result.append(loc.function_name());
-    result.append("]");
 
     return result;
 }
@@ -58,7 +56,7 @@ static std::string _LogLevelToString(LogLevel lvl) {
         case LogLevel::INFO: return "INFO";
         case LogLevel::WARNING: return "WARNING";
         case LogLevel::ERROR: return "ERROR";
-        default: return "CANNOT_RECOGNIZE";
+        default: return "UNKNOWN_LOG_LEVEL";
     }
 }
 
@@ -70,11 +68,11 @@ static void log(const std::string_view msg, LogLevel lvl,
     if (!globalLogLevels[lvl]) {
         return;
     }
-    
-    std::cout << _LogLevelToString(lvl) << ": " 
-              << msg 
+
+    std::cout << _LogLevelToString(lvl) << ": "
+              << msg << "\n"
               << _getLocation(loc) << "\n";
-    
+
 }
 
 // This struct replaces std::cout functionality. You can add checks and formatting
