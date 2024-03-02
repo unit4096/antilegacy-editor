@@ -129,7 +129,7 @@ public:
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-        window = glfwCreateWindow(WIDTH, HEIGHT, "Antilegacy editor", nullptr, nullptr);
+        window = glfwCreateWindow(WIDTH, HEIGHT, "Antilegacy Editor", nullptr, nullptr);
         glfwSetWindowUserPointer(window, this);
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
 
@@ -249,7 +249,8 @@ public:
     }
 
     // Work in progress! Render individual nodes with position offsets
-    // as push constants. Currently uses only local pos.
+    // as push constants.
+    // TODO: Use glbal positions of the nodes
     void renderNodes(const VkCommandBuffer commandBuffer, const ale::Model& model) {
         for (auto nodeId : model.rootNodes) {
             renderNode(commandBuffer, model.nodes[nodeId], model);
@@ -1624,6 +1625,14 @@ private:
             // Imgui works with -Y as up, ALE works with Y as up
             .p = ale::UIManager::getFlippedProjection(ubo.proj)
         };
+
+        for (auto& n : model.nodes) {
+            auto t = n.transform;
+
+            auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
+            ale::UIManager::drawWorldSpaceCircle(pos, pvm);
+        }
+
 
         // Immeditate mode shape rendering using ImGui
         // TODO: Make draw buffer more flexible
