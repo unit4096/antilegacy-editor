@@ -113,7 +113,7 @@ void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
 
     glm::vec2 screenPos = worldToScreen(pvm, pos);
     ImVec2 center(screenPos.x, screenPos.y);
-    auto color = IM_COL32(255, 255, 255, 255);
+    auto color = IM_COL32(100, 155,255, 255);
     listBg->AddCircleFilled(center, 5, color);
 }
 
