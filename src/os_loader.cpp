@@ -303,23 +303,18 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
                        const tinygltf::Node& n,
                        int parent, int current,  ale::Model& out_model ) {
     ale::Node ale_node;
-    ale_node.mesh = n.mesh;
 
     glm::mat4 newTransform = glm::mat4(0);
 
-    if (n.matrix.size() == 16) {
-        newTransform = glm::make_mat4(n.matrix.data());
-    }
 
     if (n.translation.size() == 3) {
 		float x = n.translation[0];
         float y = n.translation[1];
 		float z = n.translation[2];
 
-        newTransform[1][0] = z;
-        newTransform[2][0] = y;
         newTransform[3][0] = x;
-
+        newTransform[3][1] = y;
+        newTransform[3][2] = z;
     }
 
     if (n.rotation.size() == 4) {
@@ -333,11 +328,22 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
         newTransform = glm::scale(newTransform, scale);
     }
 
+
+    if (n.matrix.size() == 16) {
+        newTransform = glm::make_mat4(n.matrix.data());
+    }
+
+    // TODO: not tested yet
+    /* if (out_model.nodes.size() > parent && parent > -1) { */
+    /*     newTransform = out_model.nodes[parent].transform * newTransform; */
+    /* } */
+
 	ale_node.transform = newTransform;
     ale_node.name = n.name;
     ale_node.children = n.children;
     ale_node.id = current;
     ale_node.parent = parent;
+    ale_node.mesh = n.mesh;
 
     out_model.nodes.push_back(ale_node);
 
