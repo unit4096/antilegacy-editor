@@ -273,7 +273,7 @@ public:
 
             // Load node mesh
             MeshBufferData meshData = meshBuffers[node.mesh];
-            vkCmdDrawIndexed(commandBuffer, meshData.size, 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, meshData.size, 1, meshData.offset, 0, 0);
         }
 
         for(auto childNodeId: node.children) {
@@ -1233,7 +1233,10 @@ private:
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                 stagingBuffer, stagingBufferMemory);
 
         void* data;
         vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
@@ -1243,12 +1246,13 @@ private:
             // char* has the "atomic" size ratio across all C/C++ standards
             char* memoryItr = reinterpret_cast<char*>(data);
 
-            size_t idxOffset = 0;
+            unsigned int idxOffset = 0;
             for (size_t i = 0; i < model.meshes.size(); i++) {
                 size_t memoryOffset = sizeof(index) * model.meshes[i].indices.size();
 
                 // Temporary mesh for index offsets
                 auto m = model.meshes[i];
+                auto currentOffset = idxOffset;
 
                 //  This loop adds offsets to indices for a shared index buffer
                 for (size_t j = 0; j < model.meshes[i].indices.size(); j++) {
@@ -1258,17 +1262,21 @@ private:
                 memcpy(memoryItr, m.indices.data(), memoryOffset);
                 memoryItr += memoryOffset;
 
-                MeshBufferData meshData;
-                meshData.size = model.meshes[i].indices.size();
-                meshData.offset = memoryOffset;
-                meshBuffers.push_back(meshData);
+                MeshBufferData meshData {
+                    .size = static_cast<unsigned int>(model.meshes[i].indices.size()),
+                    .offset = currentOffset,
+                };
 
+                meshBuffers.push_back(meshData);
                 idxOffset += model.meshes[i].indices.size();
             }
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+                                 VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 indexBuffer, indexBufferMemory);
 
         copyBuffer(stagingBuffer, indexBuffer, bufferSize);
 
@@ -1623,13 +1631,20 @@ private:
             .p = ale::UIManager::getFlippedProjection(ubo.proj)
         };
 
+        /* trc::raw << "\n\n\n\n"; */
+
         for (auto& n : model.nodes) {
             auto t = n.transform;
 
             auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
             ale::UIManager::drawWorldSpaceCircle(pos, pvm);
+
+            /* trc::raw << n.name << "\n"; */
+            /* trc::raw << n.mesh << "\n"; */
+            /* trc::printMat4(n.transform, "transform of node"); */
         }
 
+        /* trc::raw << "\n\n\n\n"; */
 
         // Immeditate mode shape rendering using ImGui
         // TODO: Make draw buffer more flexible
