@@ -63,15 +63,16 @@ static std::string _LogLevelToString(LogLevel lvl) {
 // Outputs a log with a certain LogLevel and a trace of where it was invoked
 static void log(const std::string_view msg, LogLevel lvl,
                  const std::source_location loc) {
+    constexpr char GRAY[] = "\033[90m";
+    constexpr char RESET[] = "\033[0m";
 
     // Checks if the level is enabled
     if (!globalLogLevels[lvl]) {
         return;
     }
-
     std::cout << _LogLevelToString(lvl) << ": "
               << msg << "\n"
-              << _getLocation(loc) << "\n";
+              << GRAY << _getLocation(loc) << RESET << "\n";
 
 }
 
