@@ -1155,14 +1155,16 @@ private:
 
     void createVertexBuffer() {
 
-
         if (model.meshes.size() <= 0) {
             throw std::runtime_error("No meshes in the model!");
         }
 
+        // Counter for all the vertices in the model
         VkDeviceSize numAllVerts = 0;
+        // Check vertex size against this vert
         auto vert = model.meshes[0].vertices[0];
 
+        // Add mesh sizes to the counter
         for(auto m: model.meshes) {
             numAllVerts += m.vertices.size();
         }
@@ -1171,18 +1173,21 @@ private:
             throw std::runtime_error("Vertex buffer size is 0!");
         }
 
+        VkDeviceSize vertBufferSize = numAllVerts * sizeof(vert);
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        createBuffer(numAllVerts, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                  stagingBuffer, stagingBufferMemory);
 
+
+        // Create a huge array with all the vertices
         std::vector<ale::Vertex> allVertices = {};
         allVertices.reserve(numAllVerts);
 
-
+        // Populate our giant vertex array
         for (auto m : model.meshes) {
             for (auto v: m.vertices) {
                 allVertices.push_back(v);
@@ -1190,22 +1195,21 @@ private:
         }
 
         void* data;
-        vkMapMemory(vkb_device, stagingBufferMemory, 0, numAllVerts * sizeof(vert), 0, &data);
-
+        vkMapMemory(vkb_device, stagingBufferMemory, 0, vertBufferSize, 0, &data);
         /// MEMORY MAPPED
 
-        memcpy(data, allVertices.data(), allVertices.size() * sizeof(vert));
-
-        /// MEMORY UNMAPPED
+        // Map our gigantic vertex array straight to gpu memory
+        memcpy(data, allVertices.data(), vertBufferSize);
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
+        /// MEMORY UNMAPPED
 
-        createBuffer(numAllVerts, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                                  VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                  vertexBuffer, vertexBufferMemory);
 
-        copyBuffer(stagingBuffer, vertexBuffer, numAllVerts);
+        copyBuffer(stagingBuffer, vertexBuffer, vertBufferSize);
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
