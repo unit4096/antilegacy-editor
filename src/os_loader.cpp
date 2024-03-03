@@ -128,12 +128,6 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
             }
         }
 
-
-        // List model attributes for Debug
-        for (auto attr: primitive.attributes) {
-            trc::log("This mesh has " + attr.first);
-        }
-
         std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
         if (!primitive.attributes.contains("POSITION") ||
@@ -261,7 +255,6 @@ int Loader::_loadTexturesGLTF(const tinygltf::Model& in_model, ale::Model& out_m
 
 // Loads data from a tinygltf Texture to the inner Image format
 int Loader::_loadTextureGLTF(const tinygltf::Image& in_texture, ale::Image& out_texture) {
-    trc::log("Loading texture");
 
     if (in_texture.width < 1 || in_texture.height < 1) {
         trc::log("Invalid tex parameters, aborting", trc::LogLevel::ERROR);
@@ -287,12 +280,17 @@ int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
         return -1;
     }
 
+    // TODO: Possibly load multiple scenes
+    // int sceneIdx = in_model.defaultScene > -1? in_model.defaultScene : 0;
     const auto &scene = in_model.scenes[in_model.defaultScene];
 
+
+
     // TODO: Use iteration. It is safer than recursion
-    for (size_t i = 0; i < scene.nodes.size(); i++) {
-        _bindNodeGLTF(in_model, in_model.nodes[i], -1, i,  out_model);
-        out_model.rootNodes.push_back(i);
+    for (size_t i = 0; i <scene.nodes.size(); i++) {
+        auto rootNodeIdx = scene.nodes[i];
+        _bindNodeGLTF(in_model, in_model.nodes[rootNodeIdx], -1, rootNodeIdx,  out_model);
+        out_model.rootNodes.push_back(rootNodeIdx);
     }
 
     return 0;
@@ -344,6 +342,8 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     ale_node.id = current;
     ale_node.parent = parent;
     ale_node.mesh = n.mesh;
+
+    trc::raw << "node name: " << ale_node.name << " | id: " << ale_node.id << " | parent: " << ale_node.parent << "\n";
 
     out_model.nodes.push_back(ale_node);
 
@@ -431,8 +431,6 @@ int Loader::loadModelGLTF(const std::string model_path,
     ale::ViewMesh sampleMesh = out_model.meshes[0];
     geo::REMesh reMesh;
     populateREMesh(sampleMesh, reMesh);
-
-
     trc::log("Finished loading model");
     return 0;
 }
