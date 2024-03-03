@@ -1155,56 +1155,57 @@ private:
 
     void createVertexBuffer() {
 
-        VkDeviceSize bufferSize = 0;
-
-        auto vert = model.meshes[0].vertices[0];
 
         if (model.meshes.size() <= 0) {
             throw std::runtime_error("No meshes in the model!");
         }
 
+        VkDeviceSize numAllVerts = 0;
+        auto vert = model.meshes[0].vertices[0];
+
         for(auto m: model.meshes) {
-            bufferSize += sizeof(vert) * m.vertices.size();
+            numAllVerts += m.vertices.size();
         }
 
-        if (bufferSize <= 0) {
+        if (numAllVerts <= 0) {
             throw std::runtime_error("Vertex buffer size is 0!");
         }
 
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        createBuffer(numAllVerts, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                  stagingBuffer, stagingBufferMemory);
 
+        std::vector<ale::Vertex> allVertices = {};
+        allVertices.reserve(numAllVerts);
+
+
+        for (auto m : model.meshes) {
+            for (auto v: m.vertices) {
+                allVertices.push_back(v);
+            }
+        }
+
         void* data;
-        vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
+        vkMapMemory(vkb_device, stagingBufferMemory, 0, numAllVerts * sizeof(vert), 0, &data);
 
         /// MEMORY MAPPED
 
-        // Iterator to calculate offsets for each mesh in the buffer
-        // char* has the "atomic" size ratio across all C/C++ standards
-        char* memoryItr = reinterpret_cast<char*>(data);
-
-        // Loads vertices for all meshes into one buffer
-        for (auto m: model.meshes) {
-            size_t memoryOffset = sizeof(vert) * m.vertices.size();
-            memcpy(memoryItr, m.vertices.data(), memoryOffset);
-            memoryItr += memoryOffset;
-        }
+        memcpy(data, allVertices.data(), allVertices.size() * sizeof(vert));
 
         /// MEMORY UNMAPPED
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        createBuffer(numAllVerts, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                                  VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                  vertexBuffer, vertexBufferMemory);
 
-        copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+        copyBuffer(stagingBuffer, vertexBuffer, numAllVerts);
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
@@ -1631,21 +1632,14 @@ private:
             .p = ale::UIManager::getFlippedProjection(ubo.proj)
         };
 
-        /* trc::raw << "\n\n\n\n"; */
-
         for (auto& n : model.nodes) {
             auto t = n.transform;
 
             auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
             ale::UIManager::drawWorldSpaceCircle(pos, pvm);
-
-            /* trc::raw << n.name << "\n"; */
-            /* trc::raw << n.mesh << "\n"; */
-            /* trc::printMat4(n.transform, "transform of node"); */
         }
 
-        /* trc::raw << "\n\n\n\n"; */
-
+        
         // Immeditate mode shape rendering using ImGui
         // TODO: Make draw buffer more flexible
         for(auto pair: uiDrawQueue) {
