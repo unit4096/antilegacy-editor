@@ -30,6 +30,7 @@ public:
     static void drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model);
     static void flipProjection(glm::mat4& proj);
     static glm::mat4 getFlippedProjection(const glm::mat4& proj);
+    static void drawMenuBar();
 };
 
 

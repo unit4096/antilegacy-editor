@@ -136,7 +136,7 @@ void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& mode
 }
 
 
-void drawCoreUI() {
+void UIManager::drawMenuBar() {
 
 
     if (ImGui::BeginMainMenuBar()) {
@@ -157,7 +157,4 @@ void drawCoreUI() {
         }
         ImGui::EndMainMenuBar();
     }
-
-
-
 }

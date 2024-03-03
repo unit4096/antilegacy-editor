@@ -1534,11 +1534,8 @@ private:
         //TODO: move this code to a config file
         ImGuiStyle &style = ImGui::GetStyle();
 
-
         style.WindowMinSize        = ImVec2( 160, 20 );
-        // style.FramePadding         = ImVec2( 2, 1 );
         style.ItemSpacing          = ImVec2( 6, 2 );
-        // style.ItemInnerSpacing     = ImVec2( 6, 4 );
         style.Alpha                = 0.95f;
         style.WindowRounding       = 4.0f;
         style.FrameRounding        = 2.0f;
@@ -1669,26 +1666,11 @@ private:
         // TODO: replace this with the object's position
         ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, ubo.model);
 
-        if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu("File")) {
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Edit")) {
-                if (ImGui::MenuItem("Test Item", "TEST*BINDING")) {}
-                ImGui::Separator();
-                if (ImGui::MenuItem("Test Item 2", "TEST+BINDING+2")) {}
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("View")) {
-                ImGui::EndMenu();
-            }
-            if (ImGui::BeginMenu("Window")) {
-                ImGui::EndMenu();
-            }
-            ImGui::EndMainMenuBar();
-        }
+        ale::UIManager::drawMenuBar();
 
         CameraData camData = mainCamera->getData();
+
+
 
         {
             ImGui::Begin("View configs");
