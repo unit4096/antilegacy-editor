@@ -65,6 +65,7 @@ static void log(const std::string_view msg, LogLevel lvl,
                  const std::source_location loc) {
     constexpr char GRAY[] = "\033[90m";
     constexpr char RED[] = "\033[31m";
+    constexpr char YELLOW[] = "\e[0;33m";
     constexpr char RESET[] = "\033[0m";
 
     // Checks if the level is enabled
@@ -72,15 +73,19 @@ static void log(const std::string_view msg, LogLevel lvl,
         return;
     }
 
-    if (lvl == LogLevel::ERROR) {
-        std::cout << RED << _LogLevelToString(lvl) << ": "
-                  << msg << "\n"
-                  << GRAY << _getLocation(loc) << RESET << "\n";
-        return;
+    switch (lvl) {
+        case ERROR:
+            std::cout << RED << _LogLevelToString(lvl) << ": ";
+            break;
+        case WARNING:
+            std::cout << YELLOW << _LogLevelToString(lvl) << ": ";
+            break;
+        default:
+            std::cout << RESET << _LogLevelToString(lvl) << ": ";
+            break;
     }
 
-    std::cout << _LogLevelToString(lvl) << ": "
-              << msg << "\n"
+    std::cout << msg << "\n"
               << GRAY << _getLocation(loc) << RESET << "\n";
 }
 
