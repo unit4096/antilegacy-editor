@@ -115,17 +115,59 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
         bool bHasIndices = false;
 
         if (indicesIdx != -1) {
+
             bHasIndices = true;
             const auto& accessor = in_model.accessors[indicesIdx];
 
-            // FIXME: Implement type deduction, now just assumes that it is u short
-            const unsigned short* indices =
-                                reinterpret_cast<const unsigned short*>(
-                                    _getDataByAccessor(accessor, in_model));
+            auto _type = accessor.componentType;
 
+            if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
+
+                const unsigned short* indices = reinterpret_cast<const unsigned short*>( _getDataByAccessor(accessor, in_model));
+                for (size_t i = 0; i < accessor.count; i++) {
+                    out_mesh.indices.push_back(*(indices + i));
+                }
+
+                trc::log("Index type: short");
+            } else if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
+
+                const unsigned int* indices = reinterpret_cast<const unsigned int*>( _getDataByAccessor(accessor, in_model));
+                for (size_t i = 0; i < accessor.count; i++) {
+                    out_mesh.indices.push_back(*(indices + i));
+                }
+
+                trc::log("Index type: int");
+            } else if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
+
+                const unsigned char* indices = reinterpret_cast<const unsigned char*>( _getDataByAccessor(accessor, in_model));
+                for (size_t i = 0; i < accessor.count; i++) {
+                    out_mesh.indices.push_back(*(indices + i));
+                }
+
+                trc::log("Index type: char");
+            } else {
+                trc::log("Unknown index type!", trc::ERROR);
+            }
+
+            switch (accessor.componentType) {
+            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
+
+
+            }
+                break;
+            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
+                break;
+            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
+                trc::log("unsigned bytes not supported as indices!",trc::ERROR);
+            }
+
+            // FIXME: Implement type deduction, now just assumes that it is u short
+            const unsigned short* indices = reinterpret_cast<const unsigned short*>( _getDataByAccessor(accessor, in_model));
             for (size_t i = 0; i < accessor.count; i++) {
                 out_mesh.indices.push_back(*(indices + i));
             }
+        } else {
+            trc::log("Indices not found!", trc::WARNING);
         }
 
         std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
