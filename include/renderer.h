@@ -268,6 +268,7 @@ public:
             float* transform = ale::geo::glmMatToPtr(tr);
             auto transRange = pushConstantRanges[0];
             auto colorRange = pushConstantRanges[1];
+
             vkCmdPushConstants(commandBuffer, pipelineLayout,transRange.stageFlags, transRange.offset,transRange.size,transform);
             vkCmdPushConstants(commandBuffer, pipelineLayout,colorRange.stageFlags, colorRange.offset, colorRange.size, perObjColorData);
 
@@ -1178,9 +1179,9 @@ private:
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
         createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                 VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                 stagingBuffer, stagingBufferMemory);
+                                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                                     stagingBuffer, stagingBufferMemory);
 
 
         // Create a huge array with all the vertices
@@ -1199,15 +1200,15 @@ private:
         /// MEMORY MAPPED
 
         // Map our gigantic vertex array straight to gpu memory
-        memcpy(data, allVertices.data(), vertBufferSize);
+            memcpy(data, allVertices.data(), vertBufferSize);
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
         /// MEMORY UNMAPPED
 
         createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-                                 VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                 vertexBuffer, vertexBufferMemory);
+                                     VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                     vertexBuffer, vertexBufferMemory);
 
         copyBuffer(stagingBuffer, vertexBuffer, vertBufferSize);
 
@@ -1217,7 +1218,7 @@ private:
 
     void createIndexBuffer() {
 
-        VkDeviceSize bufferSize = 0;
+        unsigned long numIdx = 0;
         indexBufferCount = 0;
 
         // Samples the first index for default size
@@ -1228,13 +1229,38 @@ private:
         }
 
         for(auto m: model.meshes) {
-            bufferSize += sizeof(index) * m.indices.size();
+            numIdx += m.indices.size();
             indexBufferCount += m.indices.size();
         }
 
-        if (bufferSize <= 0) {
+        if (numIdx<= 0) {
             throw std::runtime_error("Vertex buffer size is 0!");
         }
+
+        std::vector<unsigned int> allIdx = {};
+        allIdx.reserve(numIdx * sizeof(index));
+
+        unsigned int iOffset = 0;
+        unsigned int vOffset = 0;
+        for (auto& m : model.meshes) {
+            unsigned int mSize = m.indices.size();
+            unsigned int vSize = m.vertices.size();
+
+            for (auto i : m.indices) {
+                allIdx.push_back(i + vOffset);
+            }
+
+            MeshBufferData data {
+                .size = mSize,
+                .offset = iOffset,
+            };
+
+            meshBuffers.push_back(data);
+            iOffset += mSize;
+            vOffset += vSize;
+        }
+
+        VkDeviceSize bufferSize = numIdx * sizeof(index);
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -1246,35 +1272,7 @@ private:
         void* data;
         vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
 
-
-            // Iterator to calculate offsets for each mesh in the buffer
-            // char* has the "atomic" size ratio across all C/C++ standards
-            char* memoryItr = reinterpret_cast<char*>(data);
-
-            unsigned int idxOffset = 0;
-            for (size_t i = 0; i < model.meshes.size(); i++) {
-                size_t memoryOffset = sizeof(index) * model.meshes[i].indices.size();
-
-                // Temporary mesh for index offsets
-                auto m = model.meshes[i];
-                auto currentOffset = idxOffset;
-
-                //  This loop adds offsets to indices for a shared index buffer
-                for (size_t j = 0; j < model.meshes[i].indices.size(); j++) {
-                    m.indices[j] += idxOffset;
-                }
-
-                memcpy(memoryItr, m.indices.data(), memoryOffset);
-                memoryItr += memoryOffset;
-
-                MeshBufferData meshData {
-                    .size = static_cast<unsigned int>(model.meshes[i].indices.size()),
-                    .offset = currentOffset,
-                };
-
-                meshBuffers.push_back(meshData);
-                idxOffset += model.meshes[i].indices.size();
-            }
+            memcpy(data, allIdx.data(), bufferSize);
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
