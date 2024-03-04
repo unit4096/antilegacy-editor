@@ -343,7 +343,7 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     ale_node.parent = parent;
     ale_node.mesh = n.mesh;
 
-    trc::raw << "node name: " << ale_node.name << " | id: " << ale_node.id << " | parent: " << ale_node.parent << "\n";
+    // trc::raw << "node name: " << ale_node.name << " | id: " << ale_node.id << " | parent: " << ale_node.parent << "\n";
 
     out_model.nodes.push_back(ale_node);
 
