@@ -277,7 +277,7 @@ public:
             vkCmdDrawIndexed(commandBuffer, meshData.size, 1, meshData.offset, 0, 0);
         }
 
-        for(auto childNodeId: node.children) {
+        for(auto childNodeId : node.children) {
                 assert(childNodeId > -1);
                 renderNode(commandBuffer, model.nodes[childNodeId], model);
         }
@@ -1166,7 +1166,7 @@ private:
         auto vert = model.meshes[0].vertices[0];
 
         // Add mesh sizes to the counter
-        for(auto m: model.meshes) {
+        for(const auto& m: model.meshes) {
             numAllVerts += m.vertices.size();
         }
 
@@ -1228,7 +1228,7 @@ private:
             throw std::runtime_error("No meshes in the model!");
         }
 
-        for(auto m: model.meshes) {
+        for(const auto& m: model.meshes) {
             numIdx += m.indices.size();
             indexBufferCount += m.indices.size();
         }
@@ -1641,7 +1641,7 @@ private:
             ale::UIManager::drawWorldSpaceCircle(pos, pvm);
         }
 
-        
+
         // Immeditate mode shape rendering using ImGui
         // TODO: Make draw buffer more flexible
         for(auto pair: uiDrawQueue) {
