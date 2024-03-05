@@ -375,9 +375,9 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
 
     // TODO: not tested yet
 
-    /* if (out_model.nodes.size() > parent && parent > -1) { */
-    /*     newTransform = out_model.nodes[parent].transform * newTransform; */
-    /* } */
+    if (out_model.nodes.size() > parent && parent > -1) {
+        newTransform = out_model.nodes[parent].transform * newTransform;
+    }
 
 	ale_node.transform = newTransform;
     ale_node.name = n.name;
