@@ -5,6 +5,8 @@ layout(push_constant, std430) uniform pc {
 };
 
 layout(binding = 0) uniform UniformBufferObject {
+    // TODO: remove model matrix (use mat instead)
+    // or find it another use
     mat4 model;
     mat4 view;
     mat4 proj;
@@ -23,7 +25,7 @@ layout(location = 3) out vec3 fragPos;
 layout(location = 4) out vec3 lightPos;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * (ubo.model + mat) * vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * mat * vec4(inPosition, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
     fragNormal = inNormal;
