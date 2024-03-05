@@ -162,7 +162,7 @@ public:
 
         // TODO: get this data from the node transform matrix
         // Model matrix
-        ubo.model = glm::rotate(glm::mat4(1.0f),
+        ubo.model =  glm::rotate(glm::mat4(1.0f),
                                 glm::radians(1.5f),
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -264,8 +264,8 @@ public:
             float objId = static_cast<float>(node.id);
             // Assign a unique "color" by object's id
             float perObjColorData[4] = {objId,1,1,1};
-            glm::mat4 tr = node.transform;
-            float* transform = ale::geo::glmMatToPtr(tr);
+            auto t = node.transform;
+            float* transform = ale::geo::glmMatToPtr(t);
             auto transRange = pushConstantRanges[0];
             auto colorRange = pushConstantRanges[1];
 
@@ -426,54 +426,63 @@ private:
 
     // attribute descriptions for ale::Vertex
     std::vector<VkVertexInputAttributeDescription> ale_VertexAttributeDescriptions = {
-            {
-                .location = 0,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(ale::Vertex, pos),
-            },
-            {
-                .location = 1,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(ale::Vertex, color),
-            },
-            {
-                .location = 2,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32_SFLOAT,
-                .offset = offsetof(ale::Vertex, texCoord),
-            },
-            {
-                .location = 3,
-                .binding = 0,
-                .format = VK_FORMAT_R32G32B32_SFLOAT,
-                .offset = offsetof(ale::Vertex, normal),
-            }
-        };
+        {
+            .location = 0,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(ale::Vertex, pos),
+        },
+        {
+            .location = 1,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(ale::Vertex, color),
+        },
+        {
+            .location = 2,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(ale::Vertex, texCoord),
+        },
+        {
+            .location = 3,
+            .binding = 0,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(ale::Vertex, normal),
+        }
+    };
 
-        // TODO: This seems like a specific config. Might be useful to
-        // move to a separate header
-        std::vector<VkPushConstantRange> pushConstantRanges = {
-            {
-                .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
-                .offset = 0,
-                .size = 64,
-            },
-            {
-                .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-                .offset = 64,
-                .size = 16,
-            },
-        };
 
+    // TODO: This seems like a specific config. Might be useful to
+    // move to a separate header
+    std::vector<VkPushConstantRange> pushConstantRanges = {
+        {
+            .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
+            .offset = 0,
+            .size = 64,
+        },
+        {
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+            .offset = 64,
+            .size = 16,
+        },
+    };
+
+    struct Buffer {
+        VkBuffer vulkanaBuffer;
+        VkDeviceMemory memory;
+        void* handle;
+    };
 
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    void* vertexBufferHandle;
+
     VkBuffer indexBuffer;
-    uint32_t indexBufferCount;
+    uint32_t indexCount;
     VkDeviceMemory indexBufferMemory;
+    void* indexBufferHandle;
 
     std::vector<MeshBufferData> meshBuffers;
 
@@ -1195,12 +1204,11 @@ private:
             }
         }
 
-        void* data;
-        vkMapMemory(vkb_device, stagingBufferMemory, 0, vertBufferSize, 0, &data);
+        vkMapMemory(vkb_device, stagingBufferMemory, 0, vertBufferSize, 0, &vertexBufferHandle);
         /// MEMORY MAPPED
 
         // Map our gigantic vertex array straight to gpu memory
-            memcpy(data, allVertices.data(), vertBufferSize);
+            memcpy(vertexBufferHandle, allVertices.data(), vertBufferSize);
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
         /// MEMORY UNMAPPED
@@ -1219,7 +1227,7 @@ private:
     void createIndexBuffer() {
 
         unsigned long numIdx = 0;
-        indexBufferCount = 0;
+        indexCount = 0;
 
         // Samples the first index for default size
         auto index = model.meshes[0].indices[0];
@@ -1230,7 +1238,7 @@ private:
 
         for(const auto& m: model.meshes) {
             numIdx += m.indices.size();
-            indexBufferCount += m.indices.size();
+            indexCount += m.indices.size();
         }
 
         if (numIdx<= 0) {
@@ -1269,10 +1277,9 @@ private:
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                                  stagingBuffer, stagingBufferMemory);
 
-        void* data;
-        vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &data);
+        vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &indexBufferHandle);
 
-            memcpy(data, allIdx.data(), bufferSize);
+            memcpy(indexBufferHandle, allIdx.data(), bufferSize);
 
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
