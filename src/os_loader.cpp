@@ -344,7 +344,7 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
                        int parent, int current,  ale::Model& out_model ) {
     ale::Node ale_node;
 
-    glm::mat4 newTransform = glm::mat4(0);
+    glm::mat4 newTransform = glm::mat4(1);
 
 
     if (n.translation.size() == 3) {
@@ -374,6 +374,7 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     }
 
     // TODO: not tested yet
+
     /* if (out_model.nodes.size() > parent && parent > -1) { */
     /*     newTransform = out_model.nodes[parent].transform * newTransform; */
     /* } */
