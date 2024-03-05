@@ -1,7 +1,7 @@
 #version 450
 
 layout(push_constant, std430) uniform pc {
-    mat4 mat;
+    mat4 objTr;
 };
 
 layout(binding = 0) uniform UniformBufferObject {
@@ -25,10 +25,10 @@ layout(location = 3) out vec3 fragPos;
 layout(location = 4) out vec3 lightPos;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * mat * vec4(inPosition, 1.0);
+    gl_Position = ubo.proj * ubo.view * objTr * vec4(inPosition, 1.0);
     fragColor = inColor;
     fragTexCoord = inTexCoord;
-    fragNormal = inNormal;
-    fragPos = vec3(ubo.model * vec4(inPosition, 1.0));
+    fragNormal = (objTr * vec4(inNormal,1)).xyz;
+    fragPos = vec3(objTr * vec4(inPosition, 1.0));
     lightPos = vec3(ubo.light);
 }
