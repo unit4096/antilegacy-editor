@@ -1573,6 +1573,8 @@ private:
     }
 
     void initImGUI(){
+        trc::log("There is a minor memory leak here!",trc::WARNING);
+
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
         io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -1698,12 +1700,10 @@ private:
 
         CameraData camData = mainCamera->getData();
 
-        
-
         {
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
-ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
+            ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
             ImGui::SliderFloat("Y", &camData.transform.pos.y, -10.0f, 10.0f);
             ImGui::SliderFloat("Z", &camData.transform.pos.z, -10.0f, 10.0f);
             ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
