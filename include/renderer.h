@@ -1574,6 +1574,7 @@ private:
 
     void initImGUI(){
         io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+        io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
         // Set up style
         ImGui::StyleColorsDark();
@@ -1681,24 +1682,33 @@ private:
             }
         }
 
-        // TODO: replace this with the object's position
-        ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, ubo.model);
+
+        // The id of the first node containing a mesh
+        int id = 0;
+        for (auto n : model.nodes) {
+            if (n.mesh > -1) {
+                id = n.id;
+                break;
+            }
+        }
+        // Manipulate a node with an ImGui Gizmo
+        ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform);
 
         ale::UIManager::drawMenuBar();
 
         CameraData camData = mainCamera->getData();
 
-
+        
 
         {
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
-            ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
+ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
             ImGui::SliderFloat("Y", &camData.transform.pos.y, -10.0f, 10.0f);
             ImGui::SliderFloat("Z", &camData.transform.pos.z, -10.0f, 10.0f);
             ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
 
-            ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
+                        ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
             ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
             ImGui::SliderFloat("Speed", &camData.speed, 0.0001f, 10.0f);
 
