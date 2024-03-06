@@ -322,13 +322,13 @@ int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
         return -1;
     }
 
-    // TODO: Possibly load multiple scenes
+    // TODO: Possibly load multiple scenes (or add scene selection)
     // int sceneIdx = in_model.defaultScene > -1? in_model.defaultScene : 0;
     const auto &scene = in_model.scenes[in_model.defaultScene];
 
+    // Reserve some space for random writes in _bindNodeGLTF()
+    out_model.nodes.resize(in_model.nodes.size());
 
-
-    // TODO: Use iteration. It is safer than recursion
     for (size_t i = 0; i <scene.nodes.size(); i++) {
         auto rootNodeIdx = scene.nodes[i];
         _bindNodeGLTF(in_model, in_model.nodes[rootNodeIdx], -1, rootNodeIdx,  out_model);
@@ -341,11 +341,10 @@ int Loader::_loadNodesGLTF(const tinygltf::Model& in_model,
 // Recursively builds node hierarchy
 void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
                        const tinygltf::Node& n,
-                       int parent, int current,  ale::Model& out_model ) {
+                       int parent, int current, ale::Model& out_model ) {
     ale::Node ale_node;
 
     glm::mat4 newTransform = glm::mat4(1);
-
 
     if (n.translation.size() == 3) {
 		float x = n.translation[0];
@@ -368,13 +367,11 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
         newTransform = glm::scale(newTransform, scale);
     }
 
-
     if (n.matrix.size() == 16) {
         newTransform = glm::make_mat4(n.matrix.data());
     }
 
-    // TODO: not tested yet
-
+    // TODO: Move this to renderer for real-time hierarchy manipulations
     if (out_model.nodes.size() > parent && parent > -1) {
         newTransform = out_model.nodes[parent].transform * newTransform;
     }
@@ -386,9 +383,9 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     ale_node.parent = parent;
     ale_node.mesh = n.mesh;
 
-    // trc::raw << "node name: " << ale_node.name << " | id: " << ale_node.id << " | parent: " << ale_node.parent << "\n";
-
-    out_model.nodes.push_back(ale_node);
+    // We know the size of .nodes and load every node
+    // So we can use this trick with random writes
+    out_model.nodes[current] = ale_node;
 
     for (size_t i = 0; i < n.children.size(); i++) {
         assert((n.children[i] >= 0) && (n.children[i] < in_model.nodes.size()));
