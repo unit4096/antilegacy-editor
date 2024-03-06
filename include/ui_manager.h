@@ -31,6 +31,8 @@ public:
     static void flipProjection(glm::mat4& proj);
     static glm::mat4 getFlippedProjection(const glm::mat4& proj);
     static void drawMenuBar();
+    static void vec3Handler(glm::vec3& vec, float dnLim, float upLim);
+    static void drawHierarchyUI(const ale::Model& model);
 };
 
 

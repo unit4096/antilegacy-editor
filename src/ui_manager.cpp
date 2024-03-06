@@ -34,6 +34,7 @@ glm::vec2 UIManager::worldToScreen(const glm::mat4& modelViewProjection,
     return glm::vec2(screenX, screenY);
 }
 
+
 // A simple function that indicates if a point is "in front" enough
 // of the camera. Used mostly to avoid inversing geometry behind the
 // camera. More sophisticated methods will be used in the user-space
@@ -158,3 +159,45 @@ void UIManager::drawMenuBar() {
         ImGui::EndMainMenuBar();
     }
 }
+
+void UIManager::vec3Handler(glm::vec3& vec, float dnLim, float upLim) {
+            ImGui::SliderFloat("X", &vec.x,dnLim,upLim);
+            ImGui::SliderFloat("Y", &vec.y,dnLim,upLim);
+            ImGui::SliderFloat("Z", &vec.z,dnLim,upLim);
+}
+
+void parseNode(const ale::Model& model, int id) {
+
+        ImGuiTreeNodeFlags base_flags =
+                                    ImGuiTreeNodeFlags_OpenOnArrow |
+                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                                    ImGuiTreeNodeFlags_SpanAvailWidth;
+        auto n = model.nodes[id];
+        ImGuiTreeNodeFlags node_flags = base_flags;
+
+        std::string s = n.name.data();
+        s.append(" idx: ");
+        s.append(std::to_string(n.id));
+
+        if (ImGui::TreeNodeEx((void*)(intptr_t)n.id, node_flags, s.data(),n.id)) {
+            if (n.children.size() > 0) {
+                for (auto c  : n.children) {
+                    parseNode(model, c);
+                }
+            } else {
+                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(201,62,62,255));
+                ImGui::Text("Leaf node");
+                ImGui::PopStyleColor();
+            }
+            ImGui::TreePop();
+        }
+}
+
+
+void UIManager::drawHierarchyUI(const ale::Model& model) {
+
+    for (auto nID : model.rootNodes) {
+        parseNode(model, nID);
+    }
+}
+
