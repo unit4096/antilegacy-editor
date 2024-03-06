@@ -1701,6 +1701,7 @@ private:
         CameraData camData = mainCamera->getData();
 
         {
+            // CAMERA & HIERARCHY START
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
             ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
@@ -1724,8 +1725,15 @@ private:
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                                  1000.0f / _io.Framerate, _io.Framerate);
             ImGui::Text("FPS CAP ENABLED");
-            ImGui::End();
+            ImGui::Spacing();
 
+            ImGui::Text("NODE HIERARCHY");
+            ale::UIManager::drawHierarchyUI(model);
+            ImGui::End();
+            // CAMERA & HIERARCHY END
+
+
+            // LIGHT POS START
             ImGui::Begin("Light Configs");
             ImGui::Text("Light Position");
 
@@ -1737,6 +1745,7 @@ private:
             ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
 
             ImGui::End();
+            // LIGHT POS END
         }
 
         mainCamera->setData(camData);
