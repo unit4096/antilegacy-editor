@@ -353,15 +353,7 @@ public:
         return ubo;
     }
 
-
-    enum UI_DRAW_TYPE {
-        LINE,
-        VERT,
-        CIRCLE,
-        UI_DRAW_TYPE_MAX,
-    };
-
-    void pushToUIDrawQueue(        std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>  pair) {
+    void pushToUIDrawQueue(std::pair<std::vector<glm::vec3>, ale::UI_DRAW_TYPE>  pair) {
         uiDrawQueue.push_back(pair);
     }
 
@@ -1645,64 +1637,42 @@ private:
     }
 
 
+    // Initializes ImGui stuff and records ui events here
     void drawImGui() {
+
+        /// INIT IMPORTANT IMGUI STUFF
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ImGuizmo::BeginFrame();
         ImGuiIO& _io = ImGui::GetIO();
-
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
-
+        // Flipped projection for ImGui
         MVP pvm {
             .m = ubo.model,
             .v = ubo.view,
             // Imgui works with -Y as up, ALE works with Y as up
             .p = ale::UIManager::getFlippedProjection(ubo.proj)
         };
-
-        for (auto& n : model.nodes) {
-            auto t = n.transform;
-
-            auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
-            ale::UIManager::drawWorldSpaceCircle(pos, pvm);
-        }
+        /// IMPORTANT STUFF LOADED
 
 
-        // Immeditate mode shape rendering using ImGui
-        // TODO: Make draw buffer more flexible
+        // TODO: The following code should be moved elsewhere
+        // renderer does not need to know about the UI layout
+
+
+        // Draw each node as a circle
+        ale::UIManager::drawNodeRoots(model, pvm);
+
+        // Draw each selected face as a triangle
         for(auto pair: uiDrawQueue) {
-            auto vec = pair.first;
-            auto mode = pair.second;
-
-            if (mode == UI_DRAW_TYPE::CIRCLE && (vec.size() == 1)) {
-                    ale::UIManager::drawWorldSpaceCircle(vec[0], pvm);
-            }
-
-            // Not enough points to draw a line
-            if (vec.size() < 2) {
-                continue;
-            }
-
-            // Connect all points in one line
-            if (mode == UI_DRAW_TYPE::LINE) {
-                for (int i = 1; i < vec.size(); i++) {
-                    ale::UIManager::drawWorldSpaceLine(vec[i-1], vec[i], pvm);
-                }
-            }
-
-            // Vertices need 3 and only 3 points
-            if (mode == UI_DRAW_TYPE::VERT && (vec.size() % 3 == 0)) {
-                for (int i = 0; i < vec.size(); i+=3) {
-                    ale::UIManager::drawWorldSpaceVert(vec[i+0],
-                                                       vec[i+1],
-                                                       vec[i+2], pvm);
-                }
-            }
+            std::vector<glm::vec3> vec = pair.first;
+            ale::UI_DRAW_TYPE type = pair.second;
+            ale::UIManager::drawVectorOfPrimitives(vec, type, pvm);
         }
 
-
+        /// GIZMOS START
         // The id of the first node containing a mesh
         int id = 0;
         for (auto n : model.nodes) {
@@ -1713,18 +1683,22 @@ private:
         }
         // Manipulate a node with an ImGui Gizmo
         ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform);
+        /// GIZMOS FINISH
 
         ale::UIManager::drawMenuBar();
 
-        CameraData camData = mainCamera->getData();
-
         {
+            CameraData camData = mainCamera->getData();
             // CAMERA & HIERARCHY START
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
+
+            //////
             ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
             ImGui::SliderFloat("Y", &camData.transform.pos.y, -10.0f, 10.0f);
             ImGui::SliderFloat("Z", &camData.transform.pos.z, -10.0f, 10.0f);
+            //////
+
             ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
 
                         ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
@@ -1745,11 +1719,12 @@ private:
             ImGui::Text("FPS CAP ENABLED");
             ImGui::Spacing();
 
+
             ImGui::Text("NODE HIERARCHY");
             ale::UIManager::drawHierarchyUI(model);
+
             ImGui::End();
             // CAMERA & HIERARCHY END
-
 
             // LIGHT POS START
             ImGui::Begin("Light Configs");
@@ -1764,10 +1739,12 @@ private:
 
             ImGui::End();
             // LIGHT POS END
+
+            mainCamera->setData(camData);
         }
 
-        mainCamera->setData(camData);
 
+        /// FINAL IMPORTANT STUFF
         ImGui::Render();
     }
 

@@ -21,6 +21,15 @@
 
 namespace ale {
 
+
+// Types of primitives to draw
+enum UI_DRAW_TYPE {
+    LINE,
+    VERT,
+    CIRCLE,
+    UI_DRAW_TYPE_MAX,
+};
+
 class UIManager {
 public:
     static glm::vec2 worldToScreen(const glm::mat4& modelViewProjection, const glm::vec3& pos);
@@ -33,6 +42,8 @@ public:
     static void drawMenuBar();
     static void vec3Handler(glm::vec3& vec, float dnLim, float upLim);
     static void drawHierarchyUI(const ale::Model& model);
+    static void drawNodeRoots(const ale::Model& model, const MVP& pvm);
+    static void drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm);
 };
 
 

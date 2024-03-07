@@ -201,3 +201,42 @@ void UIManager::drawHierarchyUI(const ale::Model& model) {
     }
 }
 
+
+// Draws each node in the scene as a circle. Takes the model and a
+// flipped mvp matrix
+void UIManager::drawNodeRoots(const ale::Model& model, const MVP& pvm) {
+    for (auto& n : model.nodes) {
+        auto t = n.transform;
+        auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
+        ale::UIManager::drawWorldSpaceCircle(pos, pvm);
+    }
+}
+
+// Draws each node in the scene as a circle. Takes
+// a pair of <points, type> and a flipped mvp matrix
+void UIManager::drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm) {
+    if (mode == UI_DRAW_TYPE::CIRCLE && (vec.size() == 1)) {
+            ale::UIManager::drawWorldSpaceCircle(vec[0], pvm);
+    }
+
+    // Not enough points to draw a line
+    if (vec.size() < 2) {
+        return;
+    }
+
+    // Connect all points in one line
+    if (mode == UI_DRAW_TYPE::LINE) {
+        for (int i = 1; i < vec.size(); i++) {
+            ale::UIManager::drawWorldSpaceLine(vec[i-1], vec[i], pvm);
+        }
+    }
+
+    // Vertices need 3 and only 3 points
+    if (mode == UI_DRAW_TYPE::VERT && (vec.size() % 3 == 0)) {
+        for (int i = 0; i < vec.size(); i+=3) {
+            ale::UIManager::drawWorldSpaceVert(vec[i+0],
+                                               vec[i+1],
+                                               vec[i+2], pvm);
+        }
+    }
+}
