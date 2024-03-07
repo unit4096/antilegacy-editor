@@ -1575,8 +1575,10 @@ private:
     void initImGUI(){
         trc::log("There is a minor memory leak here!",trc::WARNING);
 
-        io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-        io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        ImGuiIO& _io = ImGui::GetIO();
+        _io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable keyboard
+        _io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable docking
+        _io.ConfigDockingWithShift = true; // Hold shift to dock
 
         // Set up style
         ImGui::StyleColorsDark();
