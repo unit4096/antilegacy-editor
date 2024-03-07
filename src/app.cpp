@@ -15,11 +15,12 @@ App::App(AppConfigData config) {
 int App::run() {
 
     try {
-
-        // Time management for framerate control
+        // FRAMERATE MANAGEMENT
         // FPS cap in 8 milliseconds -> 120 FPS
         const std::chrono::duration<double, std::milli> fps_cap(8);
         auto lastFrame = std::chrono::steady_clock::now();
+        std::chrono::duration<double> deltaTime;
+
 
         // LOGGING
         std::vector<trc::LogLevel> logLevels = {
@@ -48,9 +49,6 @@ int App::run() {
         }
 
 
-
-
-
         // RENDERING
         // Create Vulkan renderer object
         ale::Renderer renderer(model);
@@ -66,7 +64,6 @@ int App::run() {
         GEditorState globalEditorState;
 
 
-
         // INPUT MANAGEMENT
         // Create input manager object
         ale::InputManager input;
@@ -75,7 +72,6 @@ int App::run() {
 
         // TODO: The following stuff is here for testing, move it
         // as quickly as you find a proper place for it
-
 
         // Dynamically set camera position by mesh bounding box
         assert(model.meshes.size() > 0);
@@ -101,7 +97,6 @@ int App::run() {
         // Further code tests camera movement
         // TODO: move this code from the main file,
         // provide better handling for bindings
-        std::chrono::duration<double> deltaTime;
 
         float cameraSpeedAdjusted = 1.0f;
 
@@ -200,8 +195,7 @@ int App::run() {
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
 
-
-        // Main rendering loop. Queries the input and renders to a window
+        // MAIN RENDERING LOOP
         while (!renderer.shouldClose()) {
             // Time point to the frame start
             auto thisFrame = std::chrono::steady_clock::now();
