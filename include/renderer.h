@@ -1641,57 +1641,9 @@ private:
     // I think it would be convinient for ui drawing
     std::function<void()> injectedFunctionUI = [&]() {
 
+        using ui = ale::UIManager;
         auto _io = ImGui::GetIO();
 
-        // CAMERA & HIERARCHY
-        ImGui::Begin("View configs");
-        ImGui::Text("Camera properties");
-        // Camera
-        ale::UIManager::CameraControlWidgetUI(mainCamera);
-
-        /// FPS DRAW START
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                             1000.0f / _io.Framerate, _io.Framerate);
-        ImGui::Text("FPS CAP ENABLED");
-        /// FPS DRAW END
-
-        ImGui::Spacing();
-
-        ImGui::Text("NODE HIERARCHY");
-        ale::UIManager::drawHierarchyUI(model);
-
-        ImGui::End();
-        // CAMERA & HIERARCHY END
-
-
-        // LIGHT POS START
-        ImGui::Begin("Light Configs");
-        ImGui::Text("Light Position");
-
-        const float upLimit = 100.0f;
-        const float dnLimit = -100.0f;
-
-        ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
-        ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
-        ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
-
-        ImGui::End();
-        // LIGHT POS END
-
-    };
-
-
-    // Initializes ImGui stuff and records ui events here
-    void drawImGui() {
-
-        /// INIT IMPORTANT IMGUI STUFF
-        ImGui_ImplVulkan_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGuizmo::BeginFrame();
-        ImGuiIO& _io = ImGui::GetIO();
-        float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
-        ImGuizmo::SetRect(x, y, w, h);
         // Flipped projection for ImGui
         MVP pvm {
             .m = ubo.model,
@@ -1713,7 +1665,7 @@ private:
         for(auto pair: uiDrawQueue) {
             std::vector<glm::vec3> vec = pair.first;
             ale::UI_DRAW_TYPE type = pair.second;
-            ale::UIManager::drawVectorOfPrimitives(vec, type, pvm);
+            ui::drawVectorOfPrimitives(vec, type, pvm);
         }
 
         /// GIZMOS START
@@ -1726,11 +1678,62 @@ private:
             }
         }
         // Manipulate a node with an ImGui Gizmo
-        ale::UIManager::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform);
+        ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform);
         /// GIZMOS FINISH
 
-        ale::UIManager::drawMenuBar();
+        ui::drawMenuBar();
 
+
+
+        // CAMERA & HIERARCHY
+        ImGui::Begin("View configs");
+        ImGui::Text("Camera properties");
+        // Camera
+        ui::CameraControlWidgetUI(mainCamera);
+
+        /// FPS DRAW START
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                             1000.0f / _io.Framerate, _io.Framerate);
+        ImGui::Text("FPS CAP ENABLED");
+        /// FPS DRAW END
+
+        ImGui::Spacing();
+
+        ImGui::Text("NODE HIERARCHY");
+        ui::drawHierarchyUI(model);
+
+        ImGui::End();
+        // CAMERA & HIERARCHY END
+
+
+        // LIGHT POS START
+        ImGui::Begin("Light Configs");
+        ImGui::Text("Light Position");
+
+        const float upLimit = 100.0f;
+        const float dnLimit = -100.0f;
+
+        ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
+        ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
+        ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
+
+        ImGui::End();
+        // LIGHT POS END
+    };
+
+
+    // Initializes ImGui stuff and records ui events here
+    void drawImGui() {
+        /// INIT IMPORTANT IMGUI STUFF
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
+        ImGuiIO& _io = ImGui::GetIO();
+        float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
+        ImGuizmo::SetRect(x, y, w, h);
+
+        // All UI code gets injected here
         injectedFunctionUI();
 
         /// FINAL IMPORTANT STUFF
