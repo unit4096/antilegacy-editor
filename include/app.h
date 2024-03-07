@@ -34,6 +34,7 @@
 #include <os_loader.h>
 #include <re_mesh.h>
 #include <ui_manager.h>
+#include <editor_state.h>
 
 
 namespace ale {
