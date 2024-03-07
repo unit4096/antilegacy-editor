@@ -195,6 +195,11 @@ int App::run() {
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
 
+        std::function<void()> uiEvents = [&](){
+
+
+        };
+
         // MAIN RENDERING LOOP
         while (!renderer.shouldClose()) {
             // Time point to the frame start
@@ -207,7 +212,6 @@ int App::run() {
 
             // polling events, callbacks fired
             glfwPollEvents();
-
             // Key camera input
             input.executeActiveKeyActions();
 
@@ -221,7 +225,7 @@ int App::run() {
             mainCam->setOrientation(camYawPitch.x,camYawPitch.y);
 
             // Drawing the results of the input
-            renderer.drawFrame();
+            renderer.drawFrame(uiEvents);
 
             // Smooth framerate
             auto thisFrameEnd = std::chrono::steady_clock::now();

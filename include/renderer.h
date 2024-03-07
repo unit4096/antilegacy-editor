@@ -195,7 +195,7 @@ public:
         ubo.light = _lightPosition;
     }
 
-    void drawFrame() {
+    void drawFrame(std::function<void()>& uiEvents) {
         vkWaitForFences(vkb_device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
@@ -211,7 +211,7 @@ public:
         }
 
         // Draw UI
-        drawImGui();
+        drawImGui(uiEvents);
 
         setCamera();
 
@@ -1653,11 +1653,6 @@ private:
         };
         /// IMPORTANT STUFF LOADED
 
-
-        // TODO: The following code should be moved elsewhere
-        // renderer does not need to know about the UI layout
-
-
         // Draw each node as a circle
         ale::UIManager::drawNodeRoots(model, pvm);
 
@@ -1682,8 +1677,6 @@ private:
         /// GIZMOS FINISH
 
         ui::drawMenuBar();
-
-
 
         // CAMERA & HIERARCHY
         ImGui::Begin("View configs");
@@ -1723,7 +1716,7 @@ private:
 
 
     // Initializes ImGui stuff and records ui events here
-    void drawImGui() {
+    void drawImGui(std::function<void()>& uiEvents) {
         /// INIT IMPORTANT IMGUI STUFF
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -1735,6 +1728,7 @@ private:
 
         // All UI code gets injected here
         injectedFunctionUI();
+        uiEvents();
 
         /// FINAL IMPORTANT STUFF
         ImGui::Render();
