@@ -21,8 +21,7 @@ int App::run() {
         const std::chrono::duration<double, std::milli> fps_cap(8);
         auto lastFrame = std::chrono::steady_clock::now();
 
-
-        // Set up logging
+        // LOGGING
         std::vector<trc::LogLevel> logLevels = {
             trc::LogLevel::DEBUG,
             trc::LogLevel::INFO,
@@ -31,20 +30,14 @@ int App::run() {
         };
         trc::SetLogLevels(logLevels);
 
+
+        // MODEL LOADING
         std::string model_path = "./models/fox/Fox.gltf";
-
-        // Loader handles system IO
         ale::Loader loader;
-
         loader.recordCommandLineArguments(_config.argc, _config.argv);
         loader.getFlaggedArgument("-f", model_path);
 
-        /*
-        Model object that represents a scene with multiple nodes,
-        meshes, and textures
-        */
         ale::Model model;
-
         // // You can use this to load a custom texture
         // loader.loadTexture("RELATIVE_PATH_TO_TEX", image);
 
@@ -54,30 +47,37 @@ int App::run() {
             return 1;
         }
 
+
+
+
+
+        // RENDERING
         // Create Vulkan renderer object
         ale::Renderer renderer(model);
-
-        // Create input manager object
-        ale::InputManager input;
+        renderer.initWindow();
 
         // Create a camera object that will be passed to the renderer
         std::shared_ptr<ale::Camera> mainCam = std::make_shared<ale::Camera>();
-
-        // TODO: possibly move window management outside the renderer
-        renderer.initWindow();
-        input.init(renderer.getWindow());
-
         // Make the default mode to be FREE
         mainCam->toggleMode();
+
 
         // EDITOR STATE
         GEditorState globalEditorState;
 
 
 
+        // INPUT MANAGEMENT
+        // Create input manager object
+        ale::InputManager input;
+        input.init(renderer.getWindow());
+
+
+        // TODO: The following stuff is here for testing, move it
+        // as quickly as you find a proper place for it
+
 
         // Dynamically set camera position by mesh bounding box
-
         assert(model.meshes.size() > 0);
 
         // Uses AABB of the first mesh
@@ -107,13 +107,9 @@ int App::run() {
 
         float mouseSensitivity = 0.06f;
 
-		// Movement along global XYZ aixs
-        // auto moveX  = [&]() {mainCam->movePosGlobal( glm::vec3(0,0,1), cameraSpeed);};
-        // auto moveNX = [&]() {mainCam->movePosGlobal(glm::vec3(0,0,-1), cameraSpeed);};
+		// Movement along global Y aixs
         auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0), cameraSpeedAdjusted);};
         auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeedAdjusted);};
-        // auto moveZ  = [&]() {mainCam->movePosGlobal( glm::vec3(1,0,0), cameraSpeed);};
-        // auto moveNZ = [&]() {mainCam->movePosGlobal(glm::vec3(-1,0,0), cameraSpeed);};
 
 		// WASD free camera movement
         auto moveF = [&]() { mainCam->moveForwardLocal(cameraSpeedAdjusted);};
