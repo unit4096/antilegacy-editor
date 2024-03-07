@@ -69,7 +69,11 @@ int App::run() {
 
         // Make the default mode to be FREE
         mainCam->toggleMode();
-        // Set initial camera position
+
+        // EDITOR STATE
+        GEditorState globalEditorState;
+
+
 
 
         // Dynamically set camera position by mesh bounding box
@@ -173,9 +177,18 @@ int App::run() {
         // Removes all primitives from the buffer
         auto flushBuffer = [&](){
             renderer.flushUIDrawQueue();
-
         };
 
+        // Removes all primitives from the buffer
+        auto changeMode = [&](){
+            if (globalEditorState.editorMode == OBJECT_MODE) {
+                globalEditorState.editorMode = MESH_MODE;
+                trc::log("Editor is now in MESH mode");
+            } else {
+                globalEditorState.editorMode = OBJECT_MODE;
+                trc::log("Editor is now in OBJ mode");
+            }
+        };
         // Bind lambda functions to keyboard actions
         input.bindFunction(ale::InputAction::CAMERA_MOVE_F, moveF, true);
         input.bindFunction(ale::InputAction::CAMERA_MOVE_B, moveB, true);
@@ -185,8 +198,9 @@ int App::run() {
         input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
         input.bindFunction(ale::InputAction::FUNC_1,raycast, false);
         input.bindFunction(ale::InputAction::FUNC_2,flushBuffer, false);
-        // Bind global camera to the inner camera object
+        input.bindFunction(ale::InputAction::FUNC_3,changeMode, false);
 
+        // Bind global camera to the inner camera object
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
 
