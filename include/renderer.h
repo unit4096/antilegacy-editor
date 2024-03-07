@@ -1558,7 +1558,8 @@ private:
             return ImVec4( r/RANGE,g/RANGE,b/RANGE,a/RANGE);
         };
 
-        // Background of normal windows
+
+        // Change colors of elements to make ImGui bearable
         style.Colors[ImGuiCol_::ImGuiCol_FrameBg] = _clr(4,4,4,255);
         style.Colors[ImGuiCol_::ImGuiCol_WindowBg] = _clr(12,12,12,255);
         style.Colors[ImGuiCol_::ImGuiCol_Button] = _clr(48,48,48,255);
@@ -1569,7 +1570,7 @@ private:
 
         style.WindowMinSize        = ImVec2( 100, 20 );
         style.ItemSpacing          = ImVec2( 6, 2 );
-        style.Alpha                = 1.0f;
+        style.Alpha                = 0.95f;
         style.WindowRounding       = 2.0f;
         style.FrameRounding        = 2.0f;
         style.IndentSpacing        = 6.0f;
