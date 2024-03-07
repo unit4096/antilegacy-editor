@@ -1553,8 +1553,9 @@ private:
 
         // Change colors of elements to make ImGui bearable
         style.Colors[ImGuiCol_::ImGuiCol_FrameBg] = _clr(4,4,4,255);
-        style.Colors[ImGuiCol_::ImGuiCol_WindowBg] = _clr(12,12,12,255);
-        style.Colors[ImGuiCol_::ImGuiCol_Button] = _clr(48,48,48,255);
+        style.Colors[ImGuiCol_::ImGuiCol_WindowBg] = _clr(14,22,22,255);
+        style.Colors[ImGuiCol_::ImGuiCol_Tab] = _clr(14,22,22,255);
+        style.Colors[ImGuiCol_::ImGuiCol_Button] = _clr(38,48,48,255);
         style.Colors[ImGuiCol_::ImGuiCol_ButtonActive] = _clr(30,78,78,255);
         style.Colors[ImGuiCol_::ImGuiCol_SliderGrab] = _clr(20,68,68,255);
         style.Colors[ImGuiCol_::ImGuiCol_ButtonHovered] =_clr(108,108,108,255);
@@ -1636,6 +1637,8 @@ private:
 
     }
 
+    // I have plans to inject this functor from outside the renderer
+    // I think it would be convinient for ui drawing
     std::function<void()> injectedFunctionUI = [&]() {
 
         auto _io = ImGui::GetIO();
@@ -1645,7 +1648,6 @@ private:
         ImGui::Text("Camera properties");
         // Camera
         ale::UIManager::CameraControlWidgetUI(mainCamera);
-
 
         /// FPS DRAW START
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
