@@ -17,24 +17,6 @@ glm::mat4 UIManager::getFlippedProjection(const glm::mat4& proj) {
         return proj * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
 }
 
-glm::vec2 UIManager::worldToScreen(const glm::mat4& modelViewProjection,
-                                   const glm::vec3& pos) {
-
-    ImGuiIO& io = ImGui::GetIO();
-    // Transform world position to clip space
-    glm::vec4 clipCoords = modelViewProjection * glm::vec4(pos,1.0f);
-
-    // Convert clip space coordinates to NDC (-1 to 1)
-    clipCoords /= clipCoords.w;
-
-    // Convert NDC coordinates to screen space pixel coordinates
-    float screenX = (clipCoords.x + 1.0f) * 0.5f * io.DisplaySize.x;
-    float screenY = (1.0f - clipCoords.y) * 0.5f * io.DisplaySize.y;
-
-    return glm::vec2(screenX, screenY);
-}
-
-
 // A simple function that indicates if a point is "in front" enough
 // of the camera. Used mostly to avoid inversing geometry behind the
 // camera. More sophisticated methods will be used in the user-space
@@ -68,9 +50,12 @@ void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
         return;
     }
 
+    auto& io = ImGui::GetIO();
+    auto size = glm::vec2(io.DisplaySize.x,io.DisplaySize.y);
+
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
-    glm::vec2 screenPos1 = worldToScreen(pvm, pos1);
-    glm::vec2 screenPos2 = worldToScreen(pvm, pos2);
+    glm::vec2 screenPos1 = ale::geo::worldToScreen(pvm, size,  pos1);
+    glm::vec2 screenPos2 = ale::geo::worldToScreen(pvm, size,  pos2);
     ImVec2 p1(screenPos1.x, screenPos1.y);
     ImVec2 p2(screenPos2.x, screenPos2.y);
     listBg->AddLine(p1, p2, IM_COL32(255, 255, 255, 255), 5);
@@ -90,11 +75,13 @@ void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
         isBehind(mvp.v,pos3, VIEW_LIMIT)) {
         return;
     }
+    auto& io = ImGui::GetIO();
+    auto size = glm::vec2(io.DisplaySize.x,io.DisplaySize.y);
 
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
-    glm::vec2 screenPos1 = worldToScreen(pvm, pos1);
-    glm::vec2 screenPos2 = worldToScreen(pvm, pos2);
-    glm::vec2 screenPos3 = worldToScreen(pvm, pos3);
+    glm::vec2 screenPos1 = ale::geo::worldToScreen(pvm, size, pos1);
+    glm::vec2 screenPos2 = ale::geo::worldToScreen(pvm, size, pos2);
+    glm::vec2 screenPos3 = ale::geo::worldToScreen(pvm, size, pos3);
     ImVec2 p1(screenPos1.x, screenPos1.y);
     ImVec2 p2(screenPos2.x, screenPos2.y);
     ImVec2 p3(screenPos3.x, screenPos3.y);
@@ -109,10 +96,12 @@ void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
     if (isBehind(mvp.v,pos, VIEW_LIMIT)) {
         return;
     }
+    auto& io = ImGui::GetIO();
+    auto size = glm::vec2(io.DisplaySize.x,io.DisplaySize.y);
 
     ImDrawList* listBg = ImGui::GetBackgroundDrawList();
 
-    glm::vec2 screenPos = worldToScreen(pvm, pos);
+    glm::vec2 screenPos = ale::geo::worldToScreen(pvm,size, pos);
     ImVec2 center(screenPos.x, screenPos.y);
     auto color = IM_COL32(100, 155,255, 255);
     listBg->AddCircleFilled(center, 5, color);

@@ -167,6 +167,25 @@ static bool rayIntersectsTriangle(const glm::vec3& rayOrigin,
     return glm::intersectRayTriangle(rayOrigin, rayDir, a, b, c, out_intersection_point,distance);
 }
 
+
+
+[[maybe_unused]]
+static glm::vec2 worldToScreen(const glm::mat4& mvp, glm::vec2 displaySize,
+                                   const glm::vec3& pos) {
+
+    // Transform world position to clip space
+    glm::vec4 clipCoords = mvp * glm::vec4(pos,1.0f);
+
+    // Convert clip space coordinates to NDC (-1 to 1)
+    clipCoords /= clipCoords.w;
+
+    // Convert NDC coordinates to screen space pixel coordinates
+    float screenX = (clipCoords.x + 1.0f) * 0.5f * displaySize.x;
+    float screenY = (1.0f - clipCoords.y) * 0.5f * displaySize.y;
+
+    return glm::vec2(screenX, screenY);
+}
+
 } // namespace geo
 } // namespace ale
 
