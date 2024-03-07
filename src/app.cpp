@@ -157,7 +157,7 @@ int App::run() {
                         loopVec.push_back(l->v->pos);
                     }
 
-                    renderer.pushToUIDrawQueue({loopVec,Renderer::VERT});
+                    renderer.pushToUIDrawQueue({loopVec,ale::VERT});
                     break;
                 }
             }
