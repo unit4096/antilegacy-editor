@@ -17,6 +17,8 @@
 #include <primitives.h>
 #include <tracer.h>
 #include <ale_geo_utils.h>
+#include <camera.h>
+#include <memory.h>
 
 
 namespace ale {
@@ -44,6 +46,7 @@ public:
     static void drawHierarchyUI(const ale::Model& model);
     static void drawNodeRoots(const ale::Model& model, const MVP& pvm);
     static void drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm);
+    static void CameraControlWidgetUI(sp<ale::Camera> cam);
 };
 
 

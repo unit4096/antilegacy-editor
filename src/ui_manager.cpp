@@ -240,3 +240,32 @@ void UIManager::drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRA
         }
     }
 }
+
+
+
+// Basic template for a camera control widget. Takes a shared_ptr to
+// ale::Camera
+void UIManager::CameraControlWidgetUI(sp<ale::Camera> cam) {
+
+    CameraData camData = cam->getData();
+    // CAMERA CONTROL START
+    ale::UIManager::vec3Handler(camData.transform.pos,-100.0f, 100.0f);
+
+    ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
+    ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
+    ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
+    ImGui::SliderFloat("SPEED", &camData.speed, 0.0001f, 10.0f);
+
+    if (ImGui::Button("Toggle Camera mode"))
+        cam->toggleMode();
+
+    std::string mode_name = cam->mode==CameraMode::ARCBALL
+                            ?"ARCBALL"
+                            :"FREE";
+    ImGui::SameLine();
+    ImGui::Text("%s",mode_name.data());
+    cam->setData(camData);
+    /// CAMERA CONTROL END
+}
+
+

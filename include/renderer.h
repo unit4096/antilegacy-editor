@@ -1636,6 +1636,47 @@ private:
 
     }
 
+    std::function<void()> injectedFunctionUI = [&]() {
+
+        auto _io = ImGui::GetIO();
+
+        // CAMERA & HIERARCHY
+        ImGui::Begin("View configs");
+        ImGui::Text("Camera properties");
+        // Camera
+        ale::UIManager::CameraControlWidgetUI(mainCamera);
+
+
+        /// FPS DRAW START
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                             1000.0f / _io.Framerate, _io.Framerate);
+        ImGui::Text("FPS CAP ENABLED");
+        /// FPS DRAW END
+
+        ImGui::Spacing();
+
+        ImGui::Text("NODE HIERARCHY");
+        ale::UIManager::drawHierarchyUI(model);
+
+        ImGui::End();
+        // CAMERA & HIERARCHY END
+
+
+        // LIGHT POS START
+        ImGui::Begin("Light Configs");
+        ImGui::Text("Light Position");
+
+        const float upLimit = 100.0f;
+        const float dnLimit = -100.0f;
+
+        ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
+        ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
+        ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
+
+        ImGui::End();
+        // LIGHT POS END
+
+    };
 
 
     // Initializes ImGui stuff and records ui events here
@@ -1688,66 +1729,7 @@ private:
 
         ale::UIManager::drawMenuBar();
 
-        {
-            CameraData camData = mainCamera->getData();
-            // CAMERA CONTROL START
-            ImGui::Begin("View configs");
-            ImGui::Text("Camera properties");
-
-            //////
-            ImGui::SliderFloat("X", &camData.transform.pos.x, -10.0f, 10.0f);
-            ImGui::SliderFloat("Y", &camData.transform.pos.y, -10.0f, 10.0f);
-            ImGui::SliderFloat("Z", &camData.transform.pos.z, -10.0f, 10.0f);
-            //////
-
-            ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
-
-                        ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
-            ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
-            ImGui::SliderFloat("Speed", &camData.speed, 0.0001f, 10.0f);
-
-            if (ImGui::Button("Toggle Camera mode"))
-                mainCamera->toggleMode();
-
-            std::string mode_name = mainCamera->mode==CameraMode::ARCBALL
-                                    ?"ARCBALL"
-                                    :"FREE";
-            ImGui::SameLine();
-            ImGui::Text("%s",mode_name.data());
-            mainCamera->setData(camData);
-            /// CAMERA CONTROL END
-
-
-            /// FPS DRAW START
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                                 1000.0f / _io.Framerate, _io.Framerate);
-            ImGui::Text("FPS CAP ENABLED");
-            /// FPS DRAW END
-
-            ImGui::Spacing();
-
-            ImGui::Text("NODE HIERARCHY");
-            ale::UIManager::drawHierarchyUI(model);
-
-            ImGui::End();
-            // CAMERA & HIERARCHY END
-
-            // LIGHT POS START
-            ImGui::Begin("Light Configs");
-            ImGui::Text("Light Position");
-
-            const float upLimit = 100.0f;
-            const float dnLimit = -100.0f;
-
-            ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
-            ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
-            ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
-
-            ImGui::End();
-            // LIGHT POS END
-
-        }
-
+        injectedFunctionUI();
 
         /// FINAL IMPORTANT STUFF
         ImGui::Render();
