@@ -113,7 +113,7 @@ struct PushConstantData {
 
 class Renderer {
 public:
-    Renderer(ale::Model _model):model(_model){
+    Renderer(ale::Model& _model):model(_model){
         // FIXME: For now, treats the first texture as the default tex for all
         // meshes.
         image = model.textures[0];
@@ -407,7 +407,7 @@ private:
     std::stack<std::function<bool()>> destructorStack = {};
     // TODO: add multiple model handling and scene hierarchy
 
-    ale::Model model;
+    ale::Model& model;
 
     Image image;
 
