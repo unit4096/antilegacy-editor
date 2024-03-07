@@ -1552,10 +1552,25 @@ private:
         //TODO: move this code to a config file
         ImGuiStyle &style = ImGui::GetStyle();
 
-        style.WindowMinSize        = ImVec2( 160, 20 );
+        // Convert four ints to ImVec4 color
+        auto _clr = [](int r, int g, int b, int a) {
+            float RANGE = 255;
+            return ImVec4( r/RANGE,g/RANGE,b/RANGE,a/RANGE);
+        };
+
+        // Background of normal windows
+        style.Colors[ImGuiCol_::ImGuiCol_FrameBg] = _clr(4,4,4,255);
+        style.Colors[ImGuiCol_::ImGuiCol_WindowBg] = _clr(12,12,12,255);
+        style.Colors[ImGuiCol_::ImGuiCol_Button] = _clr(48,48,48,255);
+        style.Colors[ImGuiCol_::ImGuiCol_ButtonActive] = _clr(30,78,78,255);
+        style.Colors[ImGuiCol_::ImGuiCol_SliderGrab] = _clr(20,68,68,255);
+        style.Colors[ImGuiCol_::ImGuiCol_ButtonHovered] =_clr(108,108,108,255);
+
+
+        style.WindowMinSize        = ImVec2( 100, 20 );
         style.ItemSpacing          = ImVec2( 6, 2 );
-        style.Alpha                = 0.95f;
-        style.WindowRounding       = 4.0f;
+        style.Alpha                = 1.0f;
+        style.WindowRounding       = 2.0f;
         style.FrameRounding        = 2.0f;
         style.IndentSpacing        = 6.0f;
         style.ItemInnerSpacing     = ImVec2( 1, 1 );
@@ -1566,7 +1581,7 @@ private:
         style.ScrollbarRounding    = 16.0f;
         style.ScaleAllSizes(4);
 
-        float size_pixels = 20;
+        float size_pixels = 22;
         ImFontConfig config;
         io->Fonts->Clear();
         io->Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
