@@ -1637,6 +1637,7 @@ private:
     }
 
 
+
     // Initializes ImGui stuff and records ui events here
     void drawImGui() {
 
@@ -1689,7 +1690,7 @@ private:
 
         {
             CameraData camData = mainCamera->getData();
-            // CAMERA & HIERARCHY START
+            // CAMERA CONTROL START
             ImGui::Begin("View configs");
             ImGui::Text("Camera properties");
 
@@ -1713,12 +1714,17 @@ private:
                                     :"FREE";
             ImGui::SameLine();
             ImGui::Text("%s",mode_name.data());
+            mainCamera->setData(camData);
+            /// CAMERA CONTROL END
 
+
+            /// FPS DRAW START
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                                  1000.0f / _io.Framerate, _io.Framerate);
             ImGui::Text("FPS CAP ENABLED");
-            ImGui::Spacing();
+            /// FPS DRAW END
 
+            ImGui::Spacing();
 
             ImGui::Text("NODE HIERARCHY");
             ale::UIManager::drawHierarchyUI(model);
@@ -1740,7 +1746,6 @@ private:
             ImGui::End();
             // LIGHT POS END
 
-            mainCamera->setData(camData);
         }
 
 
