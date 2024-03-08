@@ -47,15 +47,17 @@ initialization and switches to 1.3 structures whenever they are availible
 // int
 #include <vkbootstrap/VkBootstrap.h>
 
-// TODO: use custom memory handlers
 #include <primitives.h>
 #include <camera.h>
 #include <tracer.h>
 #include <vulkan_utils.h>
 #include <os_loader.h>
+#include <memory.h>
 
 #include <ale_imgui_interface.h>
 #include <ui_manager.h>
+
+
 namespace trc = ale::Tracer;
 
 namespace ale {
@@ -120,7 +122,7 @@ public:
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        this->io = std::make_shared<ImGuiIO>(ImGui::GetIO());
+        this->io = ale::to_sp<ImGuiIO>(ImGui::GetIO());
     };
 
 
@@ -148,7 +150,7 @@ public:
     }
 
 
-    void bindCamera(std::shared_ptr<Camera> cam) {
+    void bindCamera(ale::sp<Camera> cam) {
         this->mainCamera = cam;
     }
 
@@ -366,7 +368,7 @@ public:
 private:
     GLFWwindow* window;
 
-    std::shared_ptr<Camera> mainCamera = std::make_shared<Camera>();
+    ale::sp<Camera> mainCamera = ale::to_sp<Camera>();
 
     UniformBufferObject ubo{};
 
@@ -478,6 +480,7 @@ private:
     VkDeviceMemory indexBufferMemory;
     void* indexBufferHandle;
 
+    // An array of offsets for vertices of each mesh
     std::vector<MeshBufferData> meshBuffers;
 
     // Number of images in the swap chain
@@ -487,7 +490,7 @@ private:
     // Some UI variables
 
     // Shared pointer to ImGui IO
-    std::shared_ptr<ImGuiIO> io;
+    ale::sp<ImGuiIO> io;
 
 
     // An array of vertices to draw for ImGui
@@ -1190,6 +1193,8 @@ private:
         // Create a huge array with all the vertices
         std::vector<ale::Vertex> allVertices = {};
         allVertices.reserve(numAllVerts);
+
+        // TODO: Use this data to map vertices for editing
 
         // Populate our giant vertex array
         for (auto m : model.meshes) {
