@@ -108,11 +108,14 @@ void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
 }
 
 
+[[maybe_unused]]
 static void drawImGuiGrid(){
     ale::Tracer::log("Not implemented!", ale::Tracer::ERROR);
 }
 
 
+// Draws ImGuizmo gizmo that takes mvp, editor state, and a transform
+// FIXME: How do i use this to manipulate sets of primitives?
 void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model, GEditorState& state){
     UIManager::flipProjection(proj);
     float* _view = geo::glmMatToPtr(view);
@@ -135,8 +138,10 @@ void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& mode
         case COMBINED_MODE:
             operation = ImGuizmo::OPERATION::UNIVERSAL;
             break;
+        case TRANSFORM_MODE_MAX:
+            trc::log("This enum is just the enum's size! Do not use it as a valid value!",trc::ERROR);
+            break;
     }
-
 
     ImGuizmo::Manipulate(_view, _proj, operation, space, _model);
 }
