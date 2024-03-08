@@ -75,6 +75,7 @@ void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
         isBehind(mvp.v,pos3, VIEW_LIMIT)) {
         return;
     }
+
     auto& io = ImGui::GetIO();
     auto size = glm::vec2(io.DisplaySize.x,io.DisplaySize.y);
 
@@ -139,7 +140,7 @@ void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& mode
             operation = ImGuizmo::OPERATION::UNIVERSAL;
             break;
         case TRANSFORM_MODE_MAX:
-            trc::log("This enum is just the enum's size! Do not use it as a valid value!",trc::ERROR);
+            trc::log("This enum value is just the enum's size! Do not use it as a valid value!",trc::ERROR);
             break;
     }
 
