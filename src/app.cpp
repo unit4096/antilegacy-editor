@@ -172,31 +172,44 @@ int App::run() {
 
         // Removes all primitives from the buffer
         auto changeMode = [&](){
-            if (globalEditorState.editorMode == OBJECT_MODE) {
-                globalEditorState.editorMode = MESH_MODE;
-                trc::log("Editor is now in MESH mode");
-            } else {
-                globalEditorState.editorMode = OBJECT_MODE;
-                trc::log("Editor is now in OBJ mode");
-            }
+            globalEditorState.setNextModeTransform();
         };
+
+        using inp = ale::InputAction;
         // Bind lambda functions to keyboard actions
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_F, moveF, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_B, moveB, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_L, moveL, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_R, moveR, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_U, moveY, true);
-        input.bindFunction(ale::InputAction::CAMERA_MOVE_D,moveNY, true);
-        input.bindFunction(ale::InputAction::FUNC_1,raycast, false);
-        input.bindFunction(ale::InputAction::FUNC_2,flushBuffer, false);
-        input.bindFunction(ale::InputAction::FUNC_3,changeMode, false);
+        input.bindFunction(inp::CAMERA_MOVE_F, moveF, true);
+        input.bindFunction(inp::CAMERA_MOVE_B, moveB, true);
+        input.bindFunction(inp::CAMERA_MOVE_L, moveL, true);
+        input.bindFunction(inp::CAMERA_MOVE_R, moveR, true);
+        input.bindFunction(inp::CAMERA_MOVE_U, moveY, true);
+        input.bindFunction(inp::CAMERA_MOVE_D,moveNY, true);
+        input.bindFunction(inp::FUNC_1,raycast, false);
+        input.bindFunction(inp::FUNC_2,flushBuffer, false);
+        input.bindFunction(inp::FUNC_3,changeMode, false);
 
         // Bind global camera to the inner camera object
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
 
+        // Arbitrary ui events to execute
         std::function<void()> uiEvents = [&](){
 
+            auto ubo = renderer.getUbo();
+            using ui = ale::UIManager;
+
+            /// GIZMOS START
+            // The id of the first node containing a mesh
+            // TODO: Implement proper node selection
+            int id = 0;
+            for (auto n : model.nodes) {
+                if (n.mesh > -1) {
+                    id = n.id;
+                    break;
+                }
+            }
+            // Manipulate a node with an ImGui Gizmo
+            ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, globalEditorState);
+            /// GIZMOS FINISH
 
         };
 

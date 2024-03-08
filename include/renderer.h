@@ -192,9 +192,10 @@ public:
 
         ubo.proj[1][1] *= -1;
 
-        ubo.light = _lightPosition;
+        ubo.light = _posLight;
     }
 
+    // TODO: Use std::optional or do not pass this as an argument
     void drawFrame(std::function<void()>& uiEvents) {
         vkWaitForFences(vkb_device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -409,9 +410,10 @@ private:
 
     ale::Model& model;
 
+    // TODO: Render materials instead of raw textures
     Image image;
 
-    glm::vec4 _lightPosition = glm::vec4(30.0, 40.0, 100.0, 1.0);
+    glm::vec4 _posLight = glm::vec4(30.0, 40.0, 100.0, 1.0);
 
     // binding descriptions for ale::Vertex
     VkVertexInputBindingDescription ale_VertexBindingDescription = vk::getVertBindingDescription(0, sizeof(ale::Vertex));
@@ -1639,6 +1641,7 @@ private:
 
     // I have plans to inject this functor from outside the renderer
     // I think it would be convinient for ui drawing
+    //
     std::function<void()> injectedFunctionUI = [&]() {
 
         using ui = ale::UIManager;
@@ -1662,19 +1665,6 @@ private:
             ale::UI_DRAW_TYPE type = pair.second;
             ui::drawVectorOfPrimitives(vec, type, pvm);
         }
-
-        /// GIZMOS START
-        // The id of the first node containing a mesh
-        int id = 0;
-        for (auto n : model.nodes) {
-            if (n.mesh > -1) {
-                id = n.id;
-                break;
-            }
-        }
-        // Manipulate a node with an ImGui Gizmo
-        ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform);
-        /// GIZMOS FINISH
 
         ui::drawMenuBar();
 
@@ -1706,9 +1696,9 @@ private:
         const float upLimit = 100.0f;
         const float dnLimit = -100.0f;
 
-        ImGui::SliderFloat("X", &_lightPosition.x, dnLimit, upLimit);
-        ImGui::SliderFloat("Y", &_lightPosition.y, dnLimit, upLimit);
-        ImGui::SliderFloat("Z", &_lightPosition.z, dnLimit, upLimit);
+        ImGui::SliderFloat("X", &_posLight.x, dnLimit, upLimit);
+        ImGui::SliderFloat("Y", &_posLight.y, dnLimit, upLimit);
+        ImGui::SliderFloat("Z", &_posLight.z, dnLimit, upLimit);
 
         ImGui::End();
         // LIGHT POS END
