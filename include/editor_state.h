@@ -5,12 +5,17 @@
     This header provides some enums to handle editor's state
 */
 #pragma once
+// ext
+#include <type_traits>
 
 // int
 #include <primitives.h>
 
-
 namespace ale {
+
+
+template<typename T>
+concept Enum = std::is_enum_v<T>;
 
 enum GEditorMode {
     OBJECT_MODE,
@@ -35,7 +40,6 @@ enum GSpaceMode {
     SPACE_MODE_MAX,
 };
 
-
 struct GEditorState {
     GEditorMode editorMode;
     GTransformMode transformMode;
@@ -45,7 +49,27 @@ struct GEditorState {
         editorMode = OBJECT_MODE;
         transformMode = TRANSLATE_MODE;
         spaceMode = GLOBAL_MODE;
-    };
+    }
+
+    void setNextModeEditor() {
+        _enumCycle(editorMode, EDITOR_MODE_MAX);
+    }
+
+    void setNextModeTransform() {
+        _enumCycle(transformMode, TRANSFORM_MODE_MAX);
+    }
+
+    void setNextModeSpace() {
+        _enumCycle(spaceMode, SPACE_MODE_MAX);
+    }
+
+private:
+    // Recieves a reference to enum and its max value.
+    // Loops over the enum
+    template<Enum T>
+    void _enumCycle(T& current, T max) {
+        current = static_cast<T>((current + 1) % max);
+    }
 };
 
 } //namespace ale
