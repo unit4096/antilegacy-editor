@@ -113,16 +113,32 @@ static void drawImGuiGrid(){
 }
 
 
-void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model){
+void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model, GEditorState& state){
     UIManager::flipProjection(proj);
     float* _view = geo::glmMatToPtr(view);
     float* _proj = geo::glmMatToPtr(proj);
     float* _model = geo::glmMatToPtr(model);
 
-    auto enum_translate = ImGuizmo::OPERATION::TRANSLATE;
-    auto enum_worldspace = ImGuizmo::MODE::WORLD;
+    auto operation = ImGuizmo::OPERATION::TRANSLATE;
+    auto space = ImGuizmo::MODE::WORLD;
 
-    ImGuizmo::Manipulate(_view, _proj, enum_translate, enum_worldspace, _model);
+    switch (state.transformMode) {
+        case TRANSLATE_MODE:
+            operation = ImGuizmo::OPERATION::TRANSLATE;
+            break;
+        case ROTATE_MODE:
+            operation = ImGuizmo::OPERATION::ROTATE;
+            break;
+        case SCALE_MODE:
+            operation = ImGuizmo::OPERATION::SCALE;
+            break;
+        case COMBINED_MODE:
+            operation = ImGuizmo::OPERATION::UNIVERSAL;
+            break;
+    }
+
+
+    ImGuizmo::Manipulate(_view, _proj, operation, space, _model);
 }
 
 
@@ -148,12 +164,23 @@ void UIManager::drawMenuBar() {
         ImGui::EndMainMenuBar();
     }
 }
-
+// Handles a glm vec3 as X Y Z sliders
 void UIManager::vec3Handler(glm::vec3& vec, float dnLim, float upLim) {
             ImGui::SliderFloat("X", &vec.x,dnLim,upLim);
             ImGui::SliderFloat("Y", &vec.y,dnLim,upLim);
             ImGui::SliderFloat("Z", &vec.z,dnLim,upLim);
 }
+
+// Handles an arbitary std::vector of floats
+// TODO: Maybe find a nice way to have names and arbitrary size vectors
+void UIManager::vec3Handler(std::vector<float>& vec, float dnLim, float upLim) {
+    // I know I know, but...
+    assert(vec.size() == 3);
+    ImGui::SliderFloat("X", &vec[0], dnLim, upLim);
+    ImGui::SliderFloat("Y", &vec[1], dnLim, upLim);
+    ImGui::SliderFloat("Z", &vec[2], dnLim, upLim);
+}
+
 
 void parseNode(const ale::Model& model, int id) {
 

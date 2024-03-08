@@ -19,6 +19,7 @@
 #include <ale_geo_utils.h>
 #include <camera.h>
 #include <memory.h>
+#include <editor_state.h>
 
 
 namespace ale {
@@ -43,10 +44,12 @@ public:
     static glm::mat4 getFlippedProjection(const glm::mat4& proj);
     static void drawMenuBar();
     static void vec3Handler(glm::vec3& vec, float dnLim, float upLim);
+    static void vec3Handler(std::vector<float>& vec, float dnLim, float upLim);
     static void drawHierarchyUI(const ale::Model& model);
     static void drawNodeRoots(const ale::Model& model, const MVP& pvm);
     static void drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm);
     static void CameraControlWidgetUI(sp<ale::Camera> cam);
+    static void drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model, GEditorState& state);
 };
 
 
