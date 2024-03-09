@@ -85,8 +85,15 @@ static void log(const std::string_view msg, LogLevel lvl,
             break;
     }
 
-    std::cout << msg << "\n"
-              << GRAY << _getLocation(loc) << RESET << "\n";
+    // Fixes logging in multithreaded environments
+    std::string result(msg);
+    result.append("\n");
+    result.append(GRAY);
+    result.append(_getLocation(loc));
+    result.append(RESET);
+    result.append("\n");
+
+    std::cout << result;
 }
 
 // This struct replaces std::cout functionality. You can add checks and formatting
