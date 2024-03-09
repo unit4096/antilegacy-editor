@@ -456,16 +456,40 @@ int Loader::loadModelGLTF(const std::string model_path,
         trc::log("Textures not found");
     }
 
-    // Load meshes to a vector
-    for (auto mesh: in_model.meshes) {
-        ale::ViewMesh _out_mesh;
-        int result = _loadMeshGLTF(in_model, mesh, _out_mesh);
-        if (result != 0) return -1;
-        out_model.meshes.push_back(_out_mesh);
+    // Multithreading ahead
+
+    // TODO: It may be good to implement thread pooling rather
+    // than just spawning new threads.
+    // For this task though, context switching overhead is not a big problem
+
+    std::vector<std::future<void>> futures;
+    // Temporary array of meshes that exists to maintain their
+    // indexing order
+    std::vector<ale::ViewMesh> out_meshes;
+    out_meshes.resize(in_model.meshes.size());
+
+    auto load = [&](int i) {
+        _loadMeshGLTF(in_model, in_model.meshes[i], out_meshes[i]);
+    };
+
+    // Run each _loadMeshGLTF on a separate thread
+    // to make loading multiple meshes FAST
+    // Use explicit indexing to load them in order
+    for (int i = 0; i < in_model.meshes.size(); i++) {
+        futures.push_back(std::async(std::launch::async, load, i));
+    }
+
+    // Wait for threads
+    for (auto& fut : futures) {
+        fut.wait();
+    }
+
+    // Load meshes
+    for (auto& mesh: out_meshes) {
+        out_model.meshes.push_back(mesh);
     }
 
     _loadNodesGLTF(in_model, out_model);
-
 
     // The following code is here just to test re_mesh loading
     ale::ViewMesh sampleMesh = out_model.meshes[0];

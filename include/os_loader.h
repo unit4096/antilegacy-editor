@@ -11,6 +11,8 @@
 #include <set>
 #include <utility>
 #include <glm/gtc/type_ptr.hpp>
+#include <thread>
+#include <future>
 
 // int
 #include <primitives.h>
@@ -19,7 +21,7 @@
 #include <tinygltf/tiny_gltf.h>
 #include <tol/tiny_obj_loader.h>
 #include <ale_geo_utils.h>
-#include <memory>
+#include <memory.h>
 
 namespace ale {
 
@@ -43,12 +45,12 @@ private:
     // System IO methods
     static bool _canReadFile(std::filesystem::path p);
     // Geometry methods
-    void _generateVertexNormals(ale::ViewMesh &_mesh);
+    static void _generateVertexNormals(ale::ViewMesh &_mesh);
     const int _getNumEdgesInMesh(const ViewMesh &_mesh);
 
     // TinyGlTF methods
-    const unsigned char *_getDataByAccessor(tinygltf::Accessor accessor, const tinygltf::Model &model);        
-    int _loadMeshGLTF(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::ViewMesh &out_mesh);
+    static const unsigned char *_getDataByAccessor(tinygltf::Accessor accessor, const tinygltf::Model &model);        
+    static int _loadMeshGLTF(const tinygltf::Model &in_model, const tinygltf::Mesh &in_mesh, ale::ViewMesh &out_mesh);
     int _loadTinyGLTFModel(tinygltf::Model &gltfModel, const std::string &filename);
     int _loadTexturesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);        
     int _loadNodesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);
