@@ -44,6 +44,7 @@ struct CameraData {
     float speed, sensitivity;
 };
 
+// TODO: Implement proper ARCBALL MOVEMENT
 class Camera {
 private:
     CameraData _data;
