@@ -3,7 +3,7 @@
 
 using namespace ale;
 
-const float VIEW_LIMIT = VIEW_LIMIT;
+const float VIEW_LIMIT = 0.01f;
 
 
 // Flips passed projection
