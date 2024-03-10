@@ -17,11 +17,12 @@ glm::mat4 UIManager::getFlippedProjection(const glm::mat4& proj) {
         return proj * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
 }
 
+
 // A simple function that indicates if a point is "in front" enough
 // of the camera. Used mostly to avoid inversing geometry behind the
 // camera. More sophisticated methods will be used in the user-space
 // functions
-bool isBehind(glm::mat4 viewMatrix, glm::vec3 point, float limit = 0) {
+bool _isBehind(glm::mat4 viewMatrix, glm::vec3 point, float limit = 0) {
 
     // Inverse view matrix for world space camera orientation
     auto inv = glm::inverse(viewMatrix);
@@ -45,8 +46,8 @@ void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
                                    const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (isBehind(mvp.v,pos1, VIEW_LIMIT) ||
-        isBehind(mvp.v,pos2, VIEW_LIMIT)) {
+    if (_isBehind(mvp.v,pos1, VIEW_LIMIT) ||
+        _isBehind(mvp.v,pos2, VIEW_LIMIT)) {
         return;
     }
 
@@ -70,9 +71,9 @@ void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
                                    const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (isBehind(mvp.v,pos1, VIEW_LIMIT) ||
-        isBehind(mvp.v,pos2, VIEW_LIMIT) ||
-        isBehind(mvp.v,pos3, VIEW_LIMIT)) {
+    if (_isBehind(mvp.v,pos1, VIEW_LIMIT) ||
+        _isBehind(mvp.v,pos2, VIEW_LIMIT) ||
+        _isBehind(mvp.v,pos3, VIEW_LIMIT)) {
         return;
     }
 
@@ -94,7 +95,7 @@ void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
                                      const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (isBehind(mvp.v,pos, VIEW_LIMIT)) {
+    if (_isBehind(mvp.v,pos, VIEW_LIMIT)) {
         return;
     }
     auto& io = ImGui::GetIO();
@@ -109,9 +110,33 @@ void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
 }
 
 
-[[maybe_unused]]
-static void drawImGuiGrid(){
-    ale::Tracer::log("Not implemented!", ale::Tracer::ERROR);
+// Draws each node in the scene as a circle. Takes
+// a pair of <points, type> and a flipped mvp matrix
+void UIManager::drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm) {
+    if (mode == UI_DRAW_TYPE::CIRCLE && (vec.size() == 1)) {
+            ale::UIManager::drawWorldSpaceCircle(vec[0], pvm);
+    }
+
+    // Not enough points to draw a line
+    if (vec.size() < 2) {
+        return;
+    }
+
+    // Connect all points in one line
+    if (mode == UI_DRAW_TYPE::LINE) {
+        for (int i = 1; i < vec.size(); i++) {
+            ale::UIManager::drawWorldSpaceLine(vec[i-1], vec[i], pvm);
+        }
+    }
+
+    // Vertices need 3 and only 3 points
+    if (mode == UI_DRAW_TYPE::VERT && (vec.size() % 3 == 0)) {
+        for (int i = 0; i < vec.size(); i+=3) {
+            ale::UIManager::drawWorldSpaceVert(vec[i+0],
+                                               vec[i+1],
+                                               vec[i+2], pvm);
+        }
+    }
 }
 
 
@@ -148,8 +173,26 @@ void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& mode
 }
 
 
-void UIManager::drawMenuBar() {
+// Handles a glm vec3 as X Y Z sliders
+void UIManager::vec3Handler(glm::vec3& vec, float dnLim, float upLim) {
+            ImGui::SliderFloat("X", &vec.x,dnLim,upLim);
+            ImGui::SliderFloat("Y", &vec.y,dnLim,upLim);
+            ImGui::SliderFloat("Z", &vec.z,dnLim,upLim);
+}
 
+
+// Handles an arbitary std::vector of floats
+// TODO: Maybe find a nice way to have names and arbitrary size vectors
+void UIManager::vec3Handler(std::vector<float>& vec, float dnLim, float upLim) {
+    // I know I know, but...
+    assert(vec.size() == 3);
+    ImGui::SliderFloat("X", &vec[0], dnLim, upLim);
+    ImGui::SliderFloat("Y", &vec[1], dnLim, upLim);
+    ImGui::SliderFloat("Z", &vec[2], dnLim, upLim);
+}
+
+
+void UIManager::drawMenuBarUI() {
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
@@ -170,25 +213,9 @@ void UIManager::drawMenuBar() {
         ImGui::EndMainMenuBar();
     }
 }
-// Handles a glm vec3 as X Y Z sliders
-void UIManager::vec3Handler(glm::vec3& vec, float dnLim, float upLim) {
-            ImGui::SliderFloat("X", &vec.x,dnLim,upLim);
-            ImGui::SliderFloat("Y", &vec.y,dnLim,upLim);
-            ImGui::SliderFloat("Z", &vec.z,dnLim,upLim);
-}
-
-// Handles an arbitary std::vector of floats
-// TODO: Maybe find a nice way to have names and arbitrary size vectors
-void UIManager::vec3Handler(std::vector<float>& vec, float dnLim, float upLim) {
-    // I know I know, but...
-    assert(vec.size() == 3);
-    ImGui::SliderFloat("X", &vec[0], dnLim, upLim);
-    ImGui::SliderFloat("Y", &vec[1], dnLim, upLim);
-    ImGui::SliderFloat("Z", &vec[2], dnLim, upLim);
-}
 
 
-void parseNode(const ale::Model& model, int id) {
+void _parseNode(const ale::Model& model, int id) {
 
         ImGuiTreeNodeFlags base_flags =
                                     ImGuiTreeNodeFlags_OpenOnArrow |
@@ -204,7 +231,7 @@ void parseNode(const ale::Model& model, int id) {
         if (ImGui::TreeNodeEx((void*)(intptr_t)n.id, node_flags, s.data(),n.id)) {
             if (n.children.size() > 0) {
                 for (auto c  : n.children) {
-                    parseNode(model, c);
+                    _parseNode(model, c);
                 }
             } else {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(201,62,62,255));
@@ -219,50 +246,20 @@ void parseNode(const ale::Model& model, int id) {
 void UIManager::drawHierarchyUI(const ale::Model& model) {
 
     for (auto nID : model.rootNodes) {
-        parseNode(model, nID);
+        _parseNode(model, nID);
     }
 }
 
 
 // Draws each node in the scene as a circle. Takes the model and a
 // flipped mvp matrix
-void UIManager::drawNodeRoots(const ale::Model& model, const MVP& pvm) {
+void UIManager::drawNodeRootsUI(const ale::Model& model, const MVP& pvm) {
     for (auto& n : model.nodes) {
         auto t = n.transform;
         auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
         ale::UIManager::drawWorldSpaceCircle(pos, pvm);
     }
 }
-
-// Draws each node in the scene as a circle. Takes
-// a pair of <points, type> and a flipped mvp matrix
-void UIManager::drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm) {
-    if (mode == UI_DRAW_TYPE::CIRCLE && (vec.size() == 1)) {
-            ale::UIManager::drawWorldSpaceCircle(vec[0], pvm);
-    }
-
-    // Not enough points to draw a line
-    if (vec.size() < 2) {
-        return;
-    }
-
-    // Connect all points in one line
-    if (mode == UI_DRAW_TYPE::LINE) {
-        for (int i = 1; i < vec.size(); i++) {
-            ale::UIManager::drawWorldSpaceLine(vec[i-1], vec[i], pvm);
-        }
-    }
-
-    // Vertices need 3 and only 3 points
-    if (mode == UI_DRAW_TYPE::VERT && (vec.size() % 3 == 0)) {
-        for (int i = 0; i < vec.size(); i+=3) {
-            ale::UIManager::drawWorldSpaceVert(vec[i+0],
-                                               vec[i+1],
-                                               vec[i+2], pvm);
-        }
-    }
-}
-
 
 
 // Basic template for a camera control widget. Takes a shared_ptr to
@@ -289,5 +286,4 @@ void UIManager::CameraControlWidgetUI(sp<ale::Camera> cam) {
     cam->setData(camData);
     /// CAMERA CONTROL END
 }
-
 

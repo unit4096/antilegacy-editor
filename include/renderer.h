@@ -1662,7 +1662,7 @@ private:
         /// IMPORTANT STUFF LOADED
 
         // Draw each node as a circle
-        ale::UIManager::drawNodeRoots(model, pvm);
+        ale::UIManager::drawNodeRootsUI(model, pvm);
 
         // Draw each selected face as a triangle
         for(auto pair: uiDrawQueue) {
@@ -1671,7 +1671,7 @@ private:
             ui::drawVectorOfPrimitives(vec, type, pvm);
         }
 
-        ui::drawMenuBar();
+        ui::drawMenuBarUI();
 
         // CAMERA & HIERARCHY
         ImGui::Begin("View configs");
