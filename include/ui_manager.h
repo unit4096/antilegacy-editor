@@ -38,6 +38,7 @@ public:
     static glm::vec2 worldToScreen(const glm::mat4& modelViewProjection, const glm::vec3& pos);
     static void flipProjection(glm::mat4& proj);
     static glm::mat4 getFlippedProjection(const glm::mat4& proj);
+    static ale::MVP getMVPWithFlippedProjection(const MVP& mvp);
     static void vec3Handler(glm::vec3& vec, float dnLim, float upLim);
     static void vec3Handler(std::vector<float>& vec, float dnLim, float upLim);
     static void drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2, const MVP& mvpMat);

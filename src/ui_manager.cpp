@@ -17,6 +17,15 @@ glm::mat4 UIManager::getFlippedProjection(const glm::mat4& proj) {
         return proj * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
 }
 
+// Returns a flipped version of the projection
+ale::MVP UIManager::getMVPWithFlippedProjection(const MVP& mvp) {
+        return {
+            .m = mvp.m,
+            .v = mvp.v,
+            .p = getFlippedProjection(mvp.p),
+        };
+}
+
 
 // A simple function that indicates if a point is "in front" enough
 // of the camera. Used mostly to avoid inversing geometry behind the
@@ -217,29 +226,29 @@ void UIManager::drawMenuBarUI() {
 
 void _parseNode(const ale::Model& model, int id) {
 
-        ImGuiTreeNodeFlags base_flags =
-                                    ImGuiTreeNodeFlags_OpenOnArrow |
-                                    ImGuiTreeNodeFlags_OpenOnDoubleClick |
-                                    ImGuiTreeNodeFlags_SpanAvailWidth;
-        auto n = model.nodes[id];
-        ImGuiTreeNodeFlags node_flags = base_flags;
+    ImGuiTreeNodeFlags base_flags =
+                                ImGuiTreeNodeFlags_OpenOnArrow |
+                                ImGuiTreeNodeFlags_OpenOnDoubleClick |
+                                ImGuiTreeNodeFlags_SpanAvailWidth;
+    auto n = model.nodes[id];
+    ImGuiTreeNodeFlags node_flags = base_flags;
 
-        std::string s = n.name.data();
-        s.append(" idx: ");
-        s.append(std::to_string(n.id));
+    std::string s = n.name.data();
+    s.append(" idx: ");
+    s.append(std::to_string(n.id));
 
-        if (ImGui::TreeNodeEx((void*)(intptr_t)n.id, node_flags, s.data(),n.id)) {
-            if (n.children.size() > 0) {
-                for (auto c  : n.children) {
-                    _parseNode(model, c);
-                }
-            } else {
-                ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(201,62,62,255));
-                ImGui::Text("Leaf node");
-                ImGui::PopStyleColor();
+    if (ImGui::TreeNodeEx((void*)(intptr_t)n.id, node_flags, s.data(),n.id)) {
+        if (n.children.size() > 0) {
+            for (auto c  : n.children) {
+                _parseNode(model, c);
             }
-            ImGui::TreePop();
+        } else {
+            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(201,62,62,255));
+            ImGui::Text("Leaf node");
+            ImGui::PopStyleColor();
         }
+        ImGui::TreePop();
+    }
 }
 
 
