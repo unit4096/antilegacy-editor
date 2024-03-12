@@ -1653,12 +1653,12 @@ private:
         auto _io = ImGui::GetIO();
 
         // Flipped projection for ImGui
-        MVP pvm {
+        MVP pvm  = ui::getMVPWithFlippedProjection({
             .m = ubo.model,
             .v = ubo.view,
             // Imgui works with -Y as up, ALE works with Y as up
-            .p = ale::UIManager::getFlippedProjection(ubo.proj)
-        };
+            .p = ubo.proj,});
+
         /// IMPORTANT STUFF LOADED
 
         // Draw each node as a circle
