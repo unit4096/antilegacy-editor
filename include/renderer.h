@@ -1735,12 +1735,6 @@ private:
 
         ImGui::End();
         // LIGHT POS END
-        for (auto& m : model.meshes) {
-            auto min = glm::vec3(m.minPos[0],m.minPos[1],m.minPos[2]);
-            auto max = glm::vec3(m.maxPos[0],m.maxPos[1],m.maxPos[2]);
-            ui::drawWorldSpaceLine(min, max, pvm);
-        }
-
     };
 
 
