@@ -1,11 +1,39 @@
 /*
-This is a Vulkan renderer. This code is mostly salvaged from vulkan-tutorial.com
-and adapted to my needs. Since for now [03.12.2023] the editor is still in
-development, renederer code still somewhat resembles the original tutorial code.
 
-NOTE[11.01.2024]: I am currently in the procces of rewriting the entire rendering
-pipeline to the modern (1.3) Vulkan. Now it uses vk-bootstrap for basic Vulkan
-initialization and switches to 1.3 structures whenever they are availible
+    Main renderer for Antilegacy Editor. Uses Vulkan API to render
+    scenes in ale::Model format.
+
+    As of 13.03.2024 it is Work In Progress and currently requires
+    a material system overhaul
+
+Code structure details:
+- The renderer has a structure of a single header file to reduce compilation
+  time during development iterations. In the future this code will be
+  moved to a separate precompiled module (but clangd support is not here yet)
+- Most of the inner headers are included using angled <...> includes.
+  This allows for quick project restructuring during prototyping.
+  Internal and external dependencies are separate by // ext and // int
+  comments
+
+Implementation details:
+- boilerplate code from the renderer was taken from vulkan-tutorial.com.
+  Thus, it inherited some naming conventions from this code.
+  POI: initVulkan() keeps original structure
+- The renderer uses GLTF for window management.
+  POI: initWindow(), glfwInit()
+- This code uses VkBootstrap to reduce boilerplate line count. Additionaly,
+  some imitialization functions are moved to vulkan_utils.h
+  POI: look for `vkb_` and vkb:: namespaces prefixes for VkBootstrap
+  structures
+- This code uses a single buffer for all vertices and a single buffer for
+  all indices for performance reasons. It uses push constants to
+  apply individual object positions
+  POI: createVertexBuffer(), createIndexBuffer(), pushConstantRanges array
+
+Upcoming features:
+- Optimized rendering for multiple-material scenes
+- Runtime model streaming and shader switching for 3D editing
+- Accurate PBR rendering
 */
 
 // ext
@@ -1707,6 +1735,12 @@ private:
 
         ImGui::End();
         // LIGHT POS END
+        for (auto& m : model.meshes) {
+            auto min = glm::vec3(m.minPos[0],m.minPos[1],m.minPos[2]);
+            auto max = glm::vec3(m.maxPos[0],m.maxPos[1],m.maxPos[2]);
+            ui::drawWorldSpaceLine(min, max, pvm);
+        }
+
     };
 
 
