@@ -1,5 +1,7 @@
-// Function for geometry manipulation
-// TODO: add function descriptions
+/*
+    Functions for geometry manipulation.
+*/
+
 
 //ext
 #pragma once
@@ -115,6 +117,8 @@ static void addLoopToEdge(geo::Edge* e, geo::Loop* l) {
 }
 
 // Get bounding loops of geo::Face
+// TODO: Assumes the face has 3 triangles. Handling full Radial Edge
+// structures is WIP
 [[maybe_unused]]
 static bool getBoundingLoops(const Face* face,
                       std::vector<Loop*>& out_loops) {
@@ -168,7 +172,43 @@ static bool rayIntersectsTriangle(const glm::vec3& rayOrigin,
 }
 
 
+// Checks intersection of a ray and an axis aligned bounding box
+// FIXME: Does not apply viewing frustum checks. Need additional work
+[[maybe_unused]]
+static bool rayIntersectsAABB(const glm::vec3& origin,
+                                 const glm::vec3& direction,
+                                 const glm::vec3& minB,
+                                 const glm::vec3& maxB) {
 
+
+    float tmin = (minB.x - origin.x) / direction.x;
+    float tmax = (maxB.x - origin.x) / direction.x;
+
+    if (tmin > tmax) std::swap(tmin, tmax);
+
+    float tymin = (minB.y - origin.y) / direction.y;
+    float tymax = (maxB.y - origin.y) / direction.y;
+
+    if (tymin > tymax) std::swap(tymin, tymax);
+
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+
+    if (tymin > tmin) tmin = tymin;
+    if (tymax < tmax) tmax = tymax;
+
+    float tzmin = (minB.z - origin.z) / direction.z;
+    float tzmax = (maxB.z - origin.z) / direction.z;
+
+    if (tzmin > tzmax) std::swap(tzmin, tzmax);
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+
+    return true;
+}
+
+// Converts global space to screen space coordinates
 [[maybe_unused]]
 static glm::vec2 worldToScreen(const glm::mat4& mvp, glm::vec2 displaySize,
                                    const glm::vec3& pos) {
