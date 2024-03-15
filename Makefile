@@ -4,7 +4,7 @@ IMGUI_INCLUDE_PATH:= ./include/imgui/
 
 # Compiler flags
 CXX = clang++
-CXXFLAGS = -std=c++20 -O2 -Wall -g -fsanitize=address
+CXXFLAGS = -std=c++20 -g -O1 -Wall -fsanitize=address
 
 # Library dependencies
 LDFLAGS:= -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
@@ -31,19 +31,36 @@ IMGUI_OBJS = $(patsubst $(IMGUI_SRC_DIR)/%.cpp, $(IMGUI_OBJ_DIR)/%.o, $(IMGUI_SR
 # Executable file
 MAIN = $(BIN_DIR)/editor
 
-.PHONY: all clean test shaders clean_main
+.PHONY: all clean t shaders clean_main ./src/app.cpp gt abg
 # Targets
 
 clean_main:
 	rm $(MAIN)
 
-test: all
+c:
+	./$(MAIN) -f ./models/cube/Cube.gltf
+
+# uses external .gltf flie!
+abg:
+	echo Loading external model! MAY NOT WORK ON YOUR MACHINE \
+		&& ./build/editor -f ../../glTF-Sample-Models/models/ABeautifulGame.gltf
+
+f:
 	./$(MAIN) -f ./models/fox/Fox.gltf
+
+t: all
+	./$(MAIN) -f ./models/fox/Fox.gltf
+
+gt: testcase
+	./testme
+
+testcase:
+	$(CXX) $(CXXFLAGS) ./src/test.cpp ./$(OBJ_DIR)/camera.o -o testme $(INCLUDE_ALL) $(LDFLAGS)
 
 all: $(MAIN)
 
 # Main target
-$(MAIN):  $(IMGUI_OBJS) $(OBJS) 
+$(MAIN):  $(IMGUI_OBJS) $(OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(INCLUDE_ALL) $(LDFLAGS)
 
