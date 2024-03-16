@@ -1628,15 +1628,14 @@ private:
         ImGui::StyleColorsDark();
         setStyleImGui();
 
-        VkDescriptorPoolSize pool_sizes[] =
-        {
+        VkDescriptorPoolSize pool_sizes[] {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
         };
 
         VkDescriptorPoolCreateInfo pool_info {
             .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
             .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-            .maxSets = 1000,
+            .maxSets = 1,
             .poolSizeCount = std::size(pool_sizes),
             .pPoolSizes = pool_sizes,
         };
@@ -1666,7 +1665,6 @@ private:
 
     // I have plans to inject this functor from outside the renderer
     // I think it would be convinient for ui drawing
-    //
     std::function<void()> injectedFunctionUI = [&]() {
 
         using ui = ale::UIManager;
