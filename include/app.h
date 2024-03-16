@@ -1,15 +1,8 @@
-
 #pragma once
 #ifndef ALE_APP
 #define ALE_APP
 
-#include <stdexcept>
-#include <memory>
-#include <chrono>
-#include <thread>
-#include <cassert>
-#include <cmath>
-
+// ext
 #ifndef GLFW
 #define GLFW
 #define GLFW_INCLUDE_VULKAN
