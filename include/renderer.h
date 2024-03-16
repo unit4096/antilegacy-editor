@@ -1628,48 +1628,40 @@ private:
         ImGui::StyleColorsDark();
         setStyleImGui();
 
-        // FIXME: this pool definition a: is an overkill; b: does not use helpers
         VkDescriptorPoolSize pool_sizes[] =
         {
-            { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
-            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
-            { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
-            { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
-            { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
-            { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+            { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
         };
 
-        VkDescriptorPoolCreateInfo pool_info = {};
-        pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-        pool_info.maxSets = 1000;
-        pool_info.poolSizeCount = std::size(pool_sizes);
-        pool_info.pPoolSizes = pool_sizes;
+        VkDescriptorPoolCreateInfo pool_info {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+            .maxSets = 1000,
+            .poolSizeCount = std::size(pool_sizes),
+            .pPoolSizes = pool_sizes,
+        };
 
         vkCreateDescriptorPool(vkb_device, &pool_info, nullptr, &imguiPool);
 
         ImGui_ImplGlfw_InitForVulkan(window, true);
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = vkb_instance;
-        init_info.PhysicalDevice = vkb_physicalDevice;
-        init_info.Device = vkb_device;
-        init_info.QueueFamily = 0;
-        init_info.Queue = graphicsQueue;
-        init_info.PipelineCache = VK_NULL_HANDLE;
-        init_info.DescriptorPool = imguiPool;
-        init_info.Subpass = 0;
-        init_info.MinImageCount = chainMinImageCount;
-        init_info.ImageCount = chainImageCount;
-        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = VK_NULL_HANDLE;
-        init_info.CheckVkResultFn = VK_NULL_HANDLE;
-        ImGui_ImplVulkan_Init(&init_info, renderPass);
 
+        ImGui_ImplVulkan_InitInfo init_info {
+            .Instance = vkb_instance,
+            .PhysicalDevice = vkb_physicalDevice,
+            .Device = vkb_device,
+            .QueueFamily = 0,
+            .Queue = graphicsQueue,
+            .PipelineCache = VK_NULL_HANDLE,
+            .DescriptorPool = imguiPool,
+            .Subpass = 0,
+            .MinImageCount = static_cast<uint32_t>(chainMinImageCount),
+            .ImageCount = static_cast<uint32_t>(chainMinImageCount),
+            .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+            .Allocator = VK_NULL_HANDLE,
+            .CheckVkResultFn = VK_NULL_HANDLE,
+        };
+
+        ImGui_ImplVulkan_Init(&init_info, renderPass);
     }
 
     // I have plans to inject this functor from outside the renderer
