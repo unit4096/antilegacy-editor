@@ -182,7 +182,9 @@ public:
         this->mainCamera = cam;
     }
 
-
+    sp<ale::Camera> getCurrentCamera() {
+        return mainCamera;
+    }
 
 
     // TODO: Use std::optional or do not pass this as an argument
@@ -204,7 +206,7 @@ public:
         // Draw UI
         drawImGui(uiEvents);
 
-        setCamera();
+        updateCameraData();
 
         updateUniformBuffer(currentFrame);
 
@@ -1707,7 +1709,7 @@ private:
         ImGui::Render();
     }
 
-    void setCamera() {
+    void updateCameraData() {
         // NOTE: for now the "up" axis is Y
         const glm::vec3 GLOBAL_UP = glm::vec3(0,1,0);
         auto yawPitch = mainCamera->getYawPitch();
