@@ -181,28 +181,28 @@ void Camera::setPos(glm::vec3 newPos) {
 // MOVEMENT CONTROLS
 
 // Moves the camera in the direction of the forward orientation vector
-void Camera::moveForwardLocal(const float speed) {
-    _data.transform.pos +=  _data.front * speed;
+void Camera::moveForwardLocal() {
+    _data.transform.pos +=  _data.front * _data.speed;
 }
 
 // Moves the camera in the direction opposite to the forward orientation vector
-void Camera::moveBackwardLocal(const float speed) {
-    moveForwardLocal(-speed);
+void Camera::moveBackwardLocal() {
+    moveForwardLocal();
 }
 
 // Moves the camera left from the forward direction
-void Camera::moveLeftLocal(const float speed) {
-    _data.transform.pos += speed * -glm::normalize(glm::cross(_data.front, _data.up));
+void Camera::moveLeftLocal() {
+    _data.transform.pos += _data.speed * -glm::normalize(glm::cross(_data.front, _data.up));
 }
 
 // Moves the camera right from the forward direction
-void Camera::moveRightLocal(const float speed) {
-    _data.transform.pos += speed * glm::normalize(glm::cross(_data.front, _data.up));
+void Camera::moveRightLocal() {
+    _data.transform.pos += _data.speed * glm::normalize(glm::cross(_data.front, _data.up));
 }
 
 // Moves the camera in the direction of the specified vector
-void Camera::movePosGlobal(const glm::vec3 movementVector, const float speed) {
-    _data.transform.pos = _data.transform.pos + (movementVector * speed);
+void Camera::movePosGlobal(const glm::vec3 movementVector) {
+    _data.transform.pos = _data.transform.pos + (movementVector * _data.speed);
 }
 
 // Set target for ARCBALL mode

@@ -102,11 +102,11 @@ public:
 
     // Movement commands
 
-    void moveForwardLocal(const float speed);
-    void moveBackwardLocal(const float speed);
-    void moveLeftLocal(const float speed);
-    void moveRightLocal(const float speed);
-    void movePosGlobal(const glm::vec3 movementVector, const float speed);
+    void moveForwardLocal();
+    void moveBackwardLocal();
+    void moveLeftLocal();
+    void moveRightLocal();
+    void movePosGlobal(const glm::vec3 movementVector);
 
     void setTarget(glm::vec3 target);
     glm::vec3 getTarget();

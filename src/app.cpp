@@ -93,24 +93,17 @@ int App::run() {
         }
 
         mainCam->setSpeed(1.0f);
-
-        // Further code tests camera movement
-        // TODO: move this code from the main file,
-        // provide better handling for bindings
-
-        float cameraSpeedAdjusted = 1.0f;
-
-        float mouseSensitivity = 0.06f;
+        mainCam->setSensitivity(0.06f);
 
 		// Movement along global Y aixs
-        auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0), cameraSpeedAdjusted);};
-        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0), cameraSpeedAdjusted);};
+        auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0));};
+        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0));};
 
 		// WASD free camera movement
-        auto moveF = [&]() { mainCam->moveForwardLocal(cameraSpeedAdjusted);};
-        auto moveB = [&]() {mainCam->moveBackwardLocal(cameraSpeedAdjusted);};
-        auto moveL = [&]() {    mainCam->moveLeftLocal(cameraSpeedAdjusted);};
-        auto moveR = [&]() {   mainCam->moveRightLocal(cameraSpeedAdjusted);};
+        auto moveF = [&]() { mainCam->moveForwardLocal();};
+        auto moveB = [&]() {mainCam->moveBackwardLocal();};
+        auto moveL = [&]() {    mainCam->moveLeftLocal();};
+        auto moveR = [&]() {   mainCam->moveRightLocal();};
 
 
         ale::geo::REMesh reMesh;
@@ -212,7 +205,10 @@ int App::run() {
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
 
-            cameraSpeedAdjusted = mainCam->getSpeed() * deltaTime.count() * 100 / 8;
+
+            mainCam->setSpeed( mainCam->getSpeed()
+                               * deltaTime.count()
+                               * 100 / 8);
 
             // polling events, callbacks fired
             glfwPollEvents();
@@ -223,9 +219,8 @@ int App::run() {
             input.executeActiveMouseAcitons();
             ale::v2d mouseMovement = input.getLastDeltaMouseOffset();
             ale::v2f camYawPitch = mainCam->getYawPitch();
-            camYawPitch.x-= mouseMovement.x * mouseSensitivity;
-            camYawPitch.y-= mouseMovement.y * mouseSensitivity;
-
+            camYawPitch.x-= mouseMovement.x * mainCam->getSensitivity();
+            camYawPitch.y-= mouseMovement.y * mainCam->getSensitivity();
             mainCam->setOrientation(camYawPitch.x,camYawPitch.y);
 
             // Drawing the results of the input
