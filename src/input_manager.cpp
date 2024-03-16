@@ -18,9 +18,10 @@ void InputManager::init(GLFWwindow* window) {
 	_bindKey(GLFW_KEY_D,InputAction::CAMERA_MOVE_R);
 	_bindKey(GLFW_KEY_Q,InputAction::CAMERA_MOVE_U);
 	_bindKey(GLFW_KEY_Z,InputAction::CAMERA_MOVE_D);
-	_bindKey(GLFW_KEY_E,InputAction::FUNC_1);
-	_bindKey(GLFW_KEY_F,InputAction::FUNC_2);
-	_bindKey(GLFW_KEY_C,InputAction::FUNC_3);
+	_bindKey(GLFW_KEY_E,InputAction::ADD_SELECT);
+	_bindKey(GLFW_KEY_F,InputAction::RMV_SELECT_ALL);
+	_bindKey(GLFW_KEY_C,InputAction::CYCLE_MODE_OPERATION);
+	_bindKey(GLFW_KEY_1,InputAction::CYCLE_MODE_EDITOR);
 
     glfwSetKeyCallback(window, _keyCallback);
 }

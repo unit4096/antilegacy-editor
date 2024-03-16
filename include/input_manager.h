@@ -23,17 +23,43 @@ namespace trc = ale::Tracer;
 
 namespace ale {
 
+
+
+
 // An action executed by the editor
+// NOTE: Some action should be recorded by an undo system, while some
+// should not. I do not know yet whether i should separate such actions
+// into separate enums
 enum InputAction {
+
+    // Free camera movement
     CAMERA_MOVE_F,
     CAMERA_MOVE_B,
     CAMERA_MOVE_L,
     CAMERA_MOVE_R,
     CAMERA_MOVE_U,
     CAMERA_MOVE_D,
-    FUNC_1,
-    FUNC_2,
-    FUNC_3,
+
+    // Add and remove selections
+    ADD_SELECT,
+    RMV_SELECT_ALL,
+
+    // Editor mode cycling
+    CYCLE_MODE_PRIMITIVE,
+    CYCLE_MODE_EDITOR,
+    CYCLE_MODE_SPACE,
+    CYCLE_MODE_OPERATION,
+
+    // Set specific primitive mode
+    SET_MODE_PRIMITIVE_V,
+    SET_MODE_PRIMITIVE_E,
+    SET_MODE_PRIMITIVE_F,
+
+
+    SET_MODE_EDITOR_OBJ,
+    SET_MODE_EDITOR_MESH,
+    SET_MODE_EDITOR_UV,
+    SET_MODE_EDITOR_ANIM,
 };
 
 class InputManager {
@@ -52,12 +78,11 @@ private:
 
     double _lastPosX, _lastPosY;
     double _lastDeltaX = 0.0, _lastDeltaY = 0.0;
-    // 
     bool _isLastPressed = false;
 
     // TODO: This is a raw pointer. Get rid of it later
     GLFWwindow* _window_p;
-    
+
     void _bindKey(int key, InputAction action);
     static void _keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
     void _executeAction(InputAction _action);

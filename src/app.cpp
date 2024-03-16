@@ -129,24 +129,15 @@ int App::run() {
         // adds it to the ui draw buffer
         auto raycast = [&]() {
             bool result = false;
-            glm::vec3 camPos = mainCam->getPos();
-            glm::vec3 fwd = mainCam->getForwardVec();
-
-            trc::raw << r(fwd.x) << ","
-                     << r(fwd.y) <<  ","
-                     << r(fwd.z) << " -forward \n";
-
-            trc::raw << r(camPos.x) <<  ","
-                     << r(camPos.y) << ","
-                     << r(camPos.z) << " -pos\n";
-
             glm::vec2 out_intersection_point = glm::vec2(0);
 
             float distance = -1;
             for (auto f : reMesh.faces) {
-                result = geo::rayIntersectsTriangle( camPos, fwd,
-                                                f, out_intersection_point,
-                                                distance);
+                result = geo::rayIntersectsTriangle(mainCam->getPos(),
+                                                    mainCam->getForwardVec(),
+                                                    f,
+                                                    out_intersection_point,
+                                                    distance);
                 if (result) {
                     std::vector<geo::Loop*> out_loops = {};
                     geo::getBoundingLoops(f, out_loops);
@@ -161,6 +152,7 @@ int App::run() {
                     break;
                 }
             }
+
             ale::Tracer::raw << "Raycast result: " << result << "\n";
             ale::Tracer::raw << "Distance: " << distance << "\n";
         };
@@ -170,26 +162,33 @@ int App::run() {
             renderer.flushUIDrawQueue();
         };
 
-        // Removes all primitives from the buffer
-        auto changeMode = [&](){
+        auto changeModeEditor = [&](){
             globalEditorState.setNextModeTransform();
+            trc::log("Editor mode changed", trc::DEBUG);
         };
 
-        using inp = ale::InputAction;
+        auto changeModeOperation = [&](){
+            globalEditorState.setNextModeTransform();
+            trc::log("Operation mode changed", trc::DEBUG);
+        };
+
         // Bind lambda functions to keyboard actions
+        using inp = ale::InputAction;
         input.bindFunction(inp::CAMERA_MOVE_F, moveF, true);
         input.bindFunction(inp::CAMERA_MOVE_B, moveB, true);
         input.bindFunction(inp::CAMERA_MOVE_L, moveL, true);
         input.bindFunction(inp::CAMERA_MOVE_R, moveR, true);
         input.bindFunction(inp::CAMERA_MOVE_U, moveY, true);
         input.bindFunction(inp::CAMERA_MOVE_D,moveNY, true);
-        input.bindFunction(inp::FUNC_1,raycast, false);
-        input.bindFunction(inp::FUNC_2,flushBuffer, false);
-        input.bindFunction(inp::FUNC_3,changeMode, false);
+        input.bindFunction(inp::ADD_SELECT,raycast, false);
+        input.bindFunction(inp::RMV_SELECT_ALL,flushBuffer, false);
+        input.bindFunction(inp::CYCLE_MODE_EDITOR,changeModeEditor, false);
+        input.bindFunction(inp::CYCLE_MODE_OPERATION,changeModeOperation, false);
 
         // Bind global camera to the inner camera object
         renderer.bindCamera(mainCam);
         renderer.initRenderer();
+
 
         // Arbitrary ui events to execute
         std::function<void()> uiEvents = [&](){
