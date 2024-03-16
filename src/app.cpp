@@ -95,6 +95,7 @@ int App::run() {
         mainCam->setSpeed(1.0f);
         mainCam->setSensitivity(0.06f);
 
+
 		// Movement along global Y aixs
         auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0));};
         auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0));};
@@ -205,10 +206,8 @@ int App::run() {
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
 
+            mainCam->setDelta(deltaTime.count() * 100 / 8);
 
-            mainCam->setSpeed( mainCam->getSpeed()
-                               * deltaTime.count()
-                               * 100 / 8);
 
             // polling events, callbacks fired
             glfwPollEvents();

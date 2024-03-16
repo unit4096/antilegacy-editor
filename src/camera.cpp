@@ -25,6 +25,10 @@ Camera::Camera() {
 
 Camera::~Camera() {}
 
+void Camera::setDelta(float delta) {
+    _delta = delta;
+}
+
 // Toggle viewing mode. Now toggless between FREE and ARCBALL
 void Camera::toggleMode() {
     switch (mode) {
@@ -182,27 +186,27 @@ void Camera::setPos(glm::vec3 newPos) {
 
 // Moves the camera in the direction of the forward orientation vector
 void Camera::moveForwardLocal() {
-    _data.transform.pos +=  _data.front * _data.speed;
+    _data.transform.pos +=  _data.front * _data.speed * (_delta);
 }
 
 // Moves the camera in the direction opposite to the forward orientation vector
 void Camera::moveBackwardLocal() {
-    moveForwardLocal();
+    _data.transform.pos +=  _data.front * -_data.speed * (_delta);
 }
 
 // Moves the camera left from the forward direction
 void Camera::moveLeftLocal() {
-    _data.transform.pos += _data.speed * -glm::normalize(glm::cross(_data.front, _data.up));
+    _data.transform.pos += _data.speed * (_delta) * -glm::normalize(glm::cross(_data.front, _data.up));
 }
 
 // Moves the camera right from the forward direction
 void Camera::moveRightLocal() {
-    _data.transform.pos += _data.speed * glm::normalize(glm::cross(_data.front, _data.up));
+    _data.transform.pos += _data.speed * (_delta) * glm::normalize(glm::cross(_data.front, _data.up));
 }
 
 // Moves the camera in the direction of the specified vector
 void Camera::movePosGlobal(const glm::vec3 movementVector) {
-    _data.transform.pos = _data.transform.pos + (movementVector * _data.speed);
+    _data.transform.pos = _data.transform.pos + (movementVector * _data.speed * (_delta));
 }
 
 // Set target for ARCBALL mode

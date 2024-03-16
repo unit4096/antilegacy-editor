@@ -47,6 +47,7 @@ struct CameraData {
 // TODO: Implement proper ARCBALL MOVEMENT
 class Camera {
 private:
+    float _delta;
     CameraData _data;
     const glm::vec3 GLOBAL_UP = glm::vec3(0,1,0);
     const glm::vec3 GLOBAL_FORWARD = glm::vec3(0,0,-1);
@@ -110,6 +111,8 @@ public:
 
     void setTarget(glm::vec3 target);
     glm::vec3 getTarget();
+
+    void setDelta(float delta);
 
 }; // class Camera
 
