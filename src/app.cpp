@@ -116,27 +116,18 @@ int App::run() {
         ale::geo::REMesh reMesh;
         loader.populateREMesh(model.meshes[0], reMesh);
 
-        // Removes extra digits after comma in floats
-        auto r = [](float x) {
-            // 1000 -> 3 digits
-            const int DIGITS = 1000;
-            return floorf(x * DIGITS) / DIGITS;
-        };
-
-
         // Test function
         // Selects a triangle in the middle of the screen and
         // adds it to the ui draw buffer
         auto raycast = [&]() {
             bool result = false;
-            glm::vec2 out_intersection_point = glm::vec2(0);
+            glm::vec2 intersection = glm::vec2(0);
 
             float distance = -1;
             for (auto f : reMesh.faces) {
                 result = geo::rayIntersectsTriangle(mainCam->getPos(),
                                                     mainCam->getForwardVec(),
-                                                    f,
-                                                    out_intersection_point,
+                                                    f, intersection,
                                                     distance);
                 if (result) {
                     std::vector<geo::Loop*> out_loops = {};
@@ -153,8 +144,9 @@ int App::run() {
                 }
             }
 
-            ale::Tracer::raw << "Raycast result: " << result << "\n";
-            ale::Tracer::raw << "Distance: " << distance << "\n";
+            std::string msg = "Raycast result: " + std::to_string(result);
+            msg.append(" Distance: " + std::to_string(distance));
+            trc::log(msg);
         };
 
         // Removes all primitives from the buffer
@@ -163,7 +155,7 @@ int App::run() {
         };
 
         auto changeModeEditor = [&](){
-            globalEditorState.setNextModeTransform();
+            globalEditorState.setNextModeEditor();
             trc::log("Editor mode changed", trc::DEBUG);
         };
 
