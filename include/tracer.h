@@ -99,7 +99,7 @@ static void log(const std::string_view msg, LogLevel lvl,
 // This struct replaces std::cout functionality. You can add checks and formatting
 struct Raw {};
 
-extern Raw raw;
+static Raw raw;
 
 template <typename T>
 Raw& operator<< (Raw &s, const T &x) {
