@@ -10,6 +10,7 @@
 
 // int
 #include <primitives.h>
+#include <re_mesh.h>
 
 namespace ale {
 
@@ -44,6 +45,10 @@ struct GEditorState {
     GEditorMode editorMode;
     GTransformMode transformMode;
     GSpaceMode spaceMode;
+
+    sp<ale::geo::REMesh> currentREMesh;
+    sp<ale::ViewMesh>    currentViewMesh;
+    sp<ale::Model>       currentViewModel;
 
     GEditorState(){
         editorMode = OBJECT_MODE;
