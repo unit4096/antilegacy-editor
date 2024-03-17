@@ -11,6 +11,13 @@ App::App(AppConfigData config) {
     whether it is window creation or input management.
     As of [14.01.2024] it is intentionally verboose
     for the ease of development
+
+    There are four main classes in the editor loop:
+    1) GEditorState -- state of the editor: selections, actions, modes
+    2) InputManager -- handles GLFW input and dispatches it to actions
+    3) EventManager -- binds actions to event lambdas that modify editor state
+    4) Renderer -- draws the results and provides immediate mode UI
+
 */
 
 int App::run() {
@@ -119,7 +126,7 @@ int App::run() {
             // Delta time for editor calculations
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
-            
+
             renderer->getCurrentCamera()->setDelta(deltaTime.count() * 100 / 8);
 
             // polling events, callbacks fired
