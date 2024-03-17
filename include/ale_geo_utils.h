@@ -172,6 +172,23 @@ static bool rayIntersectsTriangle(const glm::vec3& rayOrigin,
 }
 
 
+
+[[maybe_unused]]
+static glm::vec3 getFrontViewAABB(const ale::ViewMesh& mesh){
+    const int Y = 1;
+    const int Z = 2;
+    assert(mesh.minPos.size() ==
+           mesh.maxPos.size());
+    assert(mesh.maxPos.size() >=3);
+
+    float sizeZ = std::abs(mesh.minPos[Z] - mesh.maxPos[Z]);
+
+    float frontEdgeZ = mesh.minPos[Z] - sizeZ;
+    float middleY = (mesh.minPos[Y] + mesh.maxPos[Y]) / 2;
+
+    return glm::vec3(0, middleY, -frontEdgeZ);
+}
+
 // Checks intersection of a ray and an axis aligned bounding box
 // FIXME: Does not apply viewing frustum checks. Need additional work
 [[maybe_unused]]
