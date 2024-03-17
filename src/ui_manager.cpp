@@ -296,3 +296,35 @@ void UIManager::CameraControlWidgetUI(sp<ale::Camera> cam) {
     /// CAMERA CONTROL END
 }
 
+void UIManager::drawDefaultWindowUI(sp<ale::Camera> cam,
+                                    const ale::Model& model, MVP pvm) {
+    using ui = ale::UIManager;
+    auto _io = ImGui::GetIO();
+
+    // Draw each node as a circle
+    ale::UIManager::drawNodeRootsUI(model, pvm);
+
+
+    ui::drawMenuBarUI();
+
+    // CAMERA & HIERARCHY
+    ImGui::Begin("View configs");
+    ImGui::Text("Camera properties");
+    // Camera
+    ui::CameraControlWidgetUI(cam);
+
+    /// FPS DRAW START
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                         1000.0f / _io.Framerate, _io.Framerate);
+    ImGui::Text("FPS CAP ENABLED");
+    /// FPS DRAW END
+
+    ImGui::Spacing();
+
+    ImGui::Text("NODE HIERARCHY");
+    ui::drawHierarchyUI(model);
+
+    ImGui::End();
+    // CAMERA & HIERARCHY END
+}
+

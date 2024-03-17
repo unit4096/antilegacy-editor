@@ -50,6 +50,7 @@ public:
     static void drawMenuBarUI();
     static void drawHierarchyUI(const ale::Model& model);
     static void CameraControlWidgetUI(sp<ale::Camera> cam);
+    static void drawDefaultWindowUI(sp<ale::Camera> cam, const ale::Model& model, MVP pvm);
 };
 
 
