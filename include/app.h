@@ -3,6 +3,7 @@
 #define ALE_APP
 
 // ext
+#include <algorithm>
 #ifndef GLFW
 #define GLFW
 #define GLFW_INCLUDE_VULKAN
@@ -12,12 +13,6 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_ENABLE_EXPERIMENTAL
-
-
-#include <imgui/imgui.h>
-#include <imgui/imgui_impl_glfw.h>
-#include <imgui/imgui_impl_vulkan.h>
-
 
 // int
 #include <input_manager.h>
