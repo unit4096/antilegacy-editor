@@ -19,7 +19,7 @@ Camera::Camera() {
     };
 
     _data = _newData;
-    mode = CameraMode::ARCBALL;
+    mode = CameraMode::FREE;
     _targetPos = glm::vec3(0.0f, 0.0f, 0.0f);
 }
 
