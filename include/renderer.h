@@ -1624,74 +1624,11 @@ private:
 
         ImGui_ImplVulkan_Init(&init_info, renderPass);
     }
-
-    // I have plans to inject this functor from outside the renderer
-    // I think it would be convinient for ui drawing
-    std::function<void()> injectedFunctionUI = [&]() {
-
-        using ui = ale::UIManager;
-        auto _io = ImGui::GetIO();
-
-        // Flipped projection for ImGui
-        MVP pvm  = ui::getMVPWithFlippedProjection({
-            .m = ubo.model,
-            .v = ubo.view,
-            // Imgui works with -Y as up, ALE works with Y as up
-            .p = ubo.proj,});
-
-        /// IMPORTANT STUFF LOADED
-
-        // Draw each node as a circle
-        ale::UIManager::drawNodeRootsUI(model, pvm);
-
-        // Draw each selected face as a triangle
-        for(auto pair: uiDrawQueue) {
-            std::vector<glm::vec3> vec = pair.first;
-            ale::UI_DRAW_TYPE type = pair.second;
-            ui::drawVectorOfPrimitives(vec, type, pvm);
-        }
-
-        ui::drawMenuBarUI();
-
-        // CAMERA & HIERARCHY
-        ImGui::Begin("View configs");
-        ImGui::Text("Camera properties");
-        // Camera
-        ui::CameraControlWidgetUI(mainCamera);
-
-        /// FPS DRAW START
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                             1000.0f / _io.Framerate, _io.Framerate);
-        ImGui::Text("FPS CAP ENABLED");
-        /// FPS DRAW END
-
-        ImGui::Spacing();
-
-        ImGui::Text("NODE HIERARCHY");
-        ui::drawHierarchyUI(model);
-
-        ImGui::End();
-        // CAMERA & HIERARCHY END
-
-
-        // LIGHT POS START
-        ImGui::Begin("Light Configs");
-        ImGui::Text("Light Position");
-
-        const float upLimit = 100.0f;
-        const float dnLimit = -100.0f;
-
-        ImGui::SliderFloat("X", &_posLight.x, dnLimit, upLimit);
-        ImGui::SliderFloat("Y", &_posLight.y, dnLimit, upLimit);
-        ImGui::SliderFloat("Z", &_posLight.z, dnLimit, upLimit);
-
-        ImGui::End();
-        // LIGHT POS END
-    };
+    
 
 
     // Initializes ImGui stuff and records ui events here
-    void drawImGui(std::function<void()>& uiEvents) {
+    void drawImGui(std::function<void()>& uiEventsCallback) {
         /// INIT IMPORTANT IMGUI STUFF
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -1701,9 +1638,24 @@ private:
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
 
-        // All UI code gets injected here
-        injectedFunctionUI();
-        uiEvents();
+        using ui = ale::UIManager;
+        // Draw each selected face as a triangle
+
+        MVP pvm  = ui::getMVPWithFlippedProjection({
+            .m = ubo.model,
+            .v = ubo.view,
+            // Imgui works with -Y as up, ALE works with Y as up
+            .p = ubo.proj,});
+
+        for(auto pair: uiDrawQueue) {
+            std::vector<glm::vec3> vec = pair.first;
+            ale::UI_DRAW_TYPE type = pair.second;
+            ui::drawVectorOfPrimitives(vec, type, pvm);
+        }
+
+        ui::drawDefaultWindowUI(mainCamera, this->model, pvm);
+
+        uiEventsCallback();
 
         /// FINAL IMPORTANT STUFF
         ImGui::Render();
