@@ -12,6 +12,7 @@ App::App(AppConfigData config) {
     As of [14.01.2024] it is intentionally verboose
     for the ease of development
 */
+
 int App::run() {
 
     try {
@@ -21,15 +22,9 @@ int App::run() {
         auto lastFrame = std::chrono::steady_clock::now();
         std::chrono::duration<double> deltaTime;
 
-
-        // LOGGING
-        std::vector<trc::LogLevel> logLevels = {
-            trc::LogLevel::DEBUG,
-            trc::LogLevel::INFO,
-            trc::LogLevel::WARNING,
-            trc::LogLevel::ERROR,
-        };
-        trc::SetLogLevels(logLevels);
+        // LOGGING (Enables all logging levels by default)
+        // std::vector<trc::LogLevel> logLevels = { trc::LogLevel::DEBUG, trc::LogLevel::INFO, trc::LogLevel::WARNING, trc::LogLevel::ERROR,};
+        // trc::SetLogLevels(logLevels);
 
 
         // MODEL LOADING
@@ -49,137 +44,56 @@ int App::run() {
         }
 
 
+        // EDITOR STATE
+        sp<GEditorState> state = to_sp<GEditorState>();
+        geo::REMesh reMesh;
+
+        sp<geo::REMesh> reMeshHandle = to_sp<geo::REMesh>(reMesh);
+
+        loader.populateREMesh(model.meshes[0],*reMeshHandle);
+        state->currentREMesh = reMeshHandle;
+
+
         // RENDERING
-        // Create Vulkan renderer object
-        ale::Renderer renderer(model);
-        renderer.initWindow();
+        // Create Vulkan renderer
+        ale::Renderer ren(model);
+        sp<ale::Renderer> renderer = to_sp<ale::Renderer>(ren);
+        renderer->initWindow();
 
         // Create a camera object that will be passed to the renderer
-        std::shared_ptr<ale::Camera> mainCam = std::make_shared<ale::Camera>();
-        // Make the default mode to be FREE
-        mainCam->toggleMode();
+        sp<ale::Camera> mainCam =to_sp<ale::Camera>();
+        renderer->bindCamera(mainCam);
 
-
-        // EDITOR STATE
-        GEditorState globalEditorState;
-
-
-        // INPUT MANAGEMENT
-        // Create input manager object
-        ale::InputManager input;
-        input.init(renderer.getWindow());
-
-
-        // TODO: The following stuff is here for testing, move it
-        // as quickly as you find a proper place for it
-
+        mainCam->setSpeed(1.0f);
+        mainCam->setSensitivity(0.06f);
         // Dynamically set camera position by mesh bounding box
         assert(model.meshes.size() > 0);
-
         // Uses AABB of the first mesh
         if (model.meshes[0].minPos.size() >= 3) {
-            assert(model.meshes[0].minPos.size() ==
-                   model.meshes[0].maxPos.size());
-
-            float sizeZ = std::abs(model.meshes[0].minPos[2] - model.meshes[0].maxPos[2]);
-
-            float frontEdge = model.meshes[0].minPos[2] - sizeZ;
-            float middleY = (model.meshes[0].minPos[1] +
-                             model.meshes[0].maxPos[1]) / 2;
-
-            mainCam->setPos(glm::vec3(0, middleY, -frontEdge));
+            mainCam->setPos(ale::geo::getFrontViewAABB(model.meshes[0]));
         } else {
             mainCam->setPos(glm::vec3(0, 50, 150));
         }
 
-        mainCam->setSpeed(1.0f);
-        mainCam->setSensitivity(0.06f);
+
+        // INPUT MANAGEMENT
+        // Create input manager object
+        ale::InputManager inp;
+        sp<InputManager> input = to_sp(inp);
+        // Bind input to window
+        input->init(renderer->getWindow());
 
 
-		// Movement along global Y aixs
-        auto moveY  = [&]() {mainCam->movePosGlobal( glm::vec3(0,1,0));};
-        auto moveNY = [&]() {mainCam->movePosGlobal(glm::vec3(0,-1,0));};
+        // EVENT MANAGEMENT
+        ale::EventManager eventManager(renderer,state,input);
 
-		// WASD free camera movement
-        auto moveF = [&]() { mainCam->moveForwardLocal();};
-        auto moveB = [&]() {mainCam->moveBackwardLocal();};
-        auto moveL = [&]() {    mainCam->moveLeftLocal();};
-        auto moveR = [&]() {   mainCam->moveRightLocal();};
-
-
-        ale::geo::REMesh reMesh;
-        loader.populateREMesh(model.meshes[0], reMesh);
-
-        // Test function
-        // Selects a triangle in the middle of the screen and
-        // adds it to the ui draw buffer
-        auto raycast = [&]() {
-            bool result = false;
-            glm::vec2 intersection = glm::vec2(0);
-
-            float distance = -1;
-            for (auto f : reMesh.faces) {
-                result = geo::rayIntersectsTriangle(mainCam->getPos(),
-                                                    mainCam->getForwardVec(),
-                                                    f, intersection,
-                                                    distance);
-                if (result) {
-                    std::vector<geo::Loop*> out_loops = {};
-                    geo::getBoundingLoops(f, out_loops);
-                    std::vector<glm::vec3> loopVec = {};
-                    loopVec.resize(3);
-
-                    for (auto l : out_loops) {
-                        loopVec.push_back(l->v->pos);
-                    }
-
-                    renderer.pushToUIDrawQueue({loopVec,ale::VERT});
-                    break;
-                }
-            }
-
-            std::string msg = "Raycast result: " + std::to_string(result);
-            msg.append(" Distance: " + std::to_string(distance));
-            trc::log(msg);
-        };
-
-        // Removes all primitives from the buffer
-        auto flushBuffer = [&](){
-            renderer.flushUIDrawQueue();
-        };
-
-        auto changeModeEditor = [&](){
-            globalEditorState.setNextModeEditor();
-            trc::log("Editor mode changed", trc::DEBUG);
-        };
-
-        auto changeModeOperation = [&](){
-            globalEditorState.setNextModeTransform();
-            trc::log("Operation mode changed", trc::DEBUG);
-        };
-
-        // Bind lambda functions to keyboard actions
-        using inp = ale::InputAction;
-        input.bindFunction(inp::CAMERA_MOVE_F, moveF, true);
-        input.bindFunction(inp::CAMERA_MOVE_B, moveB, true);
-        input.bindFunction(inp::CAMERA_MOVE_L, moveL, true);
-        input.bindFunction(inp::CAMERA_MOVE_R, moveR, true);
-        input.bindFunction(inp::CAMERA_MOVE_U, moveY, true);
-        input.bindFunction(inp::CAMERA_MOVE_D,moveNY, true);
-        input.bindFunction(inp::ADD_SELECT,raycast, false);
-        input.bindFunction(inp::RMV_SELECT_ALL,flushBuffer, false);
-        input.bindFunction(inp::CYCLE_MODE_EDITOR,changeModeEditor, false);
-        input.bindFunction(inp::CYCLE_MODE_OPERATION,changeModeOperation, false);
-
-        // Bind global camera to the inner camera object
-        renderer.bindCamera(mainCam);
-        renderer.initRenderer();
-
+        // Start renderer
+        renderer->initRenderer();
 
         // Arbitrary ui events to execute
         std::function<void()> uiEvents = [&](){
 
-            auto ubo = renderer.getUbo();
+            auto ubo = renderer->getUbo();
             using ui = ale::UIManager;
 
             /// GIZMOS START
@@ -193,37 +107,36 @@ int App::run() {
                 }
             }
             // Manipulate a node with an ImGui Gizmo
-            ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, globalEditorState);
+            ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, *state.get());
             /// GIZMOS FINISH
 
         };
 
         // MAIN RENDERING LOOP
-        while (!renderer.shouldClose()) {
+        while (!renderer->shouldClose()) {
             // Time point to the frame start
             auto thisFrame = std::chrono::steady_clock::now();
             // Delta time for editor calculations
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
-
-            mainCam->setDelta(deltaTime.count() * 100 / 8);
-
+            
+            renderer->getCurrentCamera()->setDelta(deltaTime.count() * 100 / 8);
 
             // polling events, callbacks fired
             glfwPollEvents();
             // Key camera input
-            input.executeActiveKeyActions();
+            input->executeActiveKeyActions();
 
             // Mouse camera input
-            input.executeActiveMouseAcitons();
-            ale::v2d mouseMovement = input.getLastDeltaMouseOffset();
-            ale::v2f camYawPitch = mainCam->getYawPitch();
-            camYawPitch.x-= mouseMovement.x * mainCam->getSensitivity();
-            camYawPitch.y-= mouseMovement.y * mainCam->getSensitivity();
-            mainCam->setOrientation(camYawPitch.x,camYawPitch.y);
+            input->executeActiveMouseAcitons();
+            ale::v2d mouseMovement = input->getLastDeltaMouseOffset();
+            ale::v2f camYawPitch = renderer->getCurrentCamera()->getYawPitch();
+            camYawPitch.x-= mouseMovement.x * renderer->getCurrentCamera()->getSensitivity();
+            camYawPitch.y-= mouseMovement.y * renderer->getCurrentCamera()->getSensitivity();
+            renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
 
             // Drawing the results of the input
-            renderer.drawFrame(uiEvents);
+            renderer->drawFrame(uiEvents);
 
             // Smooth framerate
             auto thisFrameEnd = std::chrono::steady_clock::now();
@@ -236,7 +149,7 @@ int App::run() {
             // disable this fps cap
             std::this_thread::sleep_for(remainder);
         }
-        renderer.cleanup();
+        renderer->cleanup();
 
     } catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;

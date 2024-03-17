@@ -28,6 +28,7 @@
 #include <re_mesh.h>
 #include <ui_manager.h>
 #include <editor_state.h>
+#include <event_manager.h>
 
 
 namespace ale {
