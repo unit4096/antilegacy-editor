@@ -6,8 +6,6 @@ FIXME: Currently it seeems like  class has to many
 responsibilities. Think about better design patterns
 */
 
-
-
 #pragma once
 #ifndef ALE_EVENT_MANAGER
 #define ALE_EVENT_MANAGER
@@ -29,8 +27,6 @@ responsibilities. Think about better design patterns
 #include <renderer.h>
 
 
-
-
 namespace ale {
 
 class EventManager {
@@ -38,6 +34,7 @@ public:
     EventManager(sp<ale::Renderer> renderer,
                  sp<ale::GEditorState> editorState,
                  sp<ale::InputManager> inputManager) {
+
         _renderer = renderer;
         _editorState = editorState;
         _inputManager = inputManager;
@@ -64,6 +61,7 @@ private:
     sp<ale::Renderer> _renderer;
     sp<ale::GEditorState> _editorState;
     sp<ale::InputManager> _inputManager;
+
     // Movement along global Y aixs
     std::function<void()> moveY  = [&]() {_renderer->getCurrentCamera()->movePosGlobal( glm::vec3(0,1,0));};
     std::function<void()> moveNY = [&]() {_renderer->getCurrentCamera()->movePosGlobal(glm::vec3(0,-1,0));};
@@ -78,19 +76,27 @@ private:
     // Selects a triangle in the middle of the screen and
     // adds it to the ui draw buffer
     std::function<void()> raycast = [&]() {
+
         if (!_editorState->currentREMesh) {
             trc::log("Current REMesh is null", trc::WARNING);
             return;
         }
+        auto ubo = _renderer->getUbo();
+        auto mouse = _inputManager->getMousePos();
+        auto displaySize = _renderer->getDisplaySize();
+
+        auto pos = _renderer->getCurrentCamera()->getPos();
+        auto fwd = geo::screenToWorld(
+            ale::UIManager::getFlippedProjection(ubo.proj)
+            * ubo.view, {mouse.x,mouse.y}, displaySize);
+
+
         bool result = false;
         glm::vec2 intersection = glm::vec2(0);
 
         float distance = -1;
         for (auto f : _editorState->currentREMesh->faces) {
-            result = geo::rayIntersectsTriangle(_renderer->getCurrentCamera()->getPos(),
-                                                _renderer->getCurrentCamera()->getForwardVec(),
-                                                f, intersection,
-                                                distance);
+            result = geo::rayIntersectsTriangle(pos, fwd, f, intersection, distance);
             if (result) {
                 std::vector<geo::Loop*> out_loops = {};
                 geo::getBoundingLoops(f, out_loops);
