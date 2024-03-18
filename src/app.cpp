@@ -35,6 +35,7 @@ int App::run() {
 
 
         // MODEL LOADING
+        // Fox.gltf is a default model to load when no path provided
         std::string model_path = "./models/fox/Fox.gltf";
         ale::Loader loader;
         loader.recordCommandLineArguments(_config.argc, _config.argv);
@@ -47,7 +48,7 @@ int App::run() {
         // Load a GLTF model
         if (loader.loadModelGLTF(model_path, model)) {
             trc::log("Cannot load model by path: " + model_path, trc::ERROR);
-            return 1;
+            return -1;
         }
 
 
@@ -136,8 +137,8 @@ int App::run() {
 
             // Mouse camera input
             input->executeActiveMouseAcitons();
-            ale::v2d mouseMovement = input->getLastDeltaMouseOffset();
-            ale::v2f camYawPitch = renderer->getCurrentCamera()->getYawPitch();
+            auto mouseMovement = input->getLastDeltaMouseOffset();
+            auto camYawPitch = renderer->getCurrentCamera()->getYawPitch();
             camYawPitch.x-= mouseMovement.x * renderer->getCurrentCamera()->getSensitivity();
             camYawPitch.y-= mouseMovement.y * renderer->getCurrentCamera()->getSensitivity();
             renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
@@ -150,7 +151,7 @@ int App::run() {
             auto frameDuration = duration_cast<std::chrono::duration<double>>(thisFrameEnd - thisFrame);
 
             // Sleep for = cap time - frame duration (to avoid FPS spikes)
-            const std::chrono::duration<double, std::milli> remainder = fps_cap - frameDuration;
+            const auto remainder = fps_cap - frameDuration;
             // NOTE: on some hardware enabled VSync will slow down the
             // system to sleep_for + VSync wait. In this case just
             // disable this fps cap
