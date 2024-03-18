@@ -85,12 +85,12 @@ bool InputManager::executeActiveKeyActions() {
 // Get the last recorded delta offset of the mouse (last movement)
 // x -- horizontal movement
 // y -- vertical movement
-v2d InputManager::getLastDeltaMouseOffset() {
-    return v2d(_lastDeltaX,_lastDeltaY);
+glm::highp_vec2 InputManager::getLastDeltaMouseOffset() {
+    return {_lastDeltaX, _lastDeltaY};
 }
 
-v2d InputManager::getMousePos() {
-    return v2d(_lastPosX, _lastPosY);
+glm::highp_vec2 InputManager::getMousePos() {
+    return {_lastPosX, _lastPosY};
 }
 
 // Executes mouse actions

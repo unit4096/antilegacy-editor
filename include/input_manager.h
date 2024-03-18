@@ -96,8 +96,8 @@ public:
     bool executeActiveMouseAcitons();
     void bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous = false);
     bool isActionActive(InputAction _action);
-    v2d getLastDeltaMouseOffset();
-    v2d getMousePos();
+    glm::highp_vec2 getLastDeltaMouseOffset();
+    glm::highp_vec2 getMousePos();
 };
 
 } // namespace ale
