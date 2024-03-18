@@ -243,6 +243,23 @@ static glm::vec2 worldToScreen(const glm::mat4& mvp, glm::vec2 displaySize,
     return glm::vec2(screenX, screenY);
 }
 
+
+[[maybe_unused]]
+static glm::vec3 screenToWorld(const glm::mat4& pv,
+                               const glm::vec2& mousePos,
+                               const glm::vec2& displaySize) {
+    // get NCD
+    float ndcX = mousePos.x / (displaySize.x * 0.5f) - 1.0f;
+    float ndcY = 1.0f - mousePos.y / (displaySize.y * 0.5f);
+    // get screen space offsets
+    glm::vec4 rayClip = glm::vec4(ndcX, ndcY, 1.0f, 1.0f);
+    // Unproject offsets to get world-space coordinates
+    glm::vec4 rayWorld = glm::inverse(pv) * rayClip;
+
+    return glm::normalize(glm::vec3(rayWorld));
+}
+
+
 } // namespace geo
 } // namespace ale
 
