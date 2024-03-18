@@ -84,7 +84,7 @@ public:
     void setOrientation(glm::quat orientation);
     void setOrientation(glm::mat4 rotatioh);
     // FIXME: custom data types of this sort are no good
-    v2f getYawPitch();
+    glm::vec2 getYawPitch();
     glm::quat getOrientation();
     // Normalized vector with the direction of the camera
     glm::vec3 getForwardVec();

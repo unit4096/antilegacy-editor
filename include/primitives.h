@@ -107,20 +107,6 @@ struct Model {
 };
 
 
-// Basic 2D vector from 2 floats. Can be used as a vector implementation wrapper
-struct v2f {
-    float x,y;
-    v2f(float _x, float _y):x(_x), y(_y){}
-};
-
-
-// Basic 2D vector from 2 doubles. Can be used as a vector implementation wrapper
-struct v2d {
-    double x,y;
-    v2d(double _x, double _y):x(_x), y(_y){}
-};
-
-
 } // namespace ale
 
 

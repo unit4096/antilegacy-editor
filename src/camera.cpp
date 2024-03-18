@@ -103,8 +103,8 @@ void Camera::setSensitivity(float sensitivity) {
 // CAMERA ROTATION
 
 // Get yaw and pitch in degrees. X for yaw, Y for pitch
-v2f Camera::getYawPitch() {
-    return v2f(_data.yaw,_data.pitch);
+glm::vec2 Camera::getYawPitch() {
+    return {_data.yaw,_data.pitch};
 }
 
 // Set the orientation quat using yaw and pitch variables in degrees

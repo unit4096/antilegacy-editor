@@ -117,7 +117,6 @@ int App::run() {
             // Manipulate a node with an ImGui Gizmo
             ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, *state.get());
             /// GIZMOS FINISH
-
         };
 
         // MAIN RENDERING LOOP
@@ -139,8 +138,7 @@ int App::run() {
             input->executeActiveMouseAcitons();
             auto mouseMovement = input->getLastDeltaMouseOffset();
             auto camYawPitch = renderer->getCurrentCamera()->getYawPitch();
-            camYawPitch.x-= mouseMovement.x * renderer->getCurrentCamera()->getSensitivity();
-            camYawPitch.y-= mouseMovement.y * renderer->getCurrentCamera()->getSensitivity();
+            camYawPitch-= mouseMovement * renderer->getCurrentCamera()->getSensitivity();
             renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
 
             // Drawing the results of the input
