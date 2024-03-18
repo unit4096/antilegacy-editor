@@ -354,6 +354,10 @@ public:
         uiDrawQueue.clear();
     }
 
+    glm::vec2 getDisplaySize() {
+        auto ds = ImGui::GetIO().DisplaySize;
+        return {ds.x, ds.y};
+    }
 
 private:
     GLFWwindow* window;
