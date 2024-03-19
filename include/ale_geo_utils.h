@@ -225,6 +225,15 @@ static bool rayIntersectsAABB(const glm::vec3& origin,
     return true;
 }
 
+
+static std::pair<glm::vec3, glm::vec3> extractMinMaxAABB(const ale::ViewMesh& mesh) {
+    assert(mesh.maxPos.size() == 3 && mesh.maxPos.size() == 3);
+    glm::vec3 min = {mesh.minPos[0], mesh.minPos[1], mesh.minPos[2]};
+    glm::vec3 max = {mesh.maxPos[0], mesh.maxPos[1], mesh.maxPos[2]};
+    return {min, max};
+
+}
+
 // Converts global space to screen space coordinates
 [[maybe_unused]]
 static glm::vec2 worldToScreen(const glm::mat4& mvp, glm::vec2 displaySize,
