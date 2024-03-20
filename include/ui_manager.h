@@ -51,6 +51,7 @@ public:
     static void drawHierarchyUI(const ale::Model& model);
     static void CameraControlWidgetUI(sp<ale::Camera> cam);
     static void drawDefaultWindowUI(sp<ale::Camera> cam, const ale::Model& model, MVP pvm);
+    static void drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& mvp);
 };
 
 

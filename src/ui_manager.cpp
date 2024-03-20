@@ -328,3 +328,29 @@ void UIManager::drawDefaultWindowUI(sp<ale::Camera> cam,
     // CAMERA & HIERARCHY END
 }
 
+void UIManager::drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& mvp) {
+    auto v000 = glm::vec3(min.x, min.y, min.z);
+    auto v001 = glm::vec3(min.x, min.y, max.z);
+    auto v010 = glm::vec3(min.x, max.y, min.z);
+    auto v011 = glm::vec3(min.x, max.y, max.z);
+    auto v100 = glm::vec3(max.x, min.y, min.z);
+    auto v101 = glm::vec3(max.x, min.y, max.z);
+    auto v110 = glm::vec3(max.x, max.y, min.z);
+    auto v111 = glm::vec3(max.x, max.y, max.z);
+
+    drawWorldSpaceLine(v000, v001, mvp);
+    drawWorldSpaceLine(v000, v010, mvp);
+    drawWorldSpaceLine(v001, v011, mvp);
+    drawWorldSpaceLine(v010, v011, mvp);
+
+    drawWorldSpaceLine(v000, v100, mvp);
+    drawWorldSpaceLine(v001, v101, mvp);
+    drawWorldSpaceLine(v010, v110, mvp);
+    drawWorldSpaceLine(v011, v111, mvp);
+
+    drawWorldSpaceLine(v100, v101, mvp);
+    drawWorldSpaceLine(v100, v110, mvp);
+    drawWorldSpaceLine(v101, v111, mvp);
+    drawWorldSpaceLine(v110, v111, mvp);
+
+}
