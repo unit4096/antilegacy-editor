@@ -1,0 +1,45 @@
+#version 450
+
+layout(local_size_x = 8, local_size_y = 8, ) in;
+
+// Define the structure for a line segment
+struct Line {
+    vec2 start;
+    vec2 end;
+};
+
+// Uniform block for line segments
+layout(std140, binding = 0) uniform LinesBlock {
+    Line lines[100]; // Assuming a maximum of 100 lines
+};
+
+// Output image buffer
+layout(binding = 1, rgba8) writeonly uniform image2D outImage;
+
+void main() {
+    // Get the global invocation ID
+    uvec2 pixelCoords = gl_GlobalInvocationID.xy;
+
+    // Initialize output color
+    vec4 color = vec4(0.0);
+
+    // Iterate over each line segment
+    for (int i = 0; i < 100; ++i) {
+        // Compute direction vector of the line segment
+        vec2 direction = lines[i].end - lines[i].start;
+
+        // Compute normalized distance from the start point to the current pixel
+        float t = dot(pixelCoords - lines[i].start, direction) / dot(direction, direction);
+
+        // Check if the pixel lies on the line segment
+        if (t >= 0.0 && t <= 1.0) {
+            // Set color for the line
+            color = vec4(1.0, 1.0, 1.0, 1.0); // White color
+            break; // Stop processing further line segments
+        }
+    }
+
+    // Write color to output image
+    imageStore(outImage, ivec2(pixelCoords), color);
+}
+
