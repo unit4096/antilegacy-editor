@@ -151,7 +151,6 @@ public:
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        this->io = ale::to_sp<ImGuiIO>(ImGui::GetIO());
     };
 
 
@@ -481,9 +480,6 @@ private:
     int chainMinImageCount;
 
     // Some UI variables
-
-    // Shared pointer to ImGui IO
-    ale::sp<ImGuiIO> io;
 
 
     // An array of vertices to draw for ImGui
@@ -1596,8 +1592,9 @@ private:
 
         float size_pixels = 22;
         ImFontConfig config;
-        io->Fonts->Clear();
-        io->Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
+        ImGuiIO _io = ImGui::GetIO();
+        _io.Fonts->Clear();
+        _io.Fonts->AddFontFromFileTTF("./fonts/gidole-regular.ttf", size_pixels, &config );
     }
 
     void initImGUI(){
