@@ -58,7 +58,6 @@ Upcoming features:
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
-#include <chrono>
 #include <vector>
 #include <cstring>
 #include <cstdlib>
@@ -68,7 +67,6 @@ Upcoming features:
 #include <optional>
 #include <set>
 #include <unordered_map>
-#include <memory>
 #include <stack>
 
 
@@ -81,7 +79,6 @@ Upcoming features:
 #include <vulkan_utils.h>
 #include <os_loader.h>
 #include <memory.h>
-
 #include <ale_imgui_interface.h>
 #include <ui_manager.h>
 
@@ -215,7 +212,7 @@ public:
 
         vkResetFences(vkb_device, 1, &inFlightFences[currentFrame]);
 
-        vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
+        vkResetCommandBuffer(commandBuffers[currentFrame], 0);
 
         recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
