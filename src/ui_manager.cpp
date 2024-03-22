@@ -26,37 +26,12 @@ ale::MVP UIManager::getMVPWithFlippedProjection(const MVP& mvp) {
         };
 }
 
-
-// A simple function that indicates if a point is "in front" enough
-// of the camera. Used mostly to avoid inversing geometry behind the
-// camera. More sophisticated methods will be used in the user-space
-// functions
-bool _isBehind(glm::mat4 viewMatrix, glm::vec3 point, float limit = 0) {
-
-    // Inverse view matrix for world space camera orientation
-    auto inv = glm::inverse(viewMatrix);
-
-    // Camera forward vector
-    auto camNorm = glm::vec3(inv[2]);
-    // Camera world space position
-    auto camPos  = glm::vec3(inv[3]);
-
-    // Invert the vector for correct orientation
-    camNorm*=-1;
-
-    // Dot product of point direction relative to camera
-    auto dot = glm::dot(glm::normalize(point-camPos),camNorm);
-
-    return dot < limit;
-}
-
-
 void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
                                    const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (_isBehind(mvp.v,pos1, VIEW_LIMIT) ||
-        _isBehind(mvp.v,pos2, VIEW_LIMIT)) {
+    if (geo::isBehind(mvp.v,pos1, VIEW_LIMIT) ||
+        geo::isBehind(mvp.v,pos2, VIEW_LIMIT)) {
         return;
     }
 
@@ -80,9 +55,9 @@ void UIManager::drawWorldSpaceVert(const glm::vec3& pos1,
                                    const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (_isBehind(mvp.v,pos1, VIEW_LIMIT) ||
-        _isBehind(mvp.v,pos2, VIEW_LIMIT) ||
-        _isBehind(mvp.v,pos3, VIEW_LIMIT)) {
+    if (geo::isBehind(mvp.v,pos1, VIEW_LIMIT) ||
+        geo::isBehind(mvp.v,pos2, VIEW_LIMIT) ||
+        geo::isBehind(mvp.v,pos3, VIEW_LIMIT)) {
         return;
     }
 
@@ -104,7 +79,7 @@ void UIManager::drawWorldSpaceCircle(const glm::vec3& pos,
                                      const MVP& mvp) {
     auto pvm = mvp.p * mvp.v * mvp.m;
 
-    if (_isBehind(mvp.v,pos, VIEW_LIMIT)) {
+    if (geo::isBehind(mvp.v,pos, VIEW_LIMIT)) {
         return;
     }
     auto& io = ImGui::GetIO();

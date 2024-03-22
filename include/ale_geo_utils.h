@@ -234,6 +234,31 @@ static std::pair<glm::vec3, glm::vec3> extractMinMaxAABB(const ale::ViewMesh& me
 
 }
 
+// A simple function that indicates if a point is "in front" enough
+// of the camera. Used mostly to avoid inversing geometry behind the
+// camera. More sophisticated methods will be used in the user-space
+// functions
+[[maybe_unused]]
+static bool isBehind(glm::mat4 viewMatrix, glm::vec3 point, float limit = 0) {
+
+    // Inverse view matrix for world space camera orientation
+    auto inv = glm::inverse(viewMatrix);
+
+    // Camera forward vector
+    auto camNorm = glm::vec3(inv[2]);
+    // Camera world space position
+    auto camPos  = glm::vec3(inv[3]);
+
+    // Invert the vector for correct orientation
+    camNorm*=-1;
+
+    // Dot product of point direction relative to camera
+    auto dot = glm::dot(glm::normalize(point-camPos),camNorm);
+
+    return dot < limit;
+}
+
+
 // Converts global space to screen space coordinates
 [[maybe_unused]]
 static glm::vec2 worldToScreen(const glm::mat4& mvp, glm::vec2 displaySize,
