@@ -126,6 +126,10 @@ struct UniformBufferObject {
     alignas(4) glm::vec4 light;
 };
 
+struct Line2D {
+    alignas(8) glm::vec2 start;
+    alignas(8) glm::vec2 end;
+};
 
 struct MeshBufferData{
     unsigned int size;
