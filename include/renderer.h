@@ -97,7 +97,8 @@ const std::vector<const char*> validationLayers = {
 };
 
 const std::vector<const char*> deviceExtensions = {
-    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
 };
 
 #ifdef NDEBUG
@@ -163,9 +164,7 @@ private:
 public:
     void cleanup();
     bool shouldClose();
-    GLFWwindow* getWindow();
-    UniformBufferObject getUbo();
-    void pushToUIDrawQueue(std::pair<std::vector<glm::vec3>, ale::UI_DRAW_TYPE>  pair);
+    GLFWwindow* getWindow(); UniformBufferObject getUbo(); void pushToUIDrawQueue(std::pair<std::vector<glm::vec3>, ale::UI_DRAW_TYPE>  pair);
     void flushUIDrawQueue();
     glm::vec2 getDisplaySize();
 
@@ -193,8 +192,12 @@ private:
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
+
+
+    /// TODO: REMOVE WITH DYNAMIC RENDERING
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
+    /// TODO: REMOVE WITH DYNAMIC RENDERING
     VkRenderPass renderPass;
     VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
@@ -513,6 +516,7 @@ private:
 
         vkb::PhysicalDeviceSelector phys_device_selector(vkb_instance);
         auto physical_device_selector_return = phys_device_selector
+                .add_required_extensions(deviceExtensions.size(), deviceExtensions.data())
                 .set_surface(surface)
                 .select();
 
@@ -1319,6 +1323,7 @@ private:
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
+        /// TODO: REMOVE WITH DYNAMIC RENDERING
         auto renderPassInfo = vk::getRenderPassBegin(
                                 renderPass, swapChainFramebuffers[imageIndex],
                                 swapChainExtent);
@@ -1329,7 +1334,9 @@ private:
 
         renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         renderPassInfo.pClearValues = clearValues.data();
+        
 
+        /// TODO: REMOVE WITH DYNAMIC RENDERING
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
