@@ -36,6 +36,9 @@ Upcoming features:
 - Accurate PBR rendering
 */
 
+#ifndef ALE_RENDERER
+#define ALE_RENDERER
+
 // ext
 #pragma once
 #define GLFW_INCLUDE_VULKAN
@@ -1862,3 +1865,4 @@ glm::vec2 Renderer::getDisplaySize() {
 }
 
 } // namespace ale
+#endif //ALE_RENDERER
