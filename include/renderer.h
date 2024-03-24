@@ -547,24 +547,19 @@ private:
 
 
     void initVulkan() {
-
-        // Generic vulkan init
         createInstance();
         setupDebugMessenger();
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
         createSwapChain();
-        // Interesting things start from here
         createDescriptorSetLayout();
         createGraphicsPipeline();
         createCommandPool();
         createDepthResources();
-        // image field should contain a texture now
         createTextureImage();
         createTextureImageView();
         createTextureSampler();
-        // model field should contain vertices and indices now
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
@@ -598,11 +593,8 @@ private:
         vkDeviceWaitIdle(vkb_device);
 
         cleanupSwapChain();
-
         createSwapChain();
-        // createImageViews();
         createDepthResources();
-        /* createFramebuffers(); */
     }
 
     void createInstance() {
@@ -852,9 +844,6 @@ private:
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 
-        // FIXME: Replace with proper format selection
-
-
         VkPipelineRenderingCreateInfo renderingCreateInfo {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
             .pNext = VK_NULL_HANDLE,
@@ -878,7 +867,7 @@ private:
             .pColorBlendState = &colorBlending,
             .pDynamicState = &dynamicState,
             .layout = pipelineLayout,
-            .renderPass = nullptr,
+            .renderPass = VK_NULL_HANDLE,
             .subpass = 0,
             .basePipelineHandle = VK_NULL_HANDLE,
         };
