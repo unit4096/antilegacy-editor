@@ -101,7 +101,8 @@ const std::vector<const char*> validationLayers = {
 
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
+    VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+    VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME,
 };
 
 #ifdef NDEBUG
@@ -196,12 +197,6 @@ private:
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
 
-
-    /// TODO: REMOVE WITH DYNAMIC RENDERING
-    std::vector<VkFramebuffer> swapChainFramebuffers;
-
-    /// TODO: REMOVE WITH DYNAMIC RENDERING
-    VkRenderPass renderPass;
     VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
@@ -217,13 +212,14 @@ private:
     VkImageView textureImageView;
     VkSampler textureSampler;
 
+
     std::stack<std::function<bool()>> destructorStack = {};
     // TODO: add multiple model handling and scene hierarchy
 
     ale::Model& model;
 
     // TODO: Render materials instead of raw textures
-    Image image;
+    ale::Image image;
 
     glm::vec4 _posLight = glm::vec4(30.0, 40.0, 100.0, 1.0);
 
@@ -365,12 +361,10 @@ private:
         createLogicalDevice();
         createSwapChain();
         // Interesting things start from here
-        createRenderPass();
         createDescriptorSetLayout();
         createGraphicsPipeline();
         createCommandPool();
         createDepthResources();
-        createFramebuffers();
         // image field should contain a texture now
         createTextureImage();
         createTextureImageView();
@@ -389,10 +383,6 @@ private:
         vkDestroyImageView(vkb_device, depthImageView, nullptr);
         vkDestroyImage(vkb_device, depthImage, nullptr);
         vkFreeMemory(vkb_device, depthImageMemory, nullptr);
-
-        for (auto framebuffer : swapChainFramebuffers) {
-            vkDestroyFramebuffer(vkb_device, framebuffer, nullptr);
-        }
 
         for (auto imageView : swapChainImageViews) {
             vkDestroyImageView(vkb_device, imageView, nullptr);
@@ -417,7 +407,7 @@ private:
         createSwapChain();
         // createImageViews();
         createDepthResources();
-        createFramebuffers();
+        /* createFramebuffers(); */
     }
 
     void createInstance() {
@@ -516,10 +506,18 @@ private:
         if (deviceCount == 0) {
             throw std::runtime_error("failed to find GPUs with Vulkan support!");
         }
+        VkPhysicalDeviceVulkan13Features features{
+            .dynamicRendering = true,
+            /* .synchronization2 = true, */
+        };
+
+
+
 
         vkb::PhysicalDeviceSelector phys_device_selector(vkb_instance);
         auto physical_device_selector_return = phys_device_selector
                 .add_required_extensions(deviceExtensions.size(), deviceExtensions.data())
+                .set_required_features_13(features)
                 .set_surface(surface)
                 .select();
 
@@ -527,14 +525,22 @@ private:
             throw std::runtime_error("failed to pick a device!");
         }
 
-
         vkb_physicalDevice = physical_device_selector_return.value();
+
+
     }
 
     void createLogicalDevice() {
         vkb::DeviceBuilder builder{vkb_physicalDevice};
 
-        auto dev_ret = builder.build();
+        VkPhysicalDeviceDynamicRenderingUnusedAttachmentsFeaturesEXT ext {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_FEATURES_EXT,
+            .dynamicRenderingUnusedAttachments = true,
+        };
+
+        auto dev_ret = builder
+            .add_pNext(&ext)
+            .build();
 
         if (!dev_ret) {
             throw std::runtime_error("failed to create logical device!");
@@ -589,70 +595,6 @@ private:
     }
 
 
-    void createRenderPass() {
-        VkAttachmentDescription colorAttachment{
-            .format = swapChainImageFormat,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-        };
-
-        VkAttachmentDescription depthAttachment{
-            .format = findDepthFormat(),
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        };
-
-        VkAttachmentReference colorAttachmentRef{
-            .attachment = 0,
-            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        };
-
-        VkAttachmentReference depthAttachmentRef{
-            .attachment = 1,
-            .layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-        };
-
-        VkSubpassDescription subpass {
-            .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-            .colorAttachmentCount = 1,
-            .pColorAttachments = &colorAttachmentRef,
-            .pDepthStencilAttachment = &depthAttachmentRef,
-        };
-
-        VkSubpassDependency dependency {
-            .srcSubpass = VK_SUBPASS_EXTERNAL,
-            .dstSubpass = 0,
-            .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-            .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
-            .srcAccessMask = 0,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-        };
-
-        std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
-        VkRenderPassCreateInfo renderPassInfo{
-            .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-            .attachmentCount = static_cast<uint32_t>(attachments.size()),
-            .pAttachments = attachments.data(),
-            .subpassCount = 1,
-            .pSubpasses = &subpass,
-            .dependencyCount = 1,
-            .pDependencies = &dependency,
-        };
-
-        if (vkCreateRenderPass(vkb_device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create render pass!");
-        }
-    }
 
     void createDescriptorSetLayout() {
         std::vector<VkDescriptorSetLayoutBinding> layoutBindings{};
@@ -715,8 +657,21 @@ private:
 			throw std::runtime_error("failed to create pipeline layout!");
 		}
 
+        // FIXME: Replace with proper format selection
+
+
+        VkPipelineRenderingCreateInfo renderingCreateInfo {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &vkb_swapchain.image_format,
+            .depthAttachmentFormat = findDepthFormat(),
+
+        };
+
         VkGraphicsPipelineCreateInfo pipelineInfo {
             .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = &renderingCreateInfo,
             .stageCount = 2,
             .pStages = shaderStages,
             .pVertexInputState = &vertexInputInfo,
@@ -728,7 +683,7 @@ private:
             .pColorBlendState = &colorBlending,
             .pDynamicState = &dynamicState,
             .layout = pipelineLayout,
-            .renderPass = renderPass,
+            .renderPass = nullptr,
             .subpass = 0,
             .basePipelineHandle = VK_NULL_HANDLE,
         };
@@ -740,31 +695,6 @@ private:
 
         vkDestroyShaderModule(vkb_device, fragShaderModule, nullptr);
         vkDestroyShaderModule(vkb_device, vertShaderModule, nullptr);
-}
-
-    void createFramebuffers() {
-        swapChainFramebuffers.resize(swapChainImageViews.size());
-
-        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-            std::array<VkImageView, 2> attachments = {
-                swapChainImageViews[i],
-                depthImageView
-            };
-
-            VkFramebufferCreateInfo framebufferInfo{
-                .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-                .renderPass = renderPass,
-                .attachmentCount = static_cast<uint32_t>(attachments.size()),
-                .pAttachments = attachments.data(),
-                .width = swapChainExtent.width,
-                .height = swapChainExtent.height,
-                .layers = 1,
-            };
-
-            if (vkCreateFramebuffer(vkb_device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
-                throw std::runtime_error("failed to create framebuffer!");
-            }
-        }
     }
 
     void createCommandPool() {
@@ -1326,21 +1256,77 @@ private:
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        /// TODO: REMOVE WITH DYNAMIC RENDERING
-        auto renderPassInfo = vk::getRenderPassBegin(
-                                renderPass, swapChainFramebuffers[imageIndex],
-                                swapChainExtent);
+
+
+        const VkImageMemoryBarrier imageMemoryBarrierBeg {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .image = swapChainImages[imageIndex],
+            .subresourceRange = {
+              .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+              .baseMipLevel = 0,
+              .levelCount = 1,
+              .baseArrayLayer = 0,
+              .layerCount = 1,
+            }
+        };
+
+        vkCmdPipelineBarrier(
+            commandBuffer,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,  // srcStageMask
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
+            0,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            1, // imageMemoryBarrierCount
+            &imageMemoryBarrierBeg // pImageMemoryBarriers
+        );
+
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = {{0.01f, 0.01f, 0.01f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
 
-        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-        renderPassInfo.pClearValues = clearValues.data();
-        
 
-        /// TODO: REMOVE WITH DYNAMIC RENDERING
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        VkRenderingAttachmentInfo colorAttachmentInfo {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .imageView = swapChainImageViews[imageIndex],
+            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clearValues[0],
+        };
+
+        VkRenderingAttachmentInfo depthAttachmentInfo {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .imageView = depthImageView,
+            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+            .clearValue = clearValues[1],
+        };
+
+        VkRenderingInfo renderingInfo {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .renderArea = {
+                .offset = {0, 0},
+                .extent = swapChainExtent,
+            },
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachmentInfo,
+            .pDepthAttachment = &depthAttachmentInfo,
+        };
+
+
+        vkCmdBeginRendering(commandBuffer, &renderingInfo);
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
@@ -1360,10 +1346,72 @@ private:
             vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
             renderNodes(commandBuffer, model);
 
-            // TODO: make implementation of imgui into a separate abstraction
-            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
 
-        vkCmdEndRenderPass(commandBuffer);
+        vkCmdEndRendering(commandBuffer);
+
+
+
+
+
+        VkRenderingAttachmentInfo colorImguiAttachmentInfo {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .imageView = swapChainImageViews[imageIndex],
+            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+            .clearValue = clearValues[0],
+        };
+
+        VkRenderingInfo imguiRenderingInfo {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .pNext = VK_NULL_HANDLE,
+            .renderArea = {
+                .offset = {0, 0},
+                .extent = swapChainExtent,
+            },
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorImguiAttachmentInfo,
+        };
+
+
+
+        vkCmdBeginRendering(commandBuffer, &imguiRenderingInfo);
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
+        vkCmdEndRendering(commandBuffer);
+
+
+        const VkImageMemoryBarrier imageMemoryBarrierEnd {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .image = swapChainImages[imageIndex],
+            .subresourceRange = {
+              .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+              .baseMipLevel = 0,
+              .levelCount = 1,
+              .baseArrayLayer = 0,
+              .layerCount = 1,
+            }
+        };
+
+        vkCmdPipelineBarrier(
+            commandBuffer,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,  // srcStageMask
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, // dstStageMask
+            0,
+            0,
+            nullptr,
+            0,
+            nullptr,
+            1, // imageMemoryBarrierCount
+            &imageMemoryBarrierEnd // pImageMemoryBarriers
+        );
+
+
+
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
@@ -1443,6 +1491,9 @@ private:
     void initImGUI(){
         trc::log("There is a minor memory leak here!",trc::WARNING);
 
+        IMGUI_CHECKVERSION();
+        ImGui::CreateContext();
+
         ImGuiIO& _io = ImGui::GetIO();
         _io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable keyboard
         _io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable docking
@@ -1477,16 +1528,17 @@ private:
             .PipelineCache = VK_NULL_HANDLE,
             .DescriptorPool = imguiPool,
             .Subpass = 0,
-            .MinImageCount = static_cast<uint32_t>(chainMinImageCount),
-            .ImageCount = static_cast<uint32_t>(chainMinImageCount),
+            .MinImageCount = (uint32_t)(chainMinImageCount),
+            .ImageCount = (uint32_t)(chainMinImageCount),
             .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
+            .UseDynamicRendering = true,
             .Allocator = VK_NULL_HANDLE,
-            .CheckVkResultFn = VK_NULL_HANDLE,
+            .CheckVkResultFn = nullptr,
+            .ColorAttachmentFormat = vkb_swapchain.image_format,
         };
 
-        ImGui_ImplVulkan_Init(&init_info, renderPass);
+        ImGui_ImplVulkan_Init(&init_info, nullptr);
     }
-    
 
 
     // Initializes ImGui stuff and records ui events here
