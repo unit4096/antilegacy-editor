@@ -1,7 +1,7 @@
 #pragma once
 
-/* 
-    Utility functions for Vulkan. 
+/*
+    Utility functions for Vulkan.
 */
 // ext
 #include <vector>
@@ -91,7 +91,7 @@ static VkShaderModule createShaderModule(VkDevice device, const std::vector<char
 // Creates a binding description based on binding location and its stride in bytes
 static VkVertexInputBindingDescription getVertBindingDescription(
                                                         unsigned int binding,
-                                                        unsigned int stride) {    
+                                                        unsigned int stride) {
     return {
         .binding = binding,
         .stride = stride,
@@ -149,7 +149,7 @@ static VkPipelineColorBlendStateCreateInfo getColorBlending(
         .pAttachments = &colorBlendAttachment,
         .blendConstants = {0,0,0,0},
     };
-    
+
 };
 
 
@@ -184,16 +184,17 @@ static VkImageCreateInfo getImageInfo(unsigned int w, unsigned int h,
 
 
 // ----
-// Draw command 
+// Draw command
 // ----
 
+[[maybe_unused]]
 static VkRenderPassBeginInfo getRenderPassBegin(VkRenderPass renderPass, VkFramebuffer frameBuffer, VkExtent2D swapChainExtent) {
 
     VkRect2D renderArea {
         .offset = {0, 0},
         .extent = swapChainExtent,
     };
-    
+
     return {
         .sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
         .pNext = VK_NULL_HANDLE,
@@ -322,7 +323,7 @@ static VkPipelineMultisampleStateCreateInfo getDefaultMultisampling() {
         .sampleShadingEnable = VK_FALSE,
     };
 };
-    
+
 
 static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
     return {
@@ -336,6 +337,24 @@ static VkPipelineDepthStencilStateCreateInfo getDefaultDepthStencil() {
 };
 
 // }}}
+
+
+static VkRenderingAttachmentInfo getRenderingAttachment(
+                                            VkImageView view,
+                                            VkImageLayout layout,
+                                            VkAttachmentLoadOp loadOp,
+                                            VkAttachmentStoreOp storeOp,
+                                            VkClearValue clearVal) {
+    return {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .pNext = VK_NULL_HANDLE,
+        .imageView = view,
+        .imageLayout = layout,
+        .loadOp = loadOp,
+        .storeOp = storeOp,
+        .clearValue = clearVal,
+    };
+}
 
 
 } // namespace vk

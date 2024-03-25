@@ -1435,14 +1435,11 @@ private:
     }
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
-
-
 
         const VkImageMemoryBarrier imageMemoryBarrierBeg {
             .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
@@ -1461,15 +1458,12 @@ private:
 
         vkCmdPipelineBarrier(
             commandBuffer,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,  // srcStageMask
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // dstStageMask
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             0,
-            0,
-            nullptr,
-            0,
-            nullptr,
-            1, // imageMemoryBarrierCount
-            &imageMemoryBarrierBeg // pImageMemoryBarriers
+            0, nullptr,
+            0, nullptr,
+            1, &imageMemoryBarrierBeg
         );
 
 
@@ -1478,25 +1472,20 @@ private:
         clearValues[1].depthStencil = {1.0f, 0};
 
 
-        VkRenderingAttachmentInfo colorAttachmentInfo {
-            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .pNext = VK_NULL_HANDLE,
-            .imageView = swapChainImageViews[imageIndex],
-            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .clearValue = clearValues[0],
-        };
+        VkRenderingAttachmentInfo sceneColorAttachmentInfo =
+            vk::getRenderingAttachment(swapChainImageViews[imageIndex],
+                                       VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
+                                       VK_ATTACHMENT_LOAD_OP_CLEAR,
+                                       VK_ATTACHMENT_STORE_OP_STORE,
+                                       clearValues[0]);
 
-        VkRenderingAttachmentInfo depthAttachmentInfo {
-            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .pNext = VK_NULL_HANDLE,
-            .imageView = depthImageView,
-            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-            .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-            .clearValue = clearValues[1],
-        };
+
+        VkRenderingAttachmentInfo sceneDepthAttachmentInfo =
+            vk::getRenderingAttachment(depthImageView,
+                                       VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                       VK_ATTACHMENT_LOAD_OP_CLEAR,
+                                       VK_ATTACHMENT_STORE_OP_DONT_CARE,
+                                       clearValues[1]);
 
         VkRenderingInfo renderingInfo {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -1507,11 +1496,11 @@ private:
             },
             .layerCount = 1,
             .colorAttachmentCount = 1,
-            .pColorAttachments = &colorAttachmentInfo,
-            .pDepthAttachment = &depthAttachmentInfo,
+            .pColorAttachments = &sceneColorAttachmentInfo,
+            .pDepthAttachment = &sceneDepthAttachmentInfo,
         };
 
-
+        // **Render 3D scene**
         vkCmdBeginRendering(commandBuffer, &renderingInfo);
 
             vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
@@ -1529,25 +1518,21 @@ private:
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-            vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr);
+            vkCmdBindDescriptorSets(commandBuffer,
+                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                    pipelineLayout, 0, 1,
+                                    &descriptorSets[currentFrame], 0, nullptr);
             renderNodes(commandBuffer, model);
-
 
         vkCmdEndRendering(commandBuffer);
 
 
-
-
-
-        VkRenderingAttachmentInfo colorImguiAttachmentInfo {
-            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .pNext = VK_NULL_HANDLE,
-            .imageView = swapChainImageViews[imageIndex],
-            .imageLayout = VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
-            .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-            .clearValue = clearValues[0],
-        };
+        VkRenderingAttachmentInfo imguiColorAttachmentInfo =
+            vk::getRenderingAttachment(swapChainImageViews[imageIndex],
+                                        VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR,
+                                        VK_ATTACHMENT_LOAD_OP_LOAD,
+                                        VK_ATTACHMENT_STORE_OP_STORE,
+                                        clearValues[0]);
 
         VkRenderingInfo imguiRenderingInfo {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -1558,11 +1543,10 @@ private:
             },
             .layerCount = 1,
             .colorAttachmentCount = 1,
-            .pColorAttachments = &colorImguiAttachmentInfo,
+            .pColorAttachments = &imguiColorAttachmentInfo,
         };
 
-
-
+        // Render ImGui interface to the scene attachment
         vkCmdBeginRendering(commandBuffer, &imguiRenderingInfo);
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffers[currentFrame]);
         vkCmdEndRendering(commandBuffer);
@@ -1585,19 +1569,13 @@ private:
 
         vkCmdPipelineBarrier(
             commandBuffer,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,  // srcStageMask
+            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
             VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, // dstStageMask
             0,
-            0,
-            nullptr,
-            0,
-            nullptr,
-            1, // imageMemoryBarrierCount
-            &imageMemoryBarrierEnd // pImageMemoryBarriers
+            0, nullptr,
+            0, nullptr,
+            1, &imageMemoryBarrierEnd
         );
-
-
-
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");
