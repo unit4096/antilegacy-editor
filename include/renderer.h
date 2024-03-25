@@ -190,18 +190,17 @@ public:
 
     // TODO: Use std::optional or do not pass this as an argument
     void drawFrame(std::function<void()>& uiEvents) {
-
         vkWaitForFences(vkb_device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
-        VkResult result = vkAcquireNextImageKHR(vkb_device, vkb_swapchain,UINT64_MAX,
+        VkResult currentResult = vkAcquireNextImageKHR(vkb_device, vkb_swapchain,UINT64_MAX,
                                                 imageAvailableSemaphores[currentFrame],
                                                 VK_NULL_HANDLE, &imageIndex);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        if (currentResult == VK_ERROR_OUT_OF_DATE_KHR) {
             ImGui_ImplVulkan_SetMinImageCount(chainMinImageCount);
             recreateSwapChain();
             return;
-        } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        } else if (currentResult != VK_SUCCESS && currentResult != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
@@ -214,7 +213,7 @@ public:
         vkResetFences(vkb_device, 1, &inFlightFences[currentFrame]);
 
         vkResetCommandBuffer(commandBuffers[currentFrame], 0);
-        recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+        recordRenderCommandBuffer(commandBuffers[currentFrame], imageIndex);
 
 
         std::vector<VkSemaphore> waitSemaphores = {imageAvailableSemaphores[currentFrame]};
@@ -231,12 +230,12 @@ public:
         std::vector<VkSwapchainKHR> swapChains = {vkb_swapchain};
 
         VkPresentInfoKHR presentInfo = vk::getPresentInfoKHR(signalSemaphores, swapChains, imageIndex);
-        result = vkQueuePresentKHR(presentQueue, &presentInfo);
+        currentResult = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+        if (currentResult == VK_ERROR_OUT_OF_DATE_KHR || currentResult == VK_SUBOPTIMAL_KHR || framebufferResized) {
             framebufferResized = false;
             recreateSwapChain();
-        } else if (result != VK_SUCCESS) {
+        } else if (currentResult != VK_SUCCESS) {
             throw std::runtime_error("failed to present swap chain image!");
         }
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -1434,38 +1433,41 @@ private:
         }
     }
 
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+    void recordRenderCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
         VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
 
-        const VkImageMemoryBarrier imageMemoryBarrierBeg {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-            .newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .image = swapChainImages[imageIndex],
-            .subresourceRange = {
-              .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-              .baseMipLevel = 0,
-              .levelCount = 1,
-              .baseArrayLayer = 0,
-              .layerCount = 1,
-            }
+        VkRect2D renderAreaWholeViewport = { .offset = {0, 0}, .extent = swapChainExtent, };
+
+        VkImageSubresourceRange colorRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
         };
 
-        vkCmdPipelineBarrier(
-            commandBuffer,
-            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            0,
-            0, nullptr,
-            0, nullptr,
-            1, &imageMemoryBarrierBeg
-        );
+        vk::VulkanImageState topOfPipeState {
+            .layout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .stage =  VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+        };
 
+        vk::VulkanImageState colorAttachmentState {
+            .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .stage =  VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+        };
+
+        vk::VulkanImageState finalPresentState {
+            .layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ,
+            .stage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT
+        };
+
+        vk::addPipelineBarrier(commandBuffer, swapChainImages[imageIndex],
+                {.dst = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT},
+                colorRange, topOfPipeState, colorAttachmentState);
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = {{0.01f, 0.01f, 0.01f, 1.0f}};
@@ -1490,10 +1492,7 @@ private:
         VkRenderingInfo renderingInfo {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = VK_NULL_HANDLE,
-            .renderArea = {
-                .offset = {0, 0},
-                .extent = swapChainExtent,
-            },
+            .renderArea = renderAreaWholeViewport,
             .layerCount = 1,
             .colorAttachmentCount = 1,
             .pColorAttachments = &sceneColorAttachmentInfo,
@@ -1537,10 +1536,7 @@ private:
         VkRenderingInfo imguiRenderingInfo {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
             .pNext = VK_NULL_HANDLE,
-            .renderArea = {
-                .offset = {0, 0},
-                .extent = swapChainExtent,
-            },
+            .renderArea = renderAreaWholeViewport,
             .layerCount = 1,
             .colorAttachmentCount = 1,
             .pColorAttachments = &imguiColorAttachmentInfo,
@@ -1552,30 +1548,10 @@ private:
         vkCmdEndRendering(commandBuffer);
 
 
-        const VkImageMemoryBarrier imageMemoryBarrierEnd {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-            .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-            .oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-            .image = swapChainImages[imageIndex],
-            .subresourceRange = {
-              .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-              .baseMipLevel = 0,
-              .levelCount = 1,
-              .baseArrayLayer = 0,
-              .layerCount = 1,
-            }
-        };
+        vk::addPipelineBarrier(commandBuffer, swapChainImages[imageIndex],
+                {.src= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT },
+                colorRange, colorAttachmentState, finalPresentState);
 
-        vkCmdPipelineBarrier(
-            commandBuffer,
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, // dstStageMask
-            0,
-            0, nullptr,
-            0, nullptr,
-            1, &imageMemoryBarrierEnd
-        );
 
         if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
             throw std::runtime_error("failed to record command buffer!");

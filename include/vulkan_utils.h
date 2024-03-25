@@ -356,6 +356,45 @@ static VkRenderingAttachmentInfo getRenderingAttachment(
     };
 }
 
+struct VulkanImageState {
+    VkImageLayout layout;
+    VkPipelineStageFlags stage;
+};
+
+struct VulkanAccessMasks {
+    VkAccessFlags src;
+    VkAccessFlags dst;
+};
+
+static void addPipelineBarrier(VkCommandBuffer buffer,
+                               VkImage image,
+                               VulkanAccessMasks accessMasks,
+                               VkImageSubresourceRange range,
+                               VulkanImageState oldState,
+                               VulkanImageState newState) {
+
+    const VkImageMemoryBarrier imageMemoryBarrier {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .srcAccessMask = accessMasks.src,
+        .dstAccessMask = accessMasks.dst,
+        .oldLayout = oldState.layout,
+        .newLayout = newState.layout,
+        .image = image,
+        .subresourceRange = range,
+    };
+
+    vkCmdPipelineBarrier(
+        buffer,
+        oldState.stage,
+        newState.stage,
+        0,
+        0, nullptr,
+        0, nullptr,
+        1, &imageMemoryBarrier
+    );
+}
+
+
 
 } // namespace vk
 } // namespace ale
