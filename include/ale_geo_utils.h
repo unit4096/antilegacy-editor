@@ -225,7 +225,7 @@ static bool rayIntersectsAABB(const glm::vec3& origin,
     return true;
 }
 
-
+[[maybe_unused]]
 static std::pair<glm::vec3, glm::vec3> extractMinMaxAABB(const ale::ViewMesh& mesh) {
     assert(mesh.maxPos.size() == 3 && mesh.maxPos.size() == 3);
     glm::vec3 min = {mesh.minPos[0], mesh.minPos[1], mesh.minPos[2]};
