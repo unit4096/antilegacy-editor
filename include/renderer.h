@@ -19,6 +19,8 @@ Implementation details:
 - boilerplate code from the renderer was taken from vulkan-tutorial.com.
   Thus, it inherited some naming conventions from this code.
   POI: initVulkan() keeps original structure
+- The renderer features a classic vertex shader to fragment shader pipeline
+  using dynamic rendering.
 - The renderer uses GLTF for window management.
   POI: initWindow(), glfwInit()
 - This code uses VkBootstrap to reduce boilerplate line count. Additionaly,
@@ -1716,9 +1718,9 @@ private:
             .ImageCount = (uint32_t)(chainMinImageCount),
             .MSAASamples = VK_SAMPLE_COUNT_1_BIT,
             .UseDynamicRendering = true,
+            .ColorAttachmentFormat = vkb_swapchain.image_format,
             .Allocator = VK_NULL_HANDLE,
             .CheckVkResultFn = nullptr,
-            .ColorAttachmentFormat = vkb_swapchain.image_format,
         };
 
         ImGui_ImplVulkan_Init(&init_info, nullptr);
