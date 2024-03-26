@@ -15,13 +15,17 @@
 #define ALE_PRIMITIVES
 
 #pragma once
-#include <memory>
+//ext
 #include <vector>
 #include <string>
 #include <functional>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+//int
+#include <re_mesh.h>
+
 
 namespace ale {
 namespace geo {
@@ -98,12 +102,27 @@ struct Node {
     bool bVisible = true;
 };
 
+// TODO: Might be good to move Model to a separate TU and link both re_mesh
+// and primitives.
 
+
+// Generic view model for rendering and scene description
 struct Model {
     std::vector<ViewMesh> meshes;
     std::vector<Image> textures;
     std::vector<Node> nodes;
     std::vector<int> rootNodes;
+    std::vector<geo::REMesh> reMeshes;
+
+    void applyNodeParentTransforms(int nodeID, glm::mat4& result) const {
+        auto n = nodes[nodeID];
+        while (n.parent > -1) {
+            const auto parentID = n.parent;
+            const auto parent = nodes[parentID];
+            result = parent.transform * result;
+            n = parent;
+        }
+    };
 };
 
 
