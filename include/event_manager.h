@@ -81,6 +81,7 @@ private:
             trc::log("Current REMesh is null", trc::WARNING);
             return;
         }
+
         auto ubo = _renderer->getUbo();
         auto mouse = _inputManager->getMousePos();
         auto displaySize = _renderer->getDisplaySize();
@@ -93,17 +94,16 @@ private:
 
         bool result = false;
         glm::vec2 intersection = glm::vec2(0);
-
         float distance = -1;
-        for (auto f : _editorState->currentREMesh->faces) {
+        for (auto& f : _editorState->currentREMesh->faces) {
             result = geo::rayIntersectsTriangle(pos, fwd, f, intersection, distance);
             if (result) {
                 std::vector<geo::Loop*> out_loops = {};
                 geo::getBoundingLoops(f, out_loops);
                 std::vector<glm::vec3> loopVec = {};
-                loopVec.resize(3);
+                loopVec.reserve(3);
 
-                for (auto l : out_loops) {
+                for (auto& l : out_loops) {
                     loopVec.push_back(l->v->pos);
                 }
 
