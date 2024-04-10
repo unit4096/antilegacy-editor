@@ -41,6 +41,7 @@ enum GSpaceMode {
     SPACE_MODE_MAX,
 };
 
+
 struct GEditorState {
     GEditorMode editorMode;
     GTransformMode transformMode;
@@ -49,6 +50,7 @@ struct GEditorState {
     sp<ale::geo::REMesh> currentREMesh;
     sp<ale::ViewMesh>    currentViewMesh;
     sp<ale::Model>       currentModel;
+    sp<ale::Node>        currentModelNode;
 
     GEditorState(){
         editorMode = OBJECT_MODE;
