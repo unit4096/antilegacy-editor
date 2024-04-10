@@ -252,12 +252,28 @@ public:
     void renderNode(const VkCommandBuffer commandBuffer, const ale::Node& node, const ale::Model& model) {
         // TODO: Add frustum culling
 
+
+        auto applyParentTransforms = [](const ale::Model& m,
+                                        ale::Node n,
+                                        glm::mat4& result){
+            while (n.parent > -1) {
+                const auto parentID = n.parent;
+                const auto parent = m.nodes[parentID];
+                result = parent.transform * result;
+                n = parent;
+            }
+        };
+
+        auto t = node.transform;
+
+        applyParentTransforms(model, node, t);
+
         if (node.mesh > -1 && node.bVisible == true) {
             // Get unique node id
             float objId = static_cast<float>(node.id);
             // Assign a unique "color" by object's id
             float perObjColorData[4] = {objId,1,1,1};
-            auto t = node.transform;
+
             float* transform = ale::geo::glmMatToPtr(t);
             auto transRange = pushConstantRanges[0];
             auto colorRange = pushConstantRanges[1];
