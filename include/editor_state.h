@@ -48,7 +48,7 @@ struct GEditorState {
 
     sp<ale::geo::REMesh> currentREMesh;
     sp<ale::ViewMesh>    currentViewMesh;
-    sp<ale::Model>       currentViewModel;
+    sp<ale::Model>       currentModel;
 
     GEditorState(){
         editorMode = OBJECT_MODE;
