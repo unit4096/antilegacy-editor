@@ -95,6 +95,8 @@ private:
         bool result = false;
         glm::vec2 intersection = glm::vec2(0);
         float distance = -1;
+
+
         for (auto& f : _editorState->currentREMesh->faces) {
             result = geo::rayIntersectsTriangle(pos, fwd, f, intersection, distance);
             if (result) {
@@ -110,6 +112,7 @@ private:
                 _renderer->pushToUIDrawQueue({loopVec,ale::VERT});
                 break;
             }
+            _renderer->pushToUIDrawQueue({{pos,pos+(fwd*100000.0f)},ale::LINE});
         }
 
         std::string msg = "Raycast result: " + std::to_string(result);
