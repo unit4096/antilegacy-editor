@@ -98,10 +98,9 @@ int App::run() {
 
         // Arbitrary ui events to execute
         std::function<void()> uiEvents = [&](){
-
-            auto ubo = renderer->getUbo();
             using ui = ale::UIManager;
-
+            auto ubo = renderer->getUbo();
+            MVP pvm = {.m=ubo.model, .v=ubo.view, .p=ui::getFlippedProjection(ubo.proj)};
             /// GIZMOS START
             // The id of the first node containing a mesh
             // TODO: Implement proper node selection
@@ -115,6 +114,22 @@ int App::run() {
             // Manipulate a node with an ImGui Gizmo
             ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, *state.get());
             /// GIZMOS FINISH
+
+            for(auto pair: state->uiDrawQueue) {
+                std::vector<glm::vec3> vec;
+                vec.reserve(pair.first.size());
+                for(int i = 0; i < pair.first.size(); i++) {
+                    auto p = pair.first[i];
+                    auto tr = state->currentModel->nodes[0].transform;
+                    glm::vec4 fp (p,1.0f);
+                    fp = fp * tr;
+                    vec.push_back(glm::vec3(fp.x,fp.y,fp.z));
+                }
+
+                ale::UI_DRAW_TYPE type = pair.second;
+                ui::drawVectorOfPrimitives(vec, type, pvm);
+            }
+
         };
 
         // MAIN RENDERING LOOP

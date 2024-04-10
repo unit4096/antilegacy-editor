@@ -41,6 +41,13 @@ enum GSpaceMode {
     SPACE_MODE_MAX,
 };
 
+enum UI_DRAW_TYPE {
+    CIRCLE,
+    LINE,
+    VERT,
+    UI_DRAW_TYPE_MAX,
+};
+
 
 struct GEditorState {
     GEditorMode editorMode;
@@ -51,6 +58,8 @@ struct GEditorState {
     sp<ale::ViewMesh>    currentViewMesh;
     sp<ale::Model>       currentModel;
     sp<ale::Node>        currentModelNode;
+    std::vector<std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>> uiDrawQueue;
+
 
     GEditorState(){
         editorMode = OBJECT_MODE;

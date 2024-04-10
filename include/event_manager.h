@@ -108,11 +108,11 @@ private:
                 for (auto& l : out_loops) {
                     loopVec.push_back(l->v->pos);
                 }
-
-                _renderer->pushToUIDrawQueue({loopVec,ale::VERT});
+                _editorState->uiDrawQueue.push_back({loopVec,ale::VERT});
                 break;
             }
-            _renderer->pushToUIDrawQueue({{pos,pos+(fwd*100000.0f)},ale::LINE});
+
+            _editorState->uiDrawQueue.push_back( {{pos,pos+(fwd*100000.0f)},ale::LINE});
         }
 
         std::string msg = "Raycast result: " + std::to_string(result);
@@ -122,7 +122,7 @@ private:
 
     // Removes all primitives from the buffer
     std::function<void()> flushBuffer = [&](){
-        _renderer->flushUIDrawQueue();
+        _editorState->uiDrawQueue.clear();
     };
 
     std::function<void()> changeModeEditor = [&](){

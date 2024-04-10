@@ -25,13 +25,6 @@
 namespace ale {
 
 
-// Types of primitives to draw
-enum UI_DRAW_TYPE {
-    LINE,
-    VERT,
-    CIRCLE,
-    UI_DRAW_TYPE_MAX,
-};
 
 class UIManager {
 public:
