@@ -1,6 +1,5 @@
 #include <ui_manager.h>
 
-
 using namespace ale;
 
 const float VIEW_LIMIT = 0.01f;
@@ -240,6 +239,7 @@ void UIManager::drawHierarchyUI(const ale::Model& model) {
 void UIManager::drawNodeRootsUI(const ale::Model& model, const MVP& pvm) {
     for (auto& n : model.nodes) {
         auto t = n.transform;
+        model.applyNodeParentTransforms(n.id, t);
         auto pos = glm::vec3(t[3][0], t[3][1], t[3][2]);
         ale::UIManager::drawWorldSpaceCircle(pos, pvm);
     }

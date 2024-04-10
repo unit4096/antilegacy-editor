@@ -12,11 +12,15 @@ namespace ale {
 template<typename T>
 using sp = std::shared_ptr<T>;
 
-template<typename T>
-sp<T> to_sp(T x) { return std::make_shared<T>(x);};
+// FIXME: This produces unwanted results
+// (double creation and destruction of objects)
+// Need to find a way to create direct aliases without macros
 
-template<typename T>
-sp<T> to_sp() { return std::make_shared<T>();};
+/* template<typename T> */
+/* sp<T> to_sp(T x) { return std::make_shared<T>(x);}; */
+
+/* template<typename T> */
+/* sp<T> to_sp() { return std::make_shared<T>();}; */
 
 template<typename T>
 using up = std::unique_ptr<T>;

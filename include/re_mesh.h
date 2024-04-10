@@ -15,7 +15,7 @@
 // ext
 #pragma once
 #include <vector>
-#include <memory>
+#include <unordered_set>
 
 #ifndef GLM
 #define GLM
@@ -27,6 +27,7 @@
 // int
 #include <ale_memory.h>
 #include <tracer.h>
+#include <ale_pool.h>
 
 
 namespace ale {
@@ -130,26 +131,12 @@ struct Face {
 // TODO: this is a boilerplate mesh class, it must be extended
 class REMesh {
 public:
-    ~REMesh() {
-        for (auto f: faces) {
-            delete f;
-        }
-        for (auto e: edges) {
-            delete e->d1;
-            delete e->d2;
-            delete e;
-        }
-        for (auto l: loops) {
-            delete l;
-        }
-        for (auto v: verts) {
-            delete v;
-        }
-        for (auto d: disks) {
-            delete d;
-        }
-
-    }
+    ~REMesh() {}
+    ale::Pool<Face> facesPool;
+    ale::Pool<Edge> edgesPool;
+    ale::Pool<Loop> loopsPool;
+    ale::Pool<Vert> vertsPool;
+    ale::Pool<Disk> disksPool;
     std::vector<Face*> faces;
     std::vector<Edge*> edges;
     std::vector<Loop*> loops;

@@ -4,6 +4,7 @@
 
 // ext
 #include <algorithm>
+#include <memory>
 #ifndef GLFW
 #define GLFW
 #define GLFW_INCLUDE_VULKAN

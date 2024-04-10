@@ -1,5 +1,6 @@
 #include "os_loader.h"
 
+
 // ext
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -492,10 +493,14 @@ int Loader::loadModelGLTF(const std::string model_path,
 
     _loadNodesGLTF(in_model, out_model);
 
-    // The following code is here just to test re_mesh loading
-    ale::ViewMesh sampleMesh = out_model.meshes[0];
-    geo::REMesh reMesh;
-    populateREMesh(sampleMesh, reMesh);
+    out_model.reMeshes.reserve(out_model.meshes.size());
+    trc::log("Populating REMeshes");
+    for(size_t i = 0; i < out_model.meshes.size(); i++) {
+        geo::REMesh r;
+        out_model.reMeshes.push_back(r);
+        populateREMesh(out_model.meshes[i], out_model.reMeshes[i]);
+    }
+
     trc::log("Finished loading model");
     return 0;
 }
@@ -514,6 +519,22 @@ int Loader::loadModelGLTF(const std::string model_path,
 
 */
 bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
+    auto numVerts = _inpMesh.vertices.size();
+
+    // FIXME: Use growing storage to avoid use of excess memory
+    int MULT = 2;
+    _outMesh.facesPool.init(numVerts*3*MULT);
+    _outMesh.vertsPool.init(numVerts*3*MULT);
+    _outMesh.edgesPool.init(numVerts*3*MULT);
+    _outMesh.loopsPool.init(numVerts*3*2*MULT);
+    _outMesh.disksPool.init(numVerts*3*MULT);
+
+    auto* fp = &_outMesh.facesPool;
+    auto* vp = &_outMesh.vertsPool;
+    auto* ep = &_outMesh.edgesPool;
+    auto* lp = &_outMesh.loopsPool;
+    auto* dp = &_outMesh.disksPool;
+
 
     const bool TEST_2_MANIFOLD = false;
 
@@ -583,7 +604,8 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             if (uniqueVerts.contains(v)) {
                 verts[j] = uniqueVerts[v];
             } else {
-                verts[j] = new geo::Vert(v);
+                verts[j] = vp->request();
+                *verts[j] = v;
                 uniqueVerts[v] = verts[j];
             }
         }
@@ -600,7 +622,8 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
                 edges[j] = uniqueEdges[e];
                 contains[j] = true;
             } else {
-                edges[j] = new geo::Edge(e);
+                edges[j] = ep->request();
+                *edges[j] = e;
             }
 
             verts[j]->edge = edges[j];
@@ -618,8 +641,8 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
                 edges[j]->d1->next = try_get_edge(edges[prev]);
                 edges[j]->d2->prev = try_get_edge(edges[next]);
             } else {
-                edges[j]->d1 = new geo::Disk();
-                edges[j]->d2 = new geo::Disk();
+                edges[j]->d1 = dp->request();
+                edges[j]->d2 = dp->request();
                 edges[j]->d1->prev = try_get_edge(edges[next]);
                 edges[j]->d2->next = try_get_edge(edges[prev]);
             }
@@ -628,10 +651,11 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         // Time to create face boundary loooops
 
         // They are always new
-        auto l1 = new geo::Loop();
-        auto l2 = new geo::Loop();
-        auto l3 = new geo::Loop();
-        auto f = new geo::Face();
+        auto l1 = lp->request();
+        auto l2 = lp->request(); 
+        auto l3 = lp->request(); 
+
+        auto f = fp->request();
 
         loops = {l1,l2,l3};
 
@@ -673,7 +697,7 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     for (auto v : uniqueVerts) {
         auto _v = v.second;
         assert(_v->edge);
-        assert(_v->edge->v1 == _v);
+        assert(_v->edge->v1 == _v || _v->edge->v2 == _v);
         _outMesh.verts.push_back(_v);
     }
 
@@ -730,17 +754,16 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             _outMesh.disks.push_back(_d);
         }
     }
-    /*
-    trc::raw << "\n"
-        << uniqueVerts.size() <<  " vertices" << "\n"
-        << uniqueEdges.size() <<  " edges" << "\n"
-        << uniqueLoops.size() <<  " loops" << "\n"
-        << uniqueFaces.size() <<  " faces" << "\n"
-        << "REMesh E.P. characteristic: "
-        << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size() << "\n"
-        << "All asserts passed somehow!" << "\n"
-        << "\n";
-    */
+
+    /* trc::raw << "\n" */
+    /*     << uniqueVerts.size() <<  " vertices" << "\n" */
+    /*     << uniqueEdges.size() <<  " edges" << "\n" */
+    /*     << uniqueLoops.size() <<  " loops" << "\n" */
+    /*     << uniqueFaces.size() <<  " faces" << "\n" */
+    /*     << "REMesh E.P. characteristic: " */
+    /*     << uniqueVerts.size() - uniqueEdges.size() + uniqueFaces.size() << "\n" */
+    /*     << "All asserts passed somehow!" << "\n" */
+    /*     << "\n"; */
 
     return 0;
 }

@@ -73,6 +73,7 @@ Upcoming features:
 #include <set>
 #include <unordered_map>
 #include <stack>
+#include <memory>
 
 
 // int
@@ -387,7 +388,7 @@ public:
 private:
     GLFWwindow* window;
 
-    ale::sp<Camera> mainCamera = ale::to_sp<Camera>();
+    ale::sp<Camera> mainCamera = std::make_shared<Camera>();
 
     UniformBufferObject ubo{};
 

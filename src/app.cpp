@@ -51,25 +51,23 @@ int App::run() {
             return -1;
         }
 
-
         // EDITOR STATE
-        sp<GEditorState> state = to_sp<GEditorState>();
-        geo::REMesh reMesh;
+        sp<GEditorState> state = std::make_shared<GEditorState>();
 
-        sp<geo::REMesh> reMeshHandle = to_sp<geo::REMesh>(reMesh);
+        sp<ale::geo::REMesh> crm = std::make_shared<geo::REMesh>(model.reMeshes[0]);
+        sp<ale::Model> cm = std::make_shared<ale::Model>(model);
 
-        loader.populateREMesh(model.meshes[0],*reMeshHandle);
-        state->currentREMesh = reMeshHandle;
-
+        state->currentREMesh = crm;
+        state->currentModel = cm;
 
         // RENDERING
         // Create Vulkan renderer
         ale::Renderer ren(model);
-        sp<ale::Renderer> renderer = to_sp<ale::Renderer>(ren);
+        sp<ale::Renderer> renderer = std::make_shared<ale::Renderer>(ren);
         renderer->initWindow();
 
         // Create a camera object that will be passed to the renderer
-        sp<ale::Camera> mainCam =to_sp<ale::Camera>();
+        sp<ale::Camera> mainCam = std::make_shared<ale::Camera>();
         renderer->bindCamera(mainCam);
 
         mainCam->setSpeed(1.0f);
@@ -87,7 +85,7 @@ int App::run() {
         // INPUT MANAGEMENT
         // Create input manager object
         ale::InputManager inp;
-        sp<InputManager> input = to_sp(inp);
+        sp<InputManager> input = std::make_shared<InputManager>(inp);
         // Bind input to window
         input->init(renderer->getWindow());
 
