@@ -42,7 +42,7 @@ void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
     glm::vec2 screenPos2 = ale::geo::worldToScreen(pvm, size,  pos2);
     ImVec2 p1(screenPos1.x, screenPos1.y);
     ImVec2 p2(screenPos2.x, screenPos2.y);
-    listBg->AddLine(p1, p2, IM_COL32(255, 255, 255, 255), 5);
+    listBg->AddLine(p1, p2, IM_COL32(255, 255, 170, 255), 2);
 }
 
 
@@ -327,5 +327,12 @@ void UIManager::drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& 
     drawWorldSpaceLine(v100, v110, mvp);
     drawWorldSpaceLine(v101, v111, mvp);
     drawWorldSpaceLine(v110, v111, mvp);
+
+}
+
+void UIManager::drawRaycast(const glm::vec3& pos, const glm::vec3 dir,float length,  const MVP& mvp) {
+    auto dst = pos + (dir*length);
+
+    drawWorldSpaceLine(pos, dst, mvp);
 
 }

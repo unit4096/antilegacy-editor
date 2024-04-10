@@ -52,6 +52,7 @@ public:
     static void CameraControlWidgetUI(sp<ale::Camera> cam);
     static void drawDefaultWindowUI(sp<ale::Camera> cam, const ale::Model& model, MVP pvm);
     static void drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& mvp);
+    static void drawRaycast(const glm::vec3& pos, const glm::vec3 dir,float length,  const MVP& mvp);
 };
 
 
