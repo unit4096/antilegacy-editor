@@ -372,12 +372,6 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
         newTransform = glm::make_mat4(n.matrix.data());
     }
 
-
-    // TODO: Move this to renderer for real-time hierarchy manipulations
-    /* if (out_model.nodes.size() > parent && parent > -1) { */
-    /*     newTransform = out_model.nodes[parent].transform * newTransform; */
-    /* } */
-
 	ale_node.transform = newTransform;
     ale_node.name = n.name;
     ale_node.children = n.children;
