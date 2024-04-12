@@ -111,28 +111,24 @@ int App::run() {
                     break;
                 }
             }
+
             // Manipulate a node with an ImGui Gizmo
             ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, *state.get());
             /// GIZMOS FINISH
 
             for(auto pair: state->uiDrawQueue) {
-                std::vector<glm::vec3> vec;
-                vec.reserve(pair.first.size());
-                for(int i = 0; i < pair.first.size(); i++) {
-                    auto p = pair.first[i];
-                    auto tr = state->currentModel->nodes[0].transform;
-                    glm::vec4 fp (p,1.0f);
-                    fp = fp * tr;
-                    vec.push_back(glm::vec3(fp.x,fp.y,fp.z));
-                }
-
                 ale::UI_DRAW_TYPE type = pair.second;
+
+                // Just add position of the parent node.
+                // Should do the trick
+
+                auto vec = pair.first;
                 ui::drawVectorOfPrimitives(vec, type, pvm);
             }
 
         };
 
-        // MAIN RENDERING LOOP
+            // MAIN RENDERING LOOP
         while (!renderer->shouldClose()) {
             // Time point to the frame start
             auto thisFrame = std::chrono::steady_clock::now();

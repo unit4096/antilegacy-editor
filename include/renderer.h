@@ -1700,23 +1700,6 @@ private:
             .p = ubo.proj,
         });
 
-        for(auto pair: uiDrawQueue) {
-            std::vector<glm::vec3> vec;
-            vec.reserve(pair.first.size());
-            for(int i = 0; i < pair.first.size(); i++) {
-                auto p = pair.first[i];
-                auto tr = _model.nodes[0].transform;
-                glm::vec4 fp (p,1.0f);
-                fp = fp * tr;
-                vec.push_back(glm::vec3(fp.x,fp.y,fp.z));
-            }
-
-
-
-            ale::UI_DRAW_TYPE type = pair.second;
-            ui::drawVectorOfPrimitives(vec, type, pvm);
-        }
-
         ui::drawDefaultWindowUI(mainCamera, this->_model, pvm);
 
         uiEventsCallback();
