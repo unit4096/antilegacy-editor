@@ -231,8 +231,13 @@ static std::pair<glm::vec3, glm::vec3> extractMinMaxAABB(const ale::ViewMesh& me
     glm::vec3 min = {mesh.minPos[0], mesh.minPos[1], mesh.minPos[2]};
     glm::vec3 max = {mesh.maxPos[0], mesh.maxPos[1], mesh.maxPos[2]};
     return {min, max};
-
 }
+
+[[maybe_unused]]
+static glm::vec3 extractPosFromTransform(glm::mat4 transform) {
+    return glm::vec3(transform[3][0], transform[3][1], transform[3][2]);
+}
+
 
 // A simple function that indicates if a point is "in front" enough
 // of the camera. Used mostly to avoid inversing geometry behind the
