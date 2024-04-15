@@ -38,7 +38,7 @@ public:
     static void drawWorldSpaceVert(const glm::vec3& pos1, const glm::vec3& pos2, const glm::vec3& pos3, const MVP& mvpMat);
     static void drawWorldSpaceCircle(const glm::vec3& pos, const MVP& mvp);
     static void drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRAW_TYPE mode, const MVP& pvm);
-    static void drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model, GEditorState& state);
+    static void drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4* model, GEditorState& state);
     static void drawNodeRootsUI(const ale::Model& model, const MVP& pvm);
     static void drawMenuBarUI();
     static void drawHierarchyUI(const ale::Model& model);
@@ -46,6 +46,7 @@ public:
     static void drawDefaultWindowUI(sp<ale::Camera> cam, const ale::Model& model, MVP pvm);
     static void drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& mvp);
     static void drawRaycast(const glm::vec3& pos, const glm::vec3 dir,float length,  const MVP& mvp);
+    static void drawTextFG(const glm::vec2& pos, std::string name);
 };
 
 

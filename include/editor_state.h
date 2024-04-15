@@ -18,6 +18,13 @@ namespace ale {
 template<typename T>
 concept Enum = std::is_enum_v<T>;
 
+
+const std::vector<std::string> GEditorMode_Names { "OBJECT_MODE", "MESH_MODE", "UV_MODE", "EDITOR_MODE_MAX", };
+const std::vector<std::string> GTransformMode_Names { "TRANSLATE_MODE", "ROTATE_MODE", "SCALE_MODE", "COMBINED_MODE", "TRANSFORM_MODE_MAX", };
+const std::vector<std::string> GSpaceMode_Names { "LOCAL_MODE", "GLOBAL_MODE", "SPACE_MODE_MAX", };
+const std::vector<std::string> UI_DRAW_TYPE_Names { "CIRCLE", "LINE", "VERT", "UI_DRAW_TYPE_MAX", };
+
+
 enum GEditorMode {
     OBJECT_MODE,
     MESH_MODE,
@@ -54,10 +61,12 @@ struct GEditorState {
     GTransformMode transformMode;
     GSpaceMode spaceMode;
 
-    sp<ale::geo::REMesh> currentREMesh;
-    sp<ale::ViewMesh>    currentViewMesh;
-    sp<ale::Model>       currentModel;
-    sp<ale::Node>        currentModelNode;
+    ale::geo::REMesh*   currentREMesh;
+    ale::ViewMesh*   currentViewMesh;
+    ale::Model*      currentModel;
+
+    ale::Node*          currentModelNode;
+
     std::vector<std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>> uiDrawQueue;
 
 

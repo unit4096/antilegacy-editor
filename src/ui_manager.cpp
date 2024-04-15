@@ -125,11 +125,12 @@ void UIManager::drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRA
 
 // Draws ImGuizmo gizmo that takes mvp, editor state, and a transform
 // FIXME: How do i use this to manipulate sets of primitives?
-void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4& model, GEditorState& state){
+void UIManager::drawImGuiGizmo(glm::mat4& view, glm::mat4& proj, glm::mat4* model, GEditorState& state){
     UIManager::flipProjection(proj);
     float* _view = geo::glmMatToPtr(view);
     float* _proj = geo::glmMatToPtr(proj);
-    float* _model = geo::glmMatToPtr(model);
+    float* _model = glm::value_ptr(*model);
+
 
     auto operation = ImGuizmo::OPERATION::TRANSLATE;
     auto space = ImGuizmo::MODE::WORLD;
@@ -336,3 +337,13 @@ void UIManager::drawRaycast(const glm::vec3& pos, const glm::vec3 dir,float leng
     drawWorldSpaceLine(pos, dst, mvp);
 
 }
+
+
+void UIManager::drawTextFG(const glm::vec2& pos, std::string name) {
+                auto* fg = ImGui::GetForegroundDrawList();
+                fg->AddText(ImVec2(pos.x,pos.y),
+                    ImColor(50.0f,45.0f,255.0f,255.0f),
+                    name.data());
+}
+
+

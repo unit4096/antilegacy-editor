@@ -242,6 +242,7 @@ public:
         currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
     }
 
+
     // Work in progress! Render individual nodes with position offsets
     // as push constants.
     void renderNodes(const VkCommandBuffer commandBuffer, const ale::Model& model) {
@@ -1681,6 +1682,7 @@ private:
 
     // Initializes ImGui stuff and records ui events here
     void drawImGui(std::function<void()>& uiEventsCallback) {
+
         /// INIT IMPORTANT IMGUI STUFF
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -1691,17 +1693,14 @@ private:
         ImGuizmo::SetRect(x, y, w, h);
 
         using ui = ale::UIManager;
-        // Draw each selected face as a triangle
-
-        MVP pvm  = ui::getMVPWithFlippedProjection({
+        MVP pvm  = {
             .m = ubo.model,
             .v = ubo.view,
             // Imgui works with -Y as up, ALE works with Y as up
-            .p = ubo.proj,
-        });
+            .p = ui::getFlippedProjection(ubo.proj),
+        };
 
         ui::drawDefaultWindowUI(mainCamera, this->_model, pvm);
-
         uiEventsCallback();
 
         /// FINAL IMPORTANT STUFF

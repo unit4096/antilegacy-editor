@@ -29,6 +29,7 @@ int App::run() {
         auto lastFrame = std::chrono::steady_clock::now();
         std::chrono::duration<double> deltaTime;
 
+
         // LOGGING (Enables all logging levels by default)
         // std::vector<trc::LogLevel> logLevels = { trc::LogLevel::DEBUG, trc::LogLevel::INFO, trc::LogLevel::WARNING, trc::LogLevel::ERROR,};
         // trc::SetLogLevels(logLevels);
@@ -40,6 +41,7 @@ int App::run() {
         ale::Loader loader;
         loader.recordCommandLineArguments(_config.argc, _config.argv);
         loader.getFlaggedArgument("-f", model_path);
+
 
         ale::Model model;
         // // You can use this to load a custom texture
@@ -54,11 +56,10 @@ int App::run() {
         // EDITOR STATE
         sp<GEditorState> state = std::make_shared<GEditorState>();
 
-        sp<ale::geo::REMesh> crm = std::make_shared<geo::REMesh>(model.reMeshes[0]);
-        sp<ale::Model> cm = std::make_shared<ale::Model>(model);
 
-        state->currentREMesh = crm;
-        state->currentModel = cm;
+        state->currentREMesh = &model.reMeshes[0];
+        state->currentModel = &model;
+        state->currentModelNode = nullptr;
 
         // RENDERING
         // Create Vulkan renderer
@@ -96,39 +97,42 @@ int App::run() {
         // Start renderer
         renderer->initRenderer();
 
+
         // Arbitrary ui events to execute
-        std::function<void()> uiEvents = [&](){
+        std::function<void()> perFrameUIEvents = [&](){
             using ui = ale::UIManager;
             auto ubo = renderer->getUbo();
-            MVP pvm = {.m=ubo.model, .v=ubo.view, .p=ui::getFlippedProjection(ubo.proj)};
-            /// GIZMOS START
-            // The id of the first node containing a mesh
-            // TODO: Implement proper node selection
-            int id = 0;
-            for (auto n : model.nodes) {
-                if (n.mesh > -1) {
-                    id = n.id;
-                    break;
-                }
-            }
 
-            // Manipulate a node with an ImGui Gizmo
-            ui::drawImGuiGizmo(ubo.view, ubo.proj, model.nodes[id].transform, *state.get());
-            /// GIZMOS FINISH
+            MVP pvm = {.m = ubo.model, .v = ubo.view, .p = ui::getFlippedProjection(ubo.proj)};
+            if (state->currentModelNode) {
+                ui::drawImGuiGizmo(ubo.view, ubo.proj, &state->currentModelNode->transform , *state.get());
+            }
 
             for(auto pair: state->uiDrawQueue) {
                 ale::UI_DRAW_TYPE type = pair.second;
-
-                // Just add position of the parent node.
-                // Should do the trick
-
                 auto vec = pair.first;
+
+                auto parentPos = geo::extractPosFromTransform(state->currentModelNode->transform);
+
+                for(auto& e : vec) {
+                    e += parentPos;
+                }
+
                 ui::drawVectorOfPrimitives(vec, type, pvm);
             }
 
+            std::string msg = "selected node: " + (state->currentModelNode == nullptr
+                              ? "NONE"
+                              : model.nodes[state->currentModelNode->id].name);
+            msg.append("\neditor mode: " + ale::GEditorMode_Names[state->editorMode]);
+            msg.append("\ntransfor mode: " + ale::GTransformMode_Names[state->transformMode]);
+            msg.append("\nspace mode: " + ale::GSpaceMode_Names[state->spaceMode]);
+            ui::drawTextFG({100,100}, msg);
+
         };
 
-            // MAIN RENDERING LOOP
+
+        // MAIN RENDERING LOOP
         while (!renderer->shouldClose()) {
             // Time point to the frame start
             auto thisFrame = std::chrono::steady_clock::now();
@@ -151,7 +155,7 @@ int App::run() {
             renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
 
             // Drawing the results of the input
-            renderer->drawFrame(uiEvents);
+            renderer->drawFrame(perFrameUIEvents);
 
             // Smooth framerate
             auto thisFrameEnd = std::chrono::steady_clock::now();
@@ -163,6 +167,7 @@ int App::run() {
             // system to sleep_for + VSync wait. In this case just
             // disable this fps cap
             std::this_thread::sleep_for(remainder);
+
         }
         renderer->cleanup();
 
