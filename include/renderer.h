@@ -409,8 +409,6 @@ private:
 
 
     std::stack<std::function<bool()>> destructorStack = {};
-    // TODO: add multiple model handling and scene hierarchy
-
     ale::Model& _model;
 
     // TODO: Render materials instead of raw textures
@@ -1469,7 +1467,7 @@ private:
                 colorRange, topOfPipeState, colorAttachmentState);
 
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{0.01f, 0.01f, 0.01f, 1.0f}};
+        clearValues[0].color = {{0.001f, 0.001f, 0.001f, 1.0f}};
         clearValues[1].depthStencil = {1.0f, 0};
 
 
@@ -1585,40 +1583,137 @@ private:
     // INIT IMGUI
     // START
 
+
     void setStyleImGui() {
         //TODO: move this code to a config file
         ImGuiStyle &style = ImGui::GetStyle();
 
-        // Convert four ints to ImVec4 color
-        auto _clr = [](int r, int g, int b, int a) {
-            float RANGE = 255;
-            return ImVec4( r/RANGE,g/RANGE,b/RANGE,a/RANGE);
+        auto rgba = [](char const* color) {
+            const float R = 255;
+            int r, g, b, a;
+            std::sscanf(color, "#%02x%02x%02x%02x", &r, &g, &b, &a);
+            return ImVec4(r/R,g/R,b/R,a/R);
         };
 
+        auto bg = rgba("#222222ff");
+        auto bg_hard = rgba("#101010ff");
+        auto bg_hardest = rgba("#040404ff");
+        auto bg_focus = rgba("#323232ff");
+        auto bg_active = rgba("#282828ff");
 
-        // Change colors of elements to make ImGui bearable
-        style.Colors[ImGuiCol_::ImGuiCol_FrameBg] = _clr(4,4,4,255);
-        style.Colors[ImGuiCol_::ImGuiCol_WindowBg] = _clr(14,22,22,255);
-        style.Colors[ImGuiCol_::ImGuiCol_Tab] = _clr(14,22,22,255);
-        style.Colors[ImGuiCol_::ImGuiCol_Button] = _clr(38,48,48,255);
-        style.Colors[ImGuiCol_::ImGuiCol_ButtonActive] = _clr(30,78,78,255);
-        style.Colors[ImGuiCol_::ImGuiCol_SliderGrab] = _clr(20,68,68,255);
-        style.Colors[ImGuiCol_::ImGuiCol_ButtonHovered] =_clr(108,108,108,255);
+        auto fg = rgba("#f0f0f0ff");
+        auto fg_dimm = rgba("#808080ff");
+
+        auto btn = rgba("#588981ff");
+        auto btn_hover = ImVec4(btn.x + 0.2, btn.y + 0.2, btn.z + 0.2, 1);
+        auto btn_active  = ImVec4(btn.x + 0.1, btn.y + 0.1, btn.z + 0.1, 1);
+        auto btn_dimm  = ImVec4(btn.x - 0.1, btn.y - 0.15, btn.z - 0.15, 1);
+
+        auto btn_alt = rgba("#dd2547ff");
+        auto btn_alt_hover = ImVec4(btn_alt.x + 0.2, btn_alt.y + 0.2, btn_alt.z + 0.2, 1);
+        auto btn_alt_active  = ImVec4(btn_alt.x + 0.1, btn_alt.y + 0.1, btn_alt.z + 0.1, 1);
+        auto btn_alt_dimm  = ImVec4(btn_alt.x - 0.1, btn_alt.y - 0.15, btn_alt.z - 0.15, 1);
 
 
-        style.WindowMinSize        = ImVec2( 100, 20 );
-        style.ItemSpacing          = ImVec2( 6, 2 );
+
+
+        style.Colors[ImGuiCol_Text]                  = fg;
+
+        style.Colors[ImGuiCol_TextDisabled]          = fg_dimm;
+
+        style.Colors[ImGuiCol_WindowBg]              = bg;
+        style.Colors[ImGuiCol_PopupBg]               = bg;
+
+        style.Colors[ImGuiCol_ChildBg]               = bg;
+
+        style.Colors[ImGuiCol_Border]                = bg_hard;
+        style.Colors[ImGuiCol_BorderShadow]          = bg_hardest;
+
+        style.Colors[ImGuiCol_FrameBg]               = bg_hard;
+        style.Colors[ImGuiCol_FrameBgHovered]        = bg_focus;
+        style.Colors[ImGuiCol_FrameBgActive]         = bg_active;
+
+        style.Colors[ImGuiCol_TitleBg]               = bg;
+        style.Colors[ImGuiCol_TitleBgCollapsed]      = bg;
+        style.Colors[ImGuiCol_TitleBgActive]         = bg_active;
+        style.Colors[ImGuiCol_MenuBarBg]             = bg;
+
+        style.Colors[ImGuiCol_ScrollbarBg]           = bg_hard;
+        style.Colors[ImGuiCol_ScrollbarGrab]         = btn;
+        style.Colors[ImGuiCol_ScrollbarGrabHovered]  = btn_hover;
+        style.Colors[ImGuiCol_ScrollbarGrabActive]   = btn_active;
+
+        style.Colors[ImGuiCol_CheckMark]             = btn_active;
+        style.Colors[ImGuiCol_SliderGrab]            = btn;
+        style.Colors[ImGuiCol_SliderGrabActive]      = btn_active;
+
+        style.Colors[ImGuiCol_Button]                = btn;
+        style.Colors[ImGuiCol_ButtonHovered]         = btn_hover;
+        style.Colors[ImGuiCol_ButtonActive]          = btn_active;
+
+        style.Colors[ImGuiCol_Header]                = btn;
+        style.Colors[ImGuiCol_HeaderHovered]         = btn_hover;
+        style.Colors[ImGuiCol_HeaderActive]          = btn_active;
+
+
+        style.Colors[ImGuiCol_Separator]             = btn;
+        style.Colors[ImGuiCol_SeparatorHovered]      = btn_hover;
+        style.Colors[ImGuiCol_SeparatorActive]       = btn_active;
+
+        style.Colors[ImGuiCol_ResizeGrip]            = btn;
+        style.Colors[ImGuiCol_ResizeGripHovered]     = btn_hover;
+        style.Colors[ImGuiCol_ResizeGripActive]      = btn_active;
+
+
+        style.Colors[ImGuiCol_Tab]                   = btn;
+        style.Colors[ImGuiCol_TabHovered]            = btn_hover;
+        style.Colors[ImGuiCol_TabActive]             = btn_active;
+
+        style.Colors[ImGuiCol_TabUnfocused]          = btn_dimm;
+        style.Colors[ImGuiCol_TabUnfocusedActive]    = btn_active;
+
+        style.Colors[ImGuiCol_DockingPreview]        = btn;
+        style.Colors[ImGuiCol_DockingEmptyBg]        = btn_dimm;
+
+
+        style.Colors[ImGuiCol_PlotLines]             = btn;
+        style.Colors[ImGuiCol_PlotLinesHovered]      = btn_hover;
+
+        style.Colors[ImGuiCol_PlotHistogram]         = btn;
+        style.Colors[ImGuiCol_PlotHistogramHovered]  = btn_hover;
+
+
+        style.Colors[ImGuiCol_TableHeaderBg]         = bg;
+
+        style.Colors[ImGuiCol_TableBorderStrong]     = bg_hard;
+        style.Colors[ImGuiCol_TableBorderLight]      = bg_active;
+
+        style.Colors[ImGuiCol_TableRowBg]            = btn;
+        style.Colors[ImGuiCol_TableRowBgAlt]         = btn_alt;
+
+        style.Colors[ImGuiCol_TextSelectedBg]        = bg_hardest;
+
+        style.Colors[ImGuiCol_DragDropTarget]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+        style.Colors[ImGuiCol_NavHighlight]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+        style.Colors[ImGuiCol_NavWindowingHighlight]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+        style.Colors[ImGuiCol_NavWindowingDimBg]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+        style.Colors[ImGuiCol_ModalWindowDimBg]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
+
+
+
+        /* style.WindowMinSize        = ImVec2( 100, 20 ); */
+        /* style.ItemSpacing          = ImVec2( 6, 2 ); */
         style.Alpha                = 0.95f;
         style.WindowRounding       = 2.0f;
         style.FrameRounding        = 2.0f;
-        style.IndentSpacing        = 6.0f;
-        style.ItemInnerSpacing     = ImVec2( 1, 1 );
-        style.ColumnsMinSpacing    = 50.0f;
+        /* style.IndentSpacing        = 6.0f; */
+        /* style.ItemInnerSpacing     = ImVec2( 1, 1 ); */
+        /* style.ColumnsMinSpacing    = 50.0f; */
         style.GrabMinSize          = 14.0f;
         style.GrabRounding         = 16.0f;
-        style.ScrollbarSize        = 12.0f;
+        /* style.ScrollbarSize        = 12.0f; */
         style.ScrollbarRounding    = 16.0f;
-        style.ScaleAllSizes(4);
+        style.ScaleAllSizes(2);
 
         float size_pixels = 22;
         ImFontConfig config;
@@ -1641,6 +1736,7 @@ private:
         // Set up style
         ImGui::StyleColorsDark();
         setStyleImGui();
+
 
         VkDescriptorPoolSize pool_sizes[] {
             { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
@@ -1688,6 +1784,11 @@ private:
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         ImGuizmo::BeginFrame();
+        ImGui::ShowDemoWindow();
+
+        ImGuiDockNodeFlags docking_flags = ImGuiDockNodeFlags_PassthruCentralNode;
+
+        ImGui::DockSpaceOverViewport(nullptr, docking_flags);
         ImGuiIO& _io = ImGui::GetIO();
         float x = 0, y = 0, w = _io.DisplaySize.x, h = _io.DisplaySize.y;
         ImGuizmo::SetRect(x, y, w, h);
@@ -1701,6 +1802,12 @@ private:
         };
 
         ui::drawDefaultWindowUI(mainCamera, this->_model, pvm);
+
+
+        ImGui::Begin("Hierarchy");
+        ui::drawHierarchyUI(this->_model);
+        ImGui::End();
+
         uiEventsCallback();
 
         /// FINAL IMPORTANT STUFF
