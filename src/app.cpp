@@ -34,7 +34,6 @@ int App::run() {
         // std::vector<trc::LogLevel> logLevels = { trc::LogLevel::DEBUG, trc::LogLevel::INFO, trc::LogLevel::WARNING, trc::LogLevel::ERROR,};
         // trc::SetLogLevels(logLevels);
 
-
         // MODEL LOADING
         // Fox.gltf is a default model to load when no path provided
         std::string model_path = "./models/fox/Fox.gltf";
@@ -127,7 +126,7 @@ int App::run() {
             msg.append("\neditor mode: " + ale::GEditorMode_Names[state->editorMode]);
             msg.append("\ntransfor mode: " + ale::GTransformMode_Names[state->transformMode]);
             msg.append("\nspace mode: " + ale::GSpaceMode_Names[state->spaceMode]);
-            ui::drawTextFG({100,100}, msg);
+            ui::drawTextBG({100,100}, msg);
 
         };
 
