@@ -204,7 +204,9 @@ void _parseNode(const ale::Model& model, int id) {
     ImGuiTreeNodeFlags base_flags =
                                 ImGuiTreeNodeFlags_OpenOnArrow |
                                 ImGuiTreeNodeFlags_OpenOnDoubleClick |
-                                ImGuiTreeNodeFlags_SpanAvailWidth;
+                                ImGuiTreeNodeFlags_SpanAvailWidth |
+                                ImGuiTreeNodeFlags_DefaultOpen;
+
     auto n = model.nodes[id];
     ImGuiTreeNodeFlags node_flags = base_flags;
 
@@ -212,23 +214,24 @@ void _parseNode(const ale::Model& model, int id) {
     s.append(" idx: ");
     s.append(std::to_string(n.id));
 
+    bool isLeaf = false;
+    if (n.children.size() <= 0) {
+        node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+        isLeaf = true;
+    }
+
     if (ImGui::TreeNodeEx((void*)(intptr_t)n.id, node_flags, s.data(),n.id)) {
-        if (n.children.size() > 0) {
+        if (!isLeaf) {
             for (auto c  : n.children) {
                 _parseNode(model, c);
             }
-        } else {
-            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(201,62,62,255));
-            ImGui::Text("Leaf node");
-            ImGui::PopStyleColor();
+            ImGui::TreePop();
         }
-        ImGui::TreePop();
     }
 }
 
 
 void UIManager::drawHierarchyUI(const ale::Model& model) {
-
     for (auto nID : model.rootNodes) {
         _parseNode(model, nID);
     }
@@ -260,8 +263,13 @@ void UIManager::CameraControlWidgetUI(sp<ale::Camera> cam) {
     ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
     ImGui::SliderFloat("SPEED", &camData.speed, 0.0001f, 10.0f);
 
-    if (ImGui::Button("Toggle Camera mode"))
+    if (ImGui::ColoredButton("Toggle camera mode",
+                 ImVec2(-FLT_MIN, 0.0f),
+                 IM_COL32(255, 255, 255, 255),
+                 IM_COL32(80, 170, 180, 255),
+                 IM_COL32(30, 60, 90, 255))){
         cam->toggleMode();
+    }
 
     std::string mode_name = cam->mode==CameraMode::ARCBALL
                             ?"ARCBALL"
@@ -272,37 +280,28 @@ void UIManager::CameraControlWidgetUI(sp<ale::Camera> cam) {
     /// CAMERA CONTROL END
 }
 
+
 void UIManager::drawDefaultWindowUI(sp<ale::Camera> cam,
                                     const ale::Model& model, MVP pvm) {
     using ui = ale::UIManager;
     auto _io = ImGui::GetIO();
 
-    // Draw each node as a circle
+
+    // TODO: Move this to overlay rendering from UI
     ale::UIManager::drawNodeRootsUI(model, pvm);
-
-
     ui::drawMenuBarUI();
 
-    // CAMERA & HIERARCHY
+
     ImGui::Begin("View configs");
     ImGui::Text("Camera properties");
-    // Camera
     ui::CameraControlWidgetUI(cam);
 
-    /// FPS DRAW START
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
-                         1000.0f / _io.Framerate, _io.Framerate);
-    ImGui::Text("FPS CAP ENABLED");
-    /// FPS DRAW END
-
-    ImGui::Spacing();
-
-    ImGui::Text("NODE HIERARCHY");
-    ui::drawHierarchyUI(model);
+    ImGui::Text(" %.3f ms/frame (%.1f FPS). FPS CAP ENABLED",
+                1000.0f / _io.Framerate, _io.Framerate);
 
     ImGui::End();
-    // CAMERA & HIERARCHY END
 }
+
 
 void UIManager::drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& mvp) {
     auto v000 = glm::vec3(min.x, min.y, min.z);
@@ -328,8 +327,8 @@ void UIManager::drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& 
     drawWorldSpaceLine(v100, v110, mvp);
     drawWorldSpaceLine(v101, v111, mvp);
     drawWorldSpaceLine(v110, v111, mvp);
-
 }
+
 
 void UIManager::drawRaycast(const glm::vec3& pos, const glm::vec3 dir,float length,  const MVP& mvp) {
     auto dst = pos + (dir*length);
@@ -346,4 +345,10 @@ void UIManager::drawTextFG(const glm::vec2& pos, std::string name) {
                     name.data());
 }
 
+void UIManager::drawTextBG(const glm::vec2& pos, std::string name) {
+                auto* bg = ImGui::GetBackgroundDrawList();
+                bg->AddText(ImVec2(pos.x,pos.y),
+                    ImColor(50.0f,45.0f,255.0f,255.0f),
+                    name.data());
+}
 

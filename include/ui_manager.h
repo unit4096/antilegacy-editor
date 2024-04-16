@@ -47,6 +47,7 @@ public:
     static void drawAABB(const glm::vec3& min, const glm::vec3& max, const MVP& mvp);
     static void drawRaycast(const glm::vec3& pos, const glm::vec3 dir,float length,  const MVP& mvp);
     static void drawTextFG(const glm::vec2& pos, std::string name);
+    static void drawTextBG(const glm::vec2& pos, std::string name);
 };
 
 
