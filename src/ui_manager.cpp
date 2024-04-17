@@ -261,7 +261,7 @@ void UIManager::CameraControlWidgetUI(sp<ale::Camera> cam) {
     ImGui::SliderFloat("FOV", &camData.fov, 10.0f, 90.0f);
     ImGui::SliderFloat("YAW", &camData.yaw, 0.0f, 360.0f);
     ImGui::SliderFloat("PITCH", &camData.pitch, -90.0f, 90.0f);
-    ImGui::SliderFloat("SPEED", &camData.speed, 0.0001f, 10.0f);
+    ImGui::SliderFloat("SPEED", &camData.speed, 0.001f, 10.0f);
 
     if (ImGui::ColoredButton("Toggle camera mode",
                  ImVec2(-FLT_MIN, 0.0f),
