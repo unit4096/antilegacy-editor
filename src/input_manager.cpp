@@ -110,20 +110,22 @@ bool InputManager::executeActiveMouseAcitons() {
     _lastDeltaX = 0;
     _lastDeltaY = 0;
 
+    glfwGetCursorPos(_window_p, &xpos, &ypos);
     // Calculates the delta offset for mouse movement
     if (state == GLFW_PRESS) {
-        glfwGetCursorPos(_window_p, &xpos, &ypos);
         if (_lastPosX != xpos || _lastPosY != ypos) {
             if (_isLastPressed){
                 _lastDeltaX = xpos - _lastPosX;
                 _lastDeltaY = ypos - _lastPosY;
             }
-            _lastPosX = xpos;
-            _lastPosY = ypos;
         }
         _isLastPressed = true;
     } else {
         _isLastPressed = false;
     }
+
+
+    _lastPosX = xpos;
+    _lastPosY = ypos;
     return true;
 }
