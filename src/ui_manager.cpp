@@ -120,6 +120,12 @@ void UIManager::drawVectorOfPrimitives(const std::vector<glm::vec3>& vec, UI_DRA
                                                vec[i+2], pvm);
         }
     }
+
+    if (mode == UI_DRAW_TYPE::AABB && vec.size() % 2 == 0) {
+        for (int i = 0; i < vec.size(); i+=2) {
+            ale::UIManager::drawAABB(vec[i], vec[i+1], pvm);
+        }
+    }
 }
 
 

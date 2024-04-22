@@ -153,6 +153,7 @@ private:
 
                     _editorState->currentModelNode = &node;
                     _editorState->currentREMesh = &_editorState->currentModel->reMeshes[node.mesh];
+                    _editorState->uiDrawQueue.push_back({{aabb.first, aabb.second},ale::AABB});
                 }
             }
         }

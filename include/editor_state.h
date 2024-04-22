@@ -52,6 +52,7 @@ enum UI_DRAW_TYPE {
     CIRCLE,
     LINE,
     VERT,
+    AABB,
     UI_DRAW_TYPE_MAX,
 };
 
