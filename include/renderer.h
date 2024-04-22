@@ -310,38 +310,10 @@ public:
         vkDestroyPipeline(vkb_device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(vkb_device, pipelineLayout, nullptr);
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroyBuffer(vkb_device, uniformBuffers[i], nullptr);
-            vkFreeMemory(vkb_device, uniformBuffersMemory[i], nullptr);
-        }
 
-        // TODO: Create helper functions for deallocations
-        vkDestroyDescriptorPool(vkb_device, descriptorPool, nullptr);
-        vkDestroyDescriptorPool(vkb_device, imguiPool, nullptr);
+        
 
-        vkDestroySampler(vkb_device, textureSampler, nullptr);
-        vkDestroyImageView(vkb_device, textureImageView, nullptr);
 
-        vkDestroyImage(vkb_device, textureImage, nullptr);
-        vkFreeMemory(vkb_device, textureImageMemory, nullptr);
-
-        vkDestroyDescriptorSetLayout(vkb_device, descriptorSetLayout, nullptr);
-
-        vkDestroyBuffer(vkb_device, indexBuffer, nullptr);
-        vkFreeMemory(vkb_device, indexBufferMemory, nullptr);
-
-        vkDestroyBuffer(vkb_device, vertexBuffer, nullptr);
-        vkFreeMemory(vkb_device, vertexBufferMemory, nullptr);
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(vkb_device, renderFinishedSemaphores[i], nullptr);
-            vkDestroySemaphore(vkb_device, imageAvailableSemaphores[i], nullptr);
-            vkDestroyFence(vkb_device, inFlightFences[i], nullptr);
-        }
-
-        vkDestroyCommandPool(vkb_device, commandPool, nullptr);
-
-        // TODO: Move here as many things as possible
         while (!destructorStack.empty()) {
             destructorStack.top()();
             destructorStack.pop();
@@ -796,6 +768,12 @@ private:
         if (vkCreateDescriptorSetLayout(vkb_device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
+
+        destructorStack.push([this](){
+            vkDestroyDescriptorSetLayout(vkb_device, descriptorSetLayout, nullptr);
+            return false;
+        });
+
     }
 
     void createGraphicsPipeline() {
@@ -891,6 +869,11 @@ private:
         if (vkCreateCommandPool(vkb_device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create graphics command pool!");
         }
+
+        destructorStack.push([this](){
+            vkDestroyCommandPool(vkb_device, commandPool, nullptr);
+            return false;
+        });
     }
 
     void createDepthResources() {
@@ -949,6 +932,16 @@ private:
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
+
+
+
+
+        destructorStack.push([this](){
+            vkDestroyImage(vkb_device, textureImage, nullptr);
+            vkFreeMemory(vkb_device, textureImageMemory, nullptr);
+            return false;
+        });
+
     }
 
     void createTextureImageView() {
@@ -981,6 +974,13 @@ private:
         if (vkCreateSampler(vkb_device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
             throw std::runtime_error("failed to create texture sampler!");
         }
+
+
+        destructorStack.push([this](){
+            vkDestroySampler(vkb_device, textureSampler, nullptr);
+            vkDestroyImageView(vkb_device, textureImageView, nullptr);
+            return false;
+        });
     }
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
@@ -1167,6 +1167,12 @@ private:
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
+
+        destructorStack.push([this](){
+            vkDestroyBuffer(vkb_device, vertexBuffer, nullptr);
+            vkFreeMemory(vkb_device, vertexBufferMemory, nullptr);
+            return false;
+        });
     }
 
     void createIndexBuffer() {
@@ -1237,6 +1243,13 @@ private:
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
+
+
+        destructorStack.push([this](){
+            vkDestroyBuffer(vkb_device, indexBuffer, nullptr);
+            vkFreeMemory(vkb_device, indexBufferMemory, nullptr);
+            return false;
+        });
     }
 
     void createUniformBuffers() {
@@ -1251,6 +1264,14 @@ private:
 
             vkMapMemory(vkb_device, uniformBuffersMemory[i], 0, bufferSize, 0, &uniformBuffersMapped[i]);
         }
+
+        destructorStack.push([this](){
+            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                vkDestroyBuffer(vkb_device, uniformBuffers[i], nullptr);
+                vkFreeMemory(vkb_device, uniformBuffersMemory[i], nullptr);
+            }
+            return false;
+        });
     }
 
     void createDescriptorPool() {
@@ -1272,6 +1293,14 @@ private:
         if (vkCreateDescriptorPool(vkb_device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor pool!");
         }
+
+
+        destructorStack.push([this](){
+            vkDestroyDescriptorPool(vkb_device, descriptorPool, nullptr);
+            vkDestroyDescriptorPool(vkb_device, imguiPool, nullptr);
+            return false;
+        });
+
     }
 
     void createDescriptorSets() {
@@ -1574,6 +1603,15 @@ private:
                 throw std::runtime_error("failed to create synchronization objects for a frame!");
             }
         }
+
+        destructorStack.push([this](){
+            for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+                vkDestroySemaphore(vkb_device, renderFinishedSemaphores[i], nullptr);
+                vkDestroySemaphore(vkb_device, imageAvailableSemaphores[i], nullptr);
+                vkDestroyFence(vkb_device, inFlightFences[i], nullptr);
+            }
+            return false;
+        });
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
