@@ -311,14 +311,10 @@ public:
         vkDestroyPipelineLayout(vkb_device, pipelineLayout, nullptr);
 
 
-        
-
-
         while (!destructorStack.empty()) {
             destructorStack.top()();
             destructorStack.pop();
         }
-
     }
 
     bool shouldClose() {
@@ -916,7 +912,10 @@ private:
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
-        createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+        createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                     VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+                     VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                     stagingBuffer, stagingBufferMemory);
 
         // TODO: store this pointer for later use
         void* data;
@@ -924,7 +923,11 @@ private:
             memcpy(data, &image.data.at(0), static_cast<size_t>(imageSize));
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
-        createImage(image.w, image.h, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+        createImage(image.w, image.h,
+                    VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+                    VK_IMAGE_USAGE_SAMPLED_BIT,
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
         transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
             copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(image.w), static_cast<uint32_t>(image.h));
@@ -932,9 +935,6 @@ private:
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
-
-
-
 
         destructorStack.push([this](){
             vkDestroyImage(vkb_device, textureImage, nullptr);
