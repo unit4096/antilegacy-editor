@@ -31,7 +31,7 @@ IMGUI_OBJS = $(patsubst $(IMGUI_SRC_DIR)/%.cpp, $(IMGUI_OBJ_DIR)/%.o, $(IMGUI_SR
 # Executable file
 MAIN = $(BIN_DIR)/editor
 
-.PHONY: all clean t shaders clean_main ./src/app.cpp gt abg
+.PHONY: all clean t shaders clean_main ./src/app.cpp rt abg
 # Targets
 
 clean_main:
@@ -41,7 +41,7 @@ c:
 	./$(MAIN) -f ./models/cube/Cube.gltf
 
 # uses external .gltf flie!
-abg:
+abg: all
 	echo Loading external model! MAY NOT WORK ON YOUR MACHINE \
 		&& ./build/editor -f ../../glTF-Sample-Models/models/ABeautifulGame.gltf
 
@@ -51,10 +51,10 @@ f:
 t: all
 	./$(MAIN) -f ./models/fox/Fox.gltf
 
-gt: testcase
+rt:	tc
 	./testme
 
-testcase:
+tc:
 	$(CXX) $(CXXFLAGS) ./src/test.cpp ./$(OBJ_DIR)/camera.o -o testme $(INCLUDE_ALL) $(LDFLAGS)
 
 all: $(MAIN)
@@ -82,4 +82,4 @@ clean:
 	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 shaders:
-	glslc shaders/shader.vert -o shaders/vert.spv & glslc shaders/shader.frag -o shaders/frag.spv
+	glslc shaders/shader.vert -o shaders/vert.spv & glslc shaders/shader.frag -o shaders/frag.spv & glslc shaders/line.comp -o shaders/line.comp.spv
