@@ -1782,8 +1782,6 @@ private:
     }
 
     void initImGUI(){
-        trc::log("There is a minor memory leak here!",trc::WARNING);
-
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
 
