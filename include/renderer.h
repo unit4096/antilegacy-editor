@@ -205,6 +205,15 @@ public:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
+
+        // Just to test that my staged buffer works
+
+        /* for(auto& v : _allVertices) { */
+        /*     v.pos+=0.1; */
+        /* } */
+        /* memcpy(_stagedBuffer.handle, _allVertices.data(), _vertBuffer.size); */
+        /* copyBuffer(_stagedBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size); */
+
         // Draw UI
         drawImGui(uiEvents);
 
@@ -431,26 +440,26 @@ private:
         },
     };
 
-    struct Buffer {
-        VkBuffer vulkanaBuffer;
-        VkDeviceMemory memory;
-        void* handle;
+    struct VulkanBufferData {
+        VkBuffer vkBuffer = VK_NULL_HANDLE;
+        VkDeviceMemory memory = VK_NULL_HANDLE;
+        size_t size = -1;
+        void* handle = nullptr;
     };
 
 
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-    void* vertexBufferHandle;
+    VulkanBufferData _vertBuffer;
+    VulkanBufferData _idxBuffer;
+    VulkanBufferData _stagedBuffer;
 
 
-    VkBuffer _stagingBuffer;
-    VkDeviceMemory _stagingBufferMemory;
-
+    std::vector<ale::Vertex> _allVertices;
 
     VkBuffer indexBuffer;
     uint32_t indexCount;
     VkDeviceMemory indexBufferMemory;
     void* indexBufferHandle;
+
 
     // An array of offsets for vertices of each mesh
     std::vector<MeshBufferData> meshBuffers;
@@ -1131,13 +1140,15 @@ private:
             throw std::runtime_error("Vertex buffer size is 0!");
         }
 
-        VkDeviceSize vertBufferSize = numAllVerts * sizeof(vert);
+        auto& _vb = _vertBuffer;
+        auto& _sb = _stagedBuffer;
 
+        _vb.size = numAllVerts * sizeof(vert);
 
-        createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        createBuffer(_vb.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                     _stagingBuffer, _stagingBufferMemory);
+                                     _sb.vkBuffer, _sb.memory);
 
 
         // Create a huge array with all the vertices
@@ -1153,28 +1164,28 @@ private:
             }
         }
 
-        vkMapMemory(vkb_device, _stagingBufferMemory, 0, vertBufferSize, 0, &vertexBufferHandle);
-        /// MEMORY MAPPED
+        vkMapMemory(vkb_device, _sb.memory, 0, _vb.size, 0, &_sb.handle);
         // Map our gigantic vertex array straight to gpu memory
-            memcpy(vertexBufferHandle, allVertices.data(), vertBufferSize);
+            memcpy(_sb.handle, allVertices.data(), _vb.size);
 
-        vkUnmapMemory(vkb_device, _stagingBufferMemory);
-        /// MEMORY UNMAPPED
+        for (auto& v : allVertices ) {
+            _allVertices.push_back(v);
+        }
 
-        createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        createBuffer(_vb.size, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                                      VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                     vertexBuffer, vertexBufferMemory);
+                                     _vb.vkBuffer, _vb.memory);
 
-        copyBuffer(_stagingBuffer, vertexBuffer, vertBufferSize);
+        copyBuffer(_sb.vkBuffer, _vb.vkBuffer, _vb.size);
 
         destructorStack.push([this](){
 
-            vkDestroyBuffer(vkb_device, _stagingBuffer, nullptr);
-            vkFreeMemory(vkb_device, _stagingBufferMemory, nullptr);
+            vkDestroyBuffer(vkb_device, _stagedBuffer.vkBuffer, nullptr);
+            vkFreeMemory(vkb_device, _stagedBuffer.memory, nullptr);
 
-            vkDestroyBuffer(vkb_device, vertexBuffer, nullptr);
-            vkFreeMemory(vkb_device, vertexBufferMemory, nullptr);
+            vkDestroyBuffer(vkb_device, _vertBuffer.vkBuffer, nullptr);
+            vkFreeMemory(vkb_device, _vertBuffer.memory, nullptr);
             return false;
         });
     }
@@ -1546,7 +1557,7 @@ private:
             VkRect2D scissor{.offset = {0, 0}, .extent = swapChainExtent};
             vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-            VkBuffer vertexBuffers[] = {vertexBuffer};
+            VkBuffer vertexBuffers[] = {_vertBuffer.vkBuffer};
             VkDeviceSize offsets[] = {0};
 
             // Bind all vertices to one buffer
