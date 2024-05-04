@@ -1394,14 +1394,20 @@ private:
         };
 
         VkCommandBuffer commandBuffer;
-        vkAllocateCommandBuffers(vkb_device, &allocInfo, &commandBuffer);
+
+        if (vkAllocateCommandBuffers(vkb_device, &allocInfo, &commandBuffer) != VK_SUCCESS) {
+            throw std::runtime_error("failed to allocate command buffers!");
+        }
 
         VkCommandBufferBeginInfo beginInfo{
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         };
 
-        vkBeginCommandBuffer(commandBuffer, &beginInfo);
+        if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+            throw std::runtime_error("failed to command buffers!");
+        }
+
 
         return commandBuffer;
     }
