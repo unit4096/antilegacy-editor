@@ -442,6 +442,11 @@ private:
     VkDeviceMemory vertexBufferMemory;
     void* vertexBufferHandle;
 
+
+    VkBuffer _stagingBuffer;
+    VkDeviceMemory _stagingBufferMemory;
+
+
     VkBuffer indexBuffer;
     uint32_t indexCount;
     VkDeviceMemory indexBufferMemory;
@@ -1128,12 +1133,11 @@ private:
 
         VkDeviceSize vertBufferSize = numAllVerts * sizeof(vert);
 
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
+
         createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                     stagingBuffer, stagingBufferMemory);
+                                     _stagingBuffer, _stagingBufferMemory);
 
 
         // Create a huge array with all the vertices
@@ -1149,13 +1153,12 @@ private:
             }
         }
 
-        vkMapMemory(vkb_device, stagingBufferMemory, 0, vertBufferSize, 0, &vertexBufferHandle);
+        vkMapMemory(vkb_device, _stagingBufferMemory, 0, vertBufferSize, 0, &vertexBufferHandle);
         /// MEMORY MAPPED
-
         // Map our gigantic vertex array straight to gpu memory
             memcpy(vertexBufferHandle, allVertices.data(), vertBufferSize);
 
-        vkUnmapMemory(vkb_device, stagingBufferMemory);
+        vkUnmapMemory(vkb_device, _stagingBufferMemory);
         /// MEMORY UNMAPPED
 
         createBuffer(vertBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -1163,12 +1166,13 @@ private:
                                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                      vertexBuffer, vertexBufferMemory);
 
-        copyBuffer(stagingBuffer, vertexBuffer, vertBufferSize);
-
-        vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
-        vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
+        copyBuffer(_stagingBuffer, vertexBuffer, vertBufferSize);
 
         destructorStack.push([this](){
+
+            vkDestroyBuffer(vkb_device, _stagingBuffer, nullptr);
+            vkFreeMemory(vkb_device, _stagingBufferMemory, nullptr);
+
             vkDestroyBuffer(vkb_device, vertexBuffer, nullptr);
             vkFreeMemory(vkb_device, vertexBufferMemory, nullptr);
             return false;
