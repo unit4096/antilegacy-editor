@@ -1996,8 +1996,10 @@ private:
     }
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 
+        constexpr char GRAY[] = "\033[90m";
+        constexpr char WHITE[] = "\033[0m";
+        std::cerr << GRAY << "VK validation layer: " << WHITE << pCallbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 };
