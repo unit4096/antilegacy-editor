@@ -207,12 +207,14 @@ public:
 
 
         // Just to test that my staged buffer works
-
         /* for(auto& v : _allVertices) { */
         /*     v.pos+=0.1; */
         /* } */
-        /* memcpy(_stagedBuffer.handle, _allVertices.data(), _vertBuffer.size); */
-        /* copyBuffer(_stagedBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size); */
+
+
+
+        /* memcpy(_vertStagingBuffer.handle, _allVertices.data(), _vertBuffer.size); */
+        /* copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size); */
 
         // Draw UI
         drawImGui(uiEvents);
@@ -440,26 +442,38 @@ private:
         },
     };
 
-    struct VulkanBufferData {
+    struct VulkanBufferLayout {
+        // Links to vulkan structures
         VkBuffer vkBuffer = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
+        // Buffer size in bytes
         size_t size = -1;
+        // A handle to access mapped memory
         void* handle = nullptr;
+
+        bool mapMemory(VkDevice _device, void*& _handle, VkDeviceMemory _memory, size_t _bufferSize) {
+            handle = _handle;
+            return vkMapMemory(_device, _memory, 0, _bufferSize, 0, &_handle);
+        }
+
+        void unmapMemory(VkDevice _device, VkDeviceMemory _memory) {
+            handle = nullptr;
+            memory = VK_NULL_HANDLE;
+            vkUnmapMemory(_device, _memory);
+        }
     };
 
+    VulkanBufferLayout _vertBuffer;
+    VulkanBufferLayout _vertStagingBuffer;
 
-    VulkanBufferData _vertBuffer;
-    VulkanBufferData _idxBuffer;
-    VulkanBufferData _stagedBuffer;
+    VulkanBufferLayout _idxBuffer;
+    VulkanBufferLayout _idxStagingBuffer;
 
-
-    std::vector<ale::Vertex> _allVertices;
-
-    VkBuffer indexBuffer;
     uint32_t indexCount;
-    VkDeviceMemory indexBufferMemory;
-    void* indexBufferHandle;
 
+
+    // TODO: This is exessive, use the staging buffer instead
+    std::vector<ale::Vertex> _allVertices;
 
     // An array of offsets for vertices of each mesh
     std::vector<MeshBufferData> meshBuffers;
@@ -1141,14 +1155,14 @@ private:
         }
 
         auto& _vb = _vertBuffer;
-        auto& _sb = _stagedBuffer;
+        auto& _vsb = _vertStagingBuffer;
 
         _vb.size = numAllVerts * sizeof(vert);
 
         createBuffer(_vb.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                     _sb.vkBuffer, _sb.memory);
+                                     _vsb.vkBuffer, _vsb.memory);
 
 
         // Create a huge array with all the vertices
@@ -1164,9 +1178,9 @@ private:
             }
         }
 
-        vkMapMemory(vkb_device, _sb.memory, 0, _vb.size, 0, &_sb.handle);
+        vkMapMemory(vkb_device, _vsb.memory, 0, _vb.size, 0, &_vsb.handle);
         // Map our gigantic vertex array straight to gpu memory
-            memcpy(_sb.handle, allVertices.data(), _vb.size);
+            memcpy(_vsb.handle, allVertices.data(), _vb.size);
 
         for (auto& v : allVertices ) {
             _allVertices.push_back(v);
@@ -1177,12 +1191,12 @@ private:
                                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                                      _vb.vkBuffer, _vb.memory);
 
-        copyBuffer(_sb.vkBuffer, _vb.vkBuffer, _vb.size);
+        copyBuffer(_vsb.vkBuffer, _vb.vkBuffer, _vb.size);
 
         destructorStack.push([this](){
 
-            vkDestroyBuffer(vkb_device, _stagedBuffer.vkBuffer, nullptr);
-            vkFreeMemory(vkb_device, _stagedBuffer.memory, nullptr);
+            vkDestroyBuffer(vkb_device, _vertStagingBuffer.vkBuffer, nullptr);
+            vkFreeMemory(vkb_device, _vertStagingBuffer.memory, nullptr);
 
             vkDestroyBuffer(vkb_device, _vertBuffer.vkBuffer, nullptr);
             vkFreeMemory(vkb_device, _vertBuffer.memory, nullptr);
@@ -1191,6 +1205,9 @@ private:
     }
 
     void createIndexBuffer() {
+
+        auto& _ib = _idxBuffer;
+        auto _isb = _idxStagingBuffer;
 
         unsigned long numIdx = 0;
         indexCount = 0;
@@ -1211,11 +1228,15 @@ private:
             throw std::runtime_error("Vertex buffer size is 0!");
         }
 
+
         std::vector<unsigned int> allIdx = {};
         allIdx.reserve(numIdx * sizeof(index));
 
+
+
         unsigned int iOffset = 0;
         unsigned int vOffset = 0;
+
         for (auto& m : _model.meshes) {
             unsigned int mSize = m.indices.size();
             unsigned int vSize = m.vertices.size();
@@ -1234,35 +1255,37 @@ private:
             vOffset += vSize;
         }
 
-        VkDeviceSize bufferSize = numIdx * sizeof(index);
 
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VkDeviceSize bufferSize = numIdx * sizeof(index);
+        _ib.size = bufferSize;
+
+
+
+        createBuffer(_ib.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
                                  VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                                 stagingBuffer, stagingBufferMemory);
+                                 _isb.vkBuffer, _isb.memory);
 
-        vkMapMemory(vkb_device, stagingBufferMemory, 0, bufferSize, 0, &indexBufferHandle);
+        vkMapMemory(vkb_device, _isb.memory, 0, bufferSize, 0, &_ib.handle);
 
-            memcpy(indexBufferHandle, allIdx.data(), bufferSize);
+            memcpy(_ib.handle, allIdx.data(), _ib.size);
 
-        vkUnmapMemory(vkb_device, stagingBufferMemory);
+        vkUnmapMemory(vkb_device, _isb.memory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
                                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-                                 indexBuffer, indexBufferMemory);
+                                 _ib.vkBuffer, _ib.memory);
 
-        copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+        copyBuffer(_isb.vkBuffer, _ib.vkBuffer, bufferSize);
 
-        vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
-        vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
+        vkDestroyBuffer(vkb_device, _isb.vkBuffer, nullptr);
+        vkFreeMemory(vkb_device, _isb.memory, nullptr);
 
 
         destructorStack.push([this](){
-            vkDestroyBuffer(vkb_device, indexBuffer, nullptr);
-            vkFreeMemory(vkb_device, indexBufferMemory, nullptr);
+            vkDestroyBuffer(vkb_device, _idxBuffer.vkBuffer, nullptr);
+            vkFreeMemory(vkb_device, _idxBuffer.memory, nullptr);
             return false;
         });
     }
@@ -1562,7 +1585,7 @@ private:
 
             // Bind all vertices to one buffer
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-            vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(commandBuffer, _idxBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 
             vkCmdBindDescriptorSets(commandBuffer,
                                     VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -1995,7 +2018,11 @@ private:
         return indices;
     }
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData) {
 
         constexpr char GRAY[] = "\033[90m";
         constexpr char WHITE[] = "\033[0m";
