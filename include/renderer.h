@@ -211,10 +211,16 @@ public:
         /*     v.pos+=0.1; */
         /* } */
 
+        auto updateMesh = [this](){
+            memcpy(_vertStagingBuffer.handle, _allVertices.data(), _vertBuffer.size);
 
+            // NOTE: This is the bottleneck for rendering
+            // FIXME: copy buffer only if necessary
 
-        /* memcpy(_vertStagingBuffer.handle, _allVertices.data(), _vertBuffer.size); */
-        /* copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size); */
+            copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size);
+        };
+
+        /* updateMesh(); */
 
         // Draw UI
         drawImGui(uiEvents);
@@ -264,7 +270,6 @@ public:
 
     void renderNode(const VkCommandBuffer commandBuffer, const ale::Node& node, const ale::Model& model) {
         // TODO: Add frustum culling
-
 
         auto applyParentTransforms = [](const ale::Model& m,
                                         ale::Node n,
@@ -451,9 +456,9 @@ private:
         // A handle to access mapped memory
         void* handle = nullptr;
 
-        bool mapMemory(VkDevice _device, void*& _handle, VkDeviceMemory _memory, size_t _bufferSize) {
+        bool mapMemory(VkDevice _device, void**& _handle, VkDeviceMemory _memory, size_t _bufferSize) {
             handle = _handle;
-            return vkMapMemory(_device, _memory, 0, _bufferSize, 0, &_handle);
+            return vkMapMemory(_device, _memory, 0, _bufferSize, 0, _handle);
         }
 
         void unmapMemory(VkDevice _device, VkDeviceMemory _memory) {
@@ -515,11 +520,9 @@ private:
 
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(
             instance, "vkCreateDebugUtilsMessengerEXT");
-        if (func != nullptr) {
-            return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
-        } else {
-            return VK_ERROR_EXTENSION_NOT_PRESENT;
-        }
+        return func !=nullptr
+            ? func(instance, pCreateInfo, pAllocator, pDebugMessenger)
+            : VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
     static void DestroyDebugUtilsMessengerEXT(VkInstance instance,
@@ -1267,9 +1270,7 @@ private:
                                  _isb.vkBuffer, _isb.memory);
 
         vkMapMemory(vkb_device, _isb.memory, 0, bufferSize, 0, &_ib.handle);
-
             memcpy(_ib.handle, allIdx.data(), _ib.size);
-
         vkUnmapMemory(vkb_device, _isb.memory);
 
         createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT |
@@ -2024,9 +2025,7 @@ private:
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* pUserData) {
 
-        constexpr char GRAY[] = "\033[90m";
-        constexpr char WHITE[] = "\033[0m";
-        std::cerr << GRAY << "VK validation layer: " << WHITE << pCallbackData->pMessage << std::endl;
+        std::cerr << trc::GRAY << "VK validation layer: " << trc::RESET << pCallbackData->pMessage << std::endl;
         return VK_FALSE;
     }
 };

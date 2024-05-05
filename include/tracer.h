@@ -21,6 +21,12 @@ namespace ale {
 namespace Tracer {
 
 
+constexpr char GRAY[] = "\033[90m";
+constexpr char RED[] = "\033[31m";
+constexpr char YELLOW[] = "\e[0;33m";
+constexpr char RESET[] = "\033[0m";
+
+
 enum LogLevel {
     INFO,
     DEBUG,
@@ -63,10 +69,6 @@ static std::string _LogLevelToString(LogLevel lvl) {
 // Outputs a log with a certain LogLevel and a trace of where it was invoked
 static void log(const std::string_view msg, LogLevel lvl,
                  const std::source_location loc) {
-    constexpr char GRAY[] = "\033[90m";
-    constexpr char RED[] = "\033[31m";
-    constexpr char YELLOW[] = "\e[0;33m";
-    constexpr char RESET[] = "\033[0m";
 
     // Checks if the level is enabled
     if (!globalLogLevels[lvl]) {
