@@ -1139,17 +1139,17 @@ private:
 
     void createVertexBuffer() {
 
-        if (_model.meshes.size() <= 0) {
+        if (_model.viewMeshes.size() <= 0) {
             throw std::runtime_error("No meshes in the model!");
         }
 
         // Counter for all the vertices in the model
         VkDeviceSize numAllVerts = 0;
         // Check vertex size against this vert
-        auto vert = _model.meshes[0].vertices[0];
+        auto vert = _model.viewMeshes[0].vertices[0];
 
         // Add mesh sizes to the counter
-        for(const auto& m: _model.meshes) {
+        for(const auto& m: _model.viewMeshes) {
             numAllVerts += m.vertices.size();
         }
 
@@ -1175,7 +1175,7 @@ private:
         // TODO: Use this data to map vertices for editing
 
         // Populate our giant vertex array
-        for (auto m : _model.meshes) {
+        for (auto m : _model.viewMeshes) {
             for (auto v: m.vertices) {
                 allVertices.push_back(v);
             }
@@ -1216,13 +1216,13 @@ private:
         indexCount = 0;
 
         // Samples the first index for default size
-        auto index = _model.meshes[0].indices[0];
+        auto index = _model.viewMeshes[0].indices[0];
 
-        if (_model.meshes.size() <= 0) {
+        if (_model.viewMeshes.size() <= 0) {
             throw std::runtime_error("No meshes in the model!");
         }
 
-        for(const auto& m: _model.meshes) {
+        for(const auto& m: _model.viewMeshes) {
             numIdx += m.indices.size();
             indexCount += m.indices.size();
         }
@@ -1240,7 +1240,7 @@ private:
         unsigned int iOffset = 0;
         unsigned int vOffset = 0;
 
-        for (auto& m : _model.meshes) {
+        for (auto& m : _model.viewMeshes) {
             unsigned int mSize = m.indices.size();
             unsigned int vSize = m.vertices.size();
 

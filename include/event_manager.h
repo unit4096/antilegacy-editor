@@ -144,7 +144,7 @@ private:
         for(auto& node : _editorState->currentModel->nodes) {
             if (node.mesh != -1) {
 
-                auto& mesh = _editorState->currentModel->meshes[node.mesh];
+                auto& mesh = _editorState->currentModel->viewMeshes[node.mesh];
                 auto aabb = geo::extractMinMaxAABB(mesh);
                 auto pos4  = glm::inverse(node.transform) * glm::vec4(pos, 1.0f);
 
@@ -178,23 +178,30 @@ private:
 
         for (auto& f : _editorState->currentREMesh->faces) {
             auto pos4 = glm::vec4(pos, 1.0f);
-            pos4= glm::inverse(_editorState->currentModelNode->transform) * pos4;
+            pos4 = glm::inverse(_editorState->currentModelNode->transform) * pos4;
 
             result = geo::rayIntersectsTriangle(pos4, fwd, f, intersection, distance);
             if (result) {
 
-                std::vector<geo::Loop*> out_loops = {};
+                std::vector<geo::Loop*> out_loops {};
                 geo::getBoundingLoops(f, out_loops);
-                std::vector<glm::vec3> loopVec = {};
+                std::vector<glm::vec3> loopVec {};
                 loopVec.reserve(3);
 
+
+                trc::raw << "\n face "<< trc::RED << f->dbID << trc::RESET << " face\n";
+
                 for (auto& l : out_loops) {
+                    auto _v = l->v;
+                    trc::raw << "\n "<< _v->dbID << " vector \n";
                     loopVec.push_back(l->v->pos);
                 }
                 _editorState->uiDrawQueue.push_back({loopVec,ale::VERT});
+                // TODO: Load range to selected buffer
+                _editorState->selectedFaces.push_back(f);
+
                 break;
             }
-
         }
 
         std::string msg = "Raycast result: " + std::to_string(result);
