@@ -106,9 +106,11 @@ struct Node {
 // and primitives.
 
 
+// TODO: Make this using SoA
+
 // Generic view model for rendering and scene description
 struct Model {
-    std::vector<ViewMesh> meshes;
+    std::vector<ViewMesh> viewMeshes;
     std::vector<Image> textures;
     std::vector<Node> nodes;
     std::vector<int> rootNodes;

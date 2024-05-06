@@ -49,7 +49,7 @@ struct Vert {
     glm::vec2 texCoord;
     // An edge in the disk loop
     Edge *edge;
-    int dbID = -1;
+    size_t dbID;
 
     // Compares vertices. Only position is important for RE Vertices
     bool operator==(const Vert& other) const {
@@ -63,7 +63,7 @@ struct Edge {
     Vert *v1, *v2;
     Loop *loop;
     Disk *d1, *d2;
-    int dbID = -1;
+    size_t dbID;
 
     bool operator==(const Edge& other) const {
         return (
@@ -77,6 +77,7 @@ struct Edge {
 };
 
 struct Disk {
+    size_t dbID;
     Edge *prev, *next;
     // Compares vertices. Only position is important for RE Vertices
     bool operator==(const Disk& other) const {
@@ -96,7 +97,7 @@ struct Loop {
     Loop *radial_prev, *radial_next;
     // Loops forming a face
     Loop *prev, *next;
-    int dbID = -1;
+    size_t dbID;
 
     bool operator==(const Loop& other) const {
 		Loop* p1 = prev == nullptr ? prev : nullptr;
@@ -120,6 +121,7 @@ struct Face {
     // A pointer to the first loop node
     Loop *loop;
     glm::vec3 *nor;
+    size_t dbID;
     unsigned int size;
 
 	bool operator==(const Face& other) const {

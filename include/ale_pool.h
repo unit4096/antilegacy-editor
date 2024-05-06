@@ -16,6 +16,8 @@ namespace trc = ale::Tracer;
 
 namespace ale {
 
+// TODO: Store _freeList as a bitmap. Store it inside empty cells of _vector
+
 
 // T is a size of a chunk
 template <class T>
@@ -42,14 +44,15 @@ public:
 
         _vector.resize(size);
         // Create nodes for free chunks (all are free!)
-        for (auto& e : _vector) {
-            _freeList.push_front(&e);
+        for(size_t i = 0; i < _vector.size(); i++) {
+            _freeList.push_front(i);
         }
+
         inited = true;
     }
 
 
-    T* request() {
+    T* request(size_t& id) {
         // No free chunks left
         if (_freeList.empty()) {
             trc::raw << "Over capacity!\n";
@@ -58,13 +61,15 @@ public:
         }
 
         // Delete free chunk node, get free chunk id
-        auto offset = _freeList.front();
+        size_t _id = _freeList.front();
+
+        id = _id;
         _freeList.pop_front();
-        return offset;
+        return &_vector[_id];
     };
 
-    void release(T* ptr) {
-        _freeList.push_front(ptr);
+    void release(size_t id) {
+        _freeList.push_front(id);
     };
 
 private:
@@ -72,7 +77,7 @@ private:
     // internal vector with data
     std::vector<T> _vector;
     // Free list is a separate linked list that tracks which chunks are free
-    std::forward_list<T*> _freeList;
+    std::forward_list<size_t> _freeList;
 };
 
 } //namespace ale
