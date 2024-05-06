@@ -506,11 +506,6 @@ int Loader::loadModelGLTF(const std::string model_path,
 
     This function is more of a test chamber for the REMesh data structure.
     I do not recommend to use it in a product code.
-
-    [18.02.2024] Looks like I hit the limits for smart pointers here.
-    Falling back to raw pointers for flexibility
-    Need to find a better memory management solution
-
 */
 bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     auto numVerts = _inpMesh.vertices.size();
@@ -598,8 +593,10 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             if (uniqueVerts.contains(v)) {
                 verts[j] = uniqueVerts[v];
             } else {
-                verts[j] = vp->request();
+                size_t id;
+                verts[j] = vp->request(id);
                 *verts[j] = v;
+                verts[j]->dbID = id;
                 uniqueVerts[v] = verts[j];
             }
         }
@@ -616,7 +613,9 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
                 edges[j] = uniqueEdges[e];
                 contains[j] = true;
             } else {
-                edges[j] = ep->request();
+                size_t id;
+                edges[j] = ep->request(id);
+                edges[j]->dbID = id;
                 *edges[j] = e;
             }
 
@@ -635,8 +634,11 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
                 edges[j]->d1->next = try_get_edge(edges[prev]);
                 edges[j]->d2->prev = try_get_edge(edges[next]);
             } else {
-                edges[j]->d1 = dp->request();
-                edges[j]->d2 = dp->request();
+                size_t id1, id2;
+                edges[j]->d1 = dp->request(id1);
+                edges[j]->d1->dbID = id1;
+                edges[j]->d2 = dp->request(id2);
+                edges[j]->d2->dbID = id2;
                 edges[j]->d1->prev = try_get_edge(edges[next]);
                 edges[j]->d2->next = try_get_edge(edges[prev]);
             }
@@ -645,11 +647,17 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         // Time to create face boundary loooops
 
         // They are always new
-        auto l1 = lp->request();
-        auto l2 = lp->request(); 
-        auto l3 = lp->request(); 
+        size_t id1, id2, id3;
+        auto l1 = lp->request(id1);
+        l1->dbID = id1;
+        auto l2 = lp->request(id2);
+        l2->dbID = id2;
+        auto l3 = lp->request(id3);
+        l3->dbID = id3;
 
-        auto f = fp->request();
+        size_t f_id;
+        auto f = fp->request(f_id);
+        f->dbID = f_id;
 
         loops = {l1,l2,l3};
 

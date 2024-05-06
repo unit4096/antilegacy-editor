@@ -29,6 +29,7 @@ int App::run() {
         auto lastFrame = std::chrono::steady_clock::now();
         std::chrono::duration<double> deltaTime;
 
+        trc::raw << "\n\n";
 
         // LOGGING (Enables all logging levels by default)
         // std::vector<trc::LogLevel> logLevels = { trc::LogLevel::DEBUG, trc::LogLevel::INFO, trc::LogLevel::WARNING, trc::LogLevel::ERROR,};
@@ -73,10 +74,10 @@ int App::run() {
         mainCam->setSpeed(1.0f);
         mainCam->setSensitivity(0.06f);
         // Dynamically set camera position by mesh bounding box
-        assert(model.meshes.size() > 0);
+        assert(model.viewMeshes.size() > 0);
         // Uses AABB of the first mesh
-        if (model.meshes[0].minPos.size() >= 3) {
-            mainCam->setPos(ale::geo::getFrontViewAABB(model.meshes[0]));
+        if (model.viewMeshes[0].minPos.size() >= 3) {
+            mainCam->setPos(ale::geo::getFrontViewAABB(model.viewMeshes[0]));
         } else {
             mainCam->setPos(glm::vec3(0, 50, 150));
         }
@@ -103,6 +104,22 @@ int App::run() {
             auto ubo = renderer->getUbo();
 
             MVP pvm = {.m = ubo.model, .v = ubo.view, .p = ui::getFlippedProjection(ubo.proj)};
+            if (state->currentModelNode && state->editorMode == ale::OBJECT_MODE) {
+                ui::drawImGuiGizmo(ubo.view, ubo.proj, &state->currentModelNode->transform , *state.get());
+            } else if (!state->selectedFaces.empty() && state->editorMode == ale::MESH_MODE) {
+                // Get first vertice
+                auto& v = state->selectedFaces[0]->loop->v;
+                glm::mat4 _tr;
+
+                ui::drawImGuiGizmo(ubo.view, ubo.proj, &_tr , *state.get());
+                auto newPos = v->pos + geo::extractPosFromTransform(_tr);
+                v->pos = newPos;
+                /* state->currentViewMesh.; */
+                state->currentModel->viewMeshes[0].vertices[v->dbID].pos = newPos;
+
+            }
+
+
             if (state->currentModelNode) {
                 ui::drawImGuiGizmo(ubo.view, ubo.proj, &state->currentModelNode->transform , *state.get());
             }
@@ -153,6 +170,10 @@ int App::run() {
             camYawPitch-= mouseMovement * renderer->getCurrentCamera()->getSensitivity();
             renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
 
+            for(auto v : model.viewMeshes[0].vertices) {
+                v.pos.x += 1;
+            }
+
             // Drawing the results of the input
             renderer->drawFrame(perFrameUIEvents);
 
@@ -165,7 +186,7 @@ int App::run() {
             // NOTE: on some hardware enabled VSync will slow down the
             // system to sleep_for + VSync wait. In this case just
             // disable this fps cap
-            std::this_thread::sleep_for(remainder);
+            /* std::this_thread::sleep_for(remainder); */
 
         }
         renderer->cleanup();
