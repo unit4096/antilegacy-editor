@@ -10,6 +10,7 @@
 #ifndef GLFW
 #define GLFW
 #define GLFW_INCLUDE_VULKAN
+#define GLFW_CURSOR_DISABLED
 #include <GLFW/glfw3.h>
 #endif //GLFW
 
