@@ -189,17 +189,16 @@ private:
                 loopVec.reserve(3);
 
 
-                trc::raw << "\n face "<< trc::RED << f->dbID << trc::RESET << " face\n";
+                trc::raw << "\n face "<< trc::RED << f->id << trc::RESET << " face\n";
 
                 for (auto& l : out_loops) {
                     auto _v = l->v;
-                    trc::raw << "\n "<< _v->dbID << " vector \n";
+                    trc::raw << "\n "<< _v->id << " vector \n";
                     loopVec.push_back(l->v->pos);
                 }
                 _editorState->uiDrawQueue.push_back({loopVec,ale::VERT});
                 // TODO: Load range to selected buffer
                 _editorState->selectedFaces.push_back(f);
-
                 break;
             }
         }

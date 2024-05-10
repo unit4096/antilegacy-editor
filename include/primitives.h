@@ -85,6 +85,7 @@ struct Image {
 
 // Basic mesh, contains arrays of indices and vertices
 struct ViewMesh {
+    size_t id;
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
     std::vector<float> minPos{};

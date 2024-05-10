@@ -101,6 +101,7 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                           const tinygltf::Mesh& in_mesh,
                           ale::ViewMesh& out_mesh) {
 
+
     auto loadMeshAttribute = [&](tinygltf::Primitive& prim,
                              std::string attrName){
         int idx = prim.attributes[attrName];
@@ -465,6 +466,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     out_meshes.resize(in_model.meshes.size());
 
     auto load = [&](int i) {
+        out_meshes[i].id = i;
         _loadMeshGLTF(in_model, in_model.meshes[i], out_meshes[i]);
     };
 
@@ -482,17 +484,17 @@ int Loader::loadModelGLTF(const std::string model_path,
 
     // Load meshes
     for (auto& mesh: out_meshes) {
-        out_model.meshes.push_back(mesh);
+        out_model.viewMeshes.push_back(mesh);
     }
 
     _loadNodesGLTF(in_model, out_model);
 
-    out_model.reMeshes.reserve(out_model.meshes.size());
+    out_model.reMeshes.reserve(out_model.viewMeshes.size());
     trc::log("Populating REMeshes");
-    for(size_t i = 0; i < out_model.meshes.size(); i++) {
+    for(size_t i = 0; i < out_model.viewMeshes.size(); i++) {
         geo::REMesh r;
         out_model.reMeshes.push_back(r);
-        populateREMesh(out_model.meshes[i], out_model.reMeshes[i]);
+        populateREMesh(out_model.viewMeshes[i], out_model.reMeshes[i]);
     }
 
     trc::log("Finished loading model");
@@ -596,7 +598,7 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
                 size_t id;
                 verts[j] = vp->request(id);
                 *verts[j] = v;
-                verts[j]->dbID = id;
+                verts[j]->id = id;
                 uniqueVerts[v] = verts[j];
             }
         }
@@ -615,7 +617,7 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             } else {
                 size_t id;
                 edges[j] = ep->request(id);
-                edges[j]->dbID = id;
+                edges[j]->id = id;
                 *edges[j] = e;
             }
 
@@ -636,9 +638,9 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
             } else {
                 size_t id1, id2;
                 edges[j]->d1 = dp->request(id1);
-                edges[j]->d1->dbID = id1;
+                edges[j]->d1->id = id1;
                 edges[j]->d2 = dp->request(id2);
-                edges[j]->d2->dbID = id2;
+                edges[j]->d2->id = id2;
                 edges[j]->d1->prev = try_get_edge(edges[next]);
                 edges[j]->d2->next = try_get_edge(edges[prev]);
             }
@@ -649,15 +651,15 @@ bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         // They are always new
         size_t id1, id2, id3;
         auto l1 = lp->request(id1);
-        l1->dbID = id1;
+        l1->id = id1;
         auto l2 = lp->request(id2);
-        l2->dbID = id2;
+        l2->id = id2;
         auto l3 = lp->request(id3);
-        l3->dbID = id3;
+        l3->id = id3;
 
         size_t f_id;
         auto f = fp->request(f_id);
-        f->dbID = f_id;
+        f->id = f_id;
 
         loops = {l1,l2,l3};
 
