@@ -238,6 +238,14 @@ static glm::vec3 extractPosFromTransform(glm::mat4 transform) {
     return glm::vec3(transform[3][0], transform[3][1], transform[3][2]);
 }
 
+[[maybe_unused]]
+static glm::mat4 constructTransformFromPos(glm::vec3 pos) {
+    glm::mat4 result = glm::mat4(1);
+    result[3][0] = pos.x;
+    result[3][1] = pos.y;
+    result[3][2] = pos.z;
+    return result;
+}
 
 // A simple function that indicates if a point is "in front" enough
 // of the camera. Used mostly to avoid inversing geometry behind the
