@@ -205,22 +205,39 @@ public:
             throw std::runtime_error("failed to acquire swap chain image!");
         }
 
+        auto updateREMesh = [this]() {
+            auto& rms = this->_model.reMeshes;
+            auto& vms = this->_model.viewMeshes;
 
-        // Just to test that my staged buffer works
-        /* for(auto& v : _allVertices) { */
-        /*     v.pos+=0.1; */
-        /* } */
+            for (int i = 0; i < rms.size(); i++) {
+                auto& vmv = vms[i].vertices;
+                auto& rmv = rms[i].verts;
 
-        auto updateMesh = [this](){
-            memcpy(_vertStagingBuffer.handle, _allVertices.data(), _vertBuffer.size);
+                for (int j = 0; j < rmv.size(); j++ ) {
+                    vmv[j].pos = rmv[j]->pos;
+                }
+            }
+        };
+        updateREMesh();
 
-            // NOTE: This is the bottleneck for rendering
-            // FIXME: copy buffer only if necessary
 
-            copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size);
+        auto updateAllVertices = [this]() {
+            auto& av = this->_allVertices;
+            auto& vms = this->_model.viewMeshes;
+
+            int counter = 0;
+            for (int i = 0; i < vms.size(); i++) {
+                auto& vmv = vms[i].vertices;
+                for (int j = 0; j < vmv.size(); j++ ) {
+                    av[counter].pos = vmv[j].pos;
+                    counter++;
+                }
+            }
+
         };
 
-        /* updateMesh(); */
+
+        /* updateAllVertices(); */
 
         // Draw UI
         drawImGui(uiEvents);
@@ -1507,9 +1524,17 @@ private:
     void recordRenderCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
         VkCommandBufferBeginInfo beginInfo{.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 
+
+        memcpy(_vertStagingBuffer.handle, _allVertices.data(), _vertBuffer.size);
+        /* copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size); */
+
+
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
             throw std::runtime_error("failed to begin recording command buffer!");
         }
+
+        VkBufferCopy copyRegion{ .size = _vertBuffer.size};
+        vkCmdCopyBuffer(commandBuffer, _vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, 1, &copyRegion);
 
         VkRect2D renderAreaWholeViewport = { .offset = {0, 0}, .extent = swapChainExtent, };
 
