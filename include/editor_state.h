@@ -68,6 +68,10 @@ struct GEditorState {
 
     ale::Node*          currentModelNode;
 
+    // TODO: Find a more powerful way to store this data
+
+    std::vector<ale::geo::Vert*> selectedVerts;
+    std::vector<ale::geo::Edge*> selectedEdges;
     std::vector<ale::geo::Face*> selectedFaces;
 
     std::vector<std::pair<std::vector<glm::vec3>, UI_DRAW_TYPE>> uiDrawQueue;
