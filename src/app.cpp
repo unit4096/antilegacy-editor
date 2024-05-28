@@ -99,54 +99,6 @@ int App::run() {
 
 
         // Arbitrary ui events to execute
-        std::function<void()> perFrameUIEvents = [&](){
-            using ui = ale::UIManager;
-            auto ubo = renderer->getUbo();
-
-            MVP pvm = {.m = ubo.model, .v = ubo.view, .p = ui::getFlippedProjection(ubo.proj)};
-            if (state->currentModelNode && state->editorMode == ale::OBJECT_MODE) {
-                ui::drawImGuiGizmo(ubo.view, ubo.proj, &state->currentModelNode->transform , *state.get());
-            } else if (!state->selectedFaces.empty() && state->editorMode == ale::MESH_MODE) {
-                // Get first vertice
-                auto& v = state->selectedFaces[0]->loop->v;
-                glm::mat4 _tr;
-
-                ui::drawImGuiGizmo(ubo.view, ubo.proj, &_tr , *state.get());
-                auto newPos = v->pos + geo::extractPosFromTransform(_tr);
-                v->pos = newPos;
-                /* state->currentViewMesh.; */
-                state->currentModel->viewMeshes[0].vertices[v->dbID].pos = newPos;
-
-            }
-
-
-            if (state->currentModelNode) {
-                ui::drawImGuiGizmo(ubo.view, ubo.proj, &state->currentModelNode->transform , *state.get());
-            }
-
-            for(auto pair: state->uiDrawQueue) {
-                ale::UI_DRAW_TYPE type = pair.second;
-                auto vec = pair.first;
-
-                auto parentPos = geo::extractPosFromTransform(state->currentModelNode->transform);
-
-                for(auto& e : vec) {
-                    e += parentPos;
-                }
-
-                ui::drawVectorOfPrimitives(vec, type, pvm);
-            }
-
-            std::string msg = "selected node: " + (state->currentModelNode == nullptr
-                              ? "NONE"
-                              : model.nodes[state->currentModelNode->id].name);
-            msg.append("\neditor mode: " + ale::GEditorMode_Names[state->editorMode]);
-            msg.append("\ntransfor mode: " + ale::GTransformMode_Names[state->transformMode]);
-            msg.append("\nspace mode: " + ale::GSpaceMode_Names[state->spaceMode]);
-            ui::drawTextBG({100,100}, msg);
-
-        };
-
 
         // MAIN RENDERING LOOP
         while (!renderer->shouldClose()) {
@@ -170,9 +122,10 @@ int App::run() {
             camYawPitch-= mouseMovement * renderer->getCurrentCamera()->getSensitivity();
             renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
 
-            for(auto v : model.viewMeshes[0].vertices) {
-                v.pos.x += 1;
-            }
+
+            std::function<void()> perFrameUIEvents = [&] () {
+                eventManager.frameEventCallback();
+            };
 
             // Drawing the results of the input
             renderer->drawFrame(perFrameUIEvents);

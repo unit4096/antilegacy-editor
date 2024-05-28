@@ -54,6 +54,50 @@ public:
         _inputManager->bindFunction(inp::CYCLE_MODE_OPERATION,changeModeOperation, false);
     }
 
+void frameEventCallback() {
+    using ui = ale::UIManager;
+    auto ubo = this->_renderer->getUbo();
+    auto& _state = this->_editorState;
+
+    MVP pvm = {.m = ubo.model, .v = ubo.view, .p = ui::getFlippedProjection(ubo.proj)};
+    if (_state->currentModelNode && _state->editorMode == ale::OBJECT_MODE) {
+        ui::drawImGuiGizmo(ubo.view, ubo.proj, &_state->currentModelNode->transform , *_state.get());
+    } else if (!_state->selectedFaces.empty() && _state->editorMode == ale::MESH_MODE) {
+        // Get first vertice
+        auto& v = _state->selectedFaces[0]->loop->v;
+
+        auto tr = geo::constructTransformFromPos(v->pos);
+
+        ui::drawImGuiGizmo(ubo.view, ubo.proj, &tr, *_state.get());
+
+        auto newPos = geo::extractPosFromTransform(tr);
+        v->pos = newPos;
+
+    }
+
+    for(auto pair: _state->uiDrawQueue) {
+        ale::UI_DRAW_TYPE type = pair.second;
+        auto vec = pair.first;
+
+        auto parentPos = geo::extractPosFromTransform(_state->currentModelNode->transform);
+
+        for(auto& e : vec) {
+            e += parentPos;
+        }
+
+        ui::drawVectorOfPrimitives(vec, type, pvm);
+    }
+
+    std::string msg = "selected node: " + (_state->currentModelNode == nullptr
+                      ? "NONE"
+                      : _editorState->currentModel->nodes[_state->currentModelNode->id].name);
+    msg.append("\neditor mode: " + ale::GEditorMode_Names[_state->editorMode]);
+    msg.append("\ntransfor mode: " + ale::GTransformMode_Names[_state->transformMode]);
+    msg.append("\nspace mode: " + ale::GSpaceMode_Names[_state->spaceMode]);
+    ui::drawTextBG({100,100}, msg);
+
+};
+
 private:
     sp<ale::Renderer> _renderer;
     sp<ale::GEditorState> _editorState;
@@ -71,7 +115,7 @@ private:
     std::function<void()> moveL = [&]() {    _renderer->getCurrentCamera()->moveLeftLocal();};
     std::function<void()> moveR = [&]() {   _renderer->getCurrentCamera()->moveRightLocal();};
 
-
+    // FIXME: Without proper architecture this will get ugly pretty quickly
     std::function<void()> raycast = [&]() {
 
         auto ubo = _renderer->getUbo();
@@ -198,6 +242,7 @@ private:
                 }
                 _editorState->uiDrawQueue.push_back({loopVec,ale::VERT});
                 // TODO: Load range to selected buffer
+                _editorState->selectedFaces.clear();
                 _editorState->selectedFaces.push_back(f);
                 break;
             }

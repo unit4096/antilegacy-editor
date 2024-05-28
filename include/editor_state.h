@@ -20,6 +20,7 @@ concept Enum = std::is_enum_v<T>;
 
 
 const std::vector<std::string> GEditorMode_Names { "OBJECT_MODE", "MESH_MODE", "UV_MODE", "EDITOR_MODE_MAX", };
+const std::vector<std::string> GPrimitivesSelection_Names{ "VERT_SELECTION_MODE", "EDGE_SELECTION_MODE", "FACE_SELECTION_MODE", };
 const std::vector<std::string> GTransformMode_Names { "TRANSLATE_MODE", "ROTATE_MODE", "SCALE_MODE", "COMBINED_MODE", "TRANSFORM_MODE_MAX", };
 const std::vector<std::string> GSpaceMode_Names { "LOCAL_MODE", "GLOBAL_MODE", "SPACE_MODE_MAX", };
 const std::vector<std::string> UI_DRAW_TYPE_Names { "CIRCLE", "LINE", "VERT", "UI_DRAW_TYPE_MAX", };
@@ -56,6 +57,19 @@ enum UI_DRAW_TYPE {
     UI_DRAW_TYPE_MAX,
 };
 
+enum GPrimitivesSelection{
+    VERT_SELECTION_MODE,
+    EDGE_SELECTION_MODE,
+    FACE_SELECTION_MODE,
+};
+
+// NOTE: Maybe make it immutable for remeshing?
+struct SelectionState {
+    glm::mat4 transform;
+    size_t meshID;
+    std::vector<ale::geo::Vert*> verts;
+};
+
 
 struct GEditorState {
     GEditorMode editorMode;
@@ -69,6 +83,8 @@ struct GEditorState {
     ale::Node*          currentModelNode;
 
     // TODO: Find a more powerful way to store this data
+    //
+    SelectionState selection;
 
     std::vector<ale::geo::Vert*> selectedVerts;
     std::vector<ale::geo::Edge*> selectedEdges;
