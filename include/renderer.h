@@ -318,7 +318,12 @@ public:
 
             // Load node mesh
             MeshBufferData meshData = meshBuffers[node.mesh];
-            vkCmdDrawIndexed(commandBuffer, meshData.size, 1, meshData.offset, 0, 0);
+            auto& mesh = model.viewMeshes[node.mesh];
+
+            for (const ale::Primitive& p : mesh.primitives) {
+                // TODO: Bind materials here
+                vkCmdDrawIndexed(commandBuffer, p.size, 1, meshData.offset + p.offsetIdx, 0, 0);
+            }
         }
 
         for(auto childNodeId : node.children) {

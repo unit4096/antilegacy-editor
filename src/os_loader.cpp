@@ -95,6 +95,69 @@ int Loader::loadModelOBJ(char *model_path, ViewMesh& _mesh) {
     return 0;
 }
 
+// Attempts to find and load indices for a primitive to a mesh
+int Loader::_tryLoadMeshIndices(const tinygltf::Model& in_model,
+                                const tinygltf::Primitive& primitive,
+                                ale::ViewMesh& out_mesh) {
+
+    int indicesIdx = primitive.indices;
+
+    if (indicesIdx <= -1) {
+        trc::log("Indices not found!", trc::WARNING);
+        return false;
+    }
+
+    const auto& accessor = in_model.accessors[indicesIdx];
+    auto _type = accessor.componentType;
+
+    if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
+
+        const unsigned short* indices = reinterpret_cast<const unsigned short*>( _getDataByAccessor(accessor, in_model));
+        for (size_t i = 0; i < accessor.count; i++) {
+            out_mesh.indices.push_back(*(indices + i));
+        }
+
+        trc::log("Index type: short");
+    } else if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
+
+        const unsigned int* indices = reinterpret_cast<const unsigned int*>( _getDataByAccessor(accessor, in_model));
+        for (size_t i = 0; i < accessor.count; i++) {
+            out_mesh.indices.push_back(*(indices + i));
+        }
+
+        trc::log("Index type: int");
+    } else if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
+
+        const unsigned char* indices = reinterpret_cast<const unsigned char*>( _getDataByAccessor(accessor, in_model));
+        for (size_t i = 0; i < accessor.count; i++) {
+            out_mesh.indices.push_back(*(indices + i));
+        }
+
+        trc::log("Index type: char");
+    } else {
+        trc::log("Unknown index type!", trc::ERROR);
+    }
+
+    switch (accessor.componentType) {
+    case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
+
+
+    }
+        break;
+    case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
+        break;
+    case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
+        trc::log("unsigned bytes not supported as indices!",trc::ERROR);
+    }
+
+    const unsigned short* indices = reinterpret_cast<const unsigned short*>( _getDataByAccessor(accessor, in_model));
+    for (size_t i = 0; i < accessor.count; i++) {
+        out_mesh.indices.push_back(*(indices + i));
+    }
+    return true;
+}
+
+
 // Loads mesh data to ale::ViewMesh
 // TODO: refactor to make the code more readable
 int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
@@ -102,81 +165,27 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
                           ale::ViewMesh& out_mesh) {
 
 
-    auto loadMeshAttribute = [&](tinygltf::Primitive& prim,
-                             std::string attrName){
+    auto loadMeshAttribute = [&](tinygltf::Primitive& prim, std::string attrName){
         int idx = prim.attributes[attrName];
         const auto& accessor = in_model.accessors[idx];
-        return reinterpret_cast<const float*>(
-                    _getDataByAccessor(accessor, in_model));
+        return reinterpret_cast<const float*>(_getDataByAccessor(accessor, in_model));
     };
 
+    size_t currentPrimitiveIndexOffsetIdx = 0;
+    size_t lastIndexedSize = 0;
 
     for (auto primitive : in_mesh.primitives) {
 
-        int indicesIdx = primitive.indices;
-        bool bHasIndices = false;
 
-        if (indicesIdx != -1) {
-
-            bHasIndices = true;
-            const auto& accessor = in_model.accessors[indicesIdx];
-
-            auto _type = accessor.componentType;
-
-            if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT) {
-
-                const unsigned short* indices = reinterpret_cast<const unsigned short*>( _getDataByAccessor(accessor, in_model));
-                for (size_t i = 0; i < accessor.count; i++) {
-                    out_mesh.indices.push_back(*(indices + i));
-                }
-
-                trc::log("Index type: short");
-            } else if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT) {
-
-                const unsigned int* indices = reinterpret_cast<const unsigned int*>( _getDataByAccessor(accessor, in_model));
-                for (size_t i = 0; i < accessor.count; i++) {
-                    out_mesh.indices.push_back(*(indices + i));
-                }
-
-                trc::log("Index type: int");
-            } else if (_type == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE) {
-
-                const unsigned char* indices = reinterpret_cast<const unsigned char*>( _getDataByAccessor(accessor, in_model));
-                for (size_t i = 0; i < accessor.count; i++) {
-                    out_mesh.indices.push_back(*(indices + i));
-                }
-
-                trc::log("Index type: char");
-            } else {
-                trc::log("Unknown index type!", trc::ERROR);
-            }
-
-            switch (accessor.componentType) {
-            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
-
-
-            }
-                break;
-            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT:
-                break;
-            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE:
-                trc::log("unsigned bytes not supported as indices!",trc::ERROR);
-            }
-
-            // FIXME: Implement type deduction, now just assumes that it is u short
-            const unsigned short* indices = reinterpret_cast<const unsigned short*>( _getDataByAccessor(accessor, in_model));
-            for (size_t i = 0; i < accessor.count; i++) {
-                out_mesh.indices.push_back(*(indices + i));
-            }
-        } else {
-            trc::log("Indices not found!", trc::WARNING);
-        }
+        // Load indices
+        bool bHasIndices = _tryLoadMeshIndices(in_model, primitive, out_mesh);
 
         std::unordered_map<ale::Vertex, unsigned int> uniqueVertices{};
 
         if (!primitive.attributes.contains("POSITION") ||
             !primitive.attributes.contains("TEXCOORD_0")) {
-            trc::log("Mesh loader currently requres both positions and UV textures", trc::LogLevel::ERROR);
+            trc::log("Mesh loader currently requres both positions and UV textures",
+                     trc::LogLevel::ERROR);
             return -1;
         }
 
@@ -258,25 +267,42 @@ int Loader::_loadMeshGLTF(const tinygltf::Model& in_model,
             // Checks whether the loader should remove vertex duplicates. Needed
             // for debug. Hopefully the compiler will optimize away this check
             // since the flag's value is const
+
             if (COMPRESS_VERTEX_DUPLICATES) {
+
                 if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<unsigned int>(
-                                                out_mesh.vertices.size());
+                    uniqueVertices[vertex] = static_cast<unsigned int>(out_mesh.vertices.size());
                     out_mesh.vertices.push_back(vertex);
                 }
+
                 out_mesh.indices.push_back(uniqueVertices[vertex]);
+
             } else {
                 out_mesh.vertices.push_back(vertex);
+
                 if (!bHasIndices) {
                     out_mesh.indices.push_back(i);
                 }
             }
+
+
         }
 
         if (!normals) {
-            trc::log("Normals not found in the model! Generating vertex normals", trc::WARNING);
+            trc::log("Normals not found in the model! Generating vertex normals",
+                     trc::WARNING);
             _generateVertexNormals(out_mesh);
         }
+
+        ale::Primitive ale_primitive{
+            .materialID = primitive.material,
+            .offsetIdx = currentPrimitiveIndexOffsetIdx,
+            .size = out_mesh.indices.size() - lastIndexedSize,
+        };
+
+        lastIndexedSize = out_mesh.indices.size();
+        out_mesh.primitives.push_back(ale_primitive);
+        currentPrimitiveIndexOffsetIdx += out_mesh.indices.size();
     }
 
     return 0;
@@ -434,13 +460,14 @@ int _checkNodeCollisions(const ale::Model& in_model) {
 int Loader::loadModelGLTF(const std::string model_path,
                           ale::Model& out_model) {
 
+    const std::string _default_checker_texture_path = "./textures/tex_uv_checker.png";
+
     if (!Loader::isFileValid(model_path)) {
         trc::log("Input file is not valid!", trc::LogLevel::ERROR);
-        return 1;
+        return -1;
     }
 
     tinygltf::Model in_model;
-
     _loadTinyGLTFModel(in_model, model_path);
 
     // Load textures and meshes first, then bind nodes
@@ -450,7 +477,12 @@ int Loader::loadModelGLTF(const std::string model_path,
         trc::log("Found textures");
         _loadTexturesGLTF(in_model, out_model);
     } else {
-        trc::log("Textures not found");
+        trc::log("Textures not found! Using fallback texture", trc::WARNING);
+
+        ale::Image fallbackTexture;
+        Loader::loadTexture(_default_checker_texture_path.data(), fallbackTexture);
+        out_model.textures.push_back(fallbackTexture);
+
     }
 
     // Multithreading ahead

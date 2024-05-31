@@ -56,6 +56,7 @@ private:
     int _loadNodesGLTF(const tinygltf::Model &in_model, ale::Model &out_model);
     int _loadTextureGLTF(const tinygltf::Image &in_texture, ale::Image &out_texture);
     void _bindNodeGLTF(const tinygltf::Model &in_model, const tinygltf::Node &n, int parent, int current, ale::Model &out_model);
+    static int _tryLoadMeshIndices(const tinygltf::Model& in_model, const tinygltf::Primitive& primitive, ale::ViewMesh& out_mesh);
 
 };
 

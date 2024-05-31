@@ -83,6 +83,15 @@ struct Image {
 };
 
 
+// Primitives bind materials to parts of the mesh
+struct Primitive {
+    int materialID;
+    size_t offsetIdx;
+    size_t size;
+    // TODO: Extend with actual primitive properties
+};
+
+
 // Basic mesh, contains arrays of indices and vertices
 struct ViewMesh {
     size_t id;
@@ -90,6 +99,7 @@ struct ViewMesh {
     std::vector<uint32_t> indices;
     std::vector<float> minPos{};
     std::vector<float> maxPos{};
+    std::vector<Primitive> primitives;
 };
 
 
