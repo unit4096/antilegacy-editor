@@ -403,8 +403,8 @@ void Loader::_bindNodeGLTF(const tinygltf::Model& in_model,
     ale_node.name = n.name;
     ale_node.children = n.children;
     ale_node.id = current;
-    ale_node.parent = parent;
-    ale_node.mesh = n.mesh;
+    ale_node.parentIdx = parent;
+    ale_node.meshIdx = n.mesh;
 
     // We know the size of .nodes and load every node
     // So we can use this trick with random writes

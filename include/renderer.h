@@ -291,8 +291,8 @@ public:
         auto applyParentTransforms = [](const ale::Model& m,
                                         ale::Node n,
                                         glm::mat4& result){
-            while (n.parent > -1) {
-                const auto parentID = n.parent;
+            while (n.parentIdx > -1) {
+                const auto parentID = n.parentIdx;
                 const auto parent = m.nodes[parentID];
                 result = parent.transform * result;
                 n = parent;
@@ -303,7 +303,7 @@ public:
 
         applyParentTransforms(model, node, t);
 
-        if (node.mesh > -1 && node.bVisible == true) {
+        if (node.meshIdx > -1 && node.bVisible == true) {
             // Get unique node id
             float objId = static_cast<float>(node.id);
             // Assign a unique "color" by object's id
@@ -317,8 +317,8 @@ public:
             vkCmdPushConstants(commandBuffer, pipelineLayout,colorRange.stageFlags, colorRange.offset, colorRange.size, perObjColorData);
 
             // Load node mesh
-            MeshBufferData meshData = meshBuffers[node.mesh];
-            auto& mesh = model.viewMeshes[node.mesh];
+            MeshBufferData meshData = meshBuffers[node.meshIdx];
+            auto& mesh = model.viewMeshes[node.meshIdx];
 
             for (const ale::Primitive& p : mesh.primitives) {
                 // TODO: Bind materials here

@@ -107,8 +107,8 @@ struct Node {
     std::string name;
     glm::mat4 transform;
     int id;
-    int parent = -1;
-    int mesh = -1;
+    int parentIdx = -1;
+    int meshIdx = -1;
     std::vector<int> children{};
     bool bVisible = true;
 };
@@ -129,8 +129,8 @@ struct Model {
 
     void applyNodeParentTransforms(int nodeID, glm::mat4& result) const {
         auto n = nodes[nodeID];
-        while (n.parent > -1) {
-            const auto parentID = n.parent;
+        while (n.parentIdx > -1) {
+            const auto parentID = n.parentIdx;
             const auto parent = nodes[parentID];
             result = parent.transform * result;
             n = parent;

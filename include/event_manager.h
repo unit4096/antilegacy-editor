@@ -186,9 +186,9 @@ private:
         bool _hits = false;
 
         for(auto& node : _editorState->currentModel->nodes) {
-            if (node.mesh != -1) {
+            if (node.meshIdx != -1) {
 
-                auto& mesh = _editorState->currentModel->viewMeshes[node.mesh];
+                auto& mesh = _editorState->currentModel->viewMeshes[node.meshIdx];
                 auto aabb = geo::extractMinMaxAABB(mesh);
                 auto pos4  = glm::inverse(node.transform) * glm::vec4(pos, 1.0f);
 
@@ -196,7 +196,7 @@ private:
                     _hits = true;
 
                     _editorState->currentModelNode = &node;
-                    _editorState->currentREMesh = &_editorState->currentModel->reMeshes[node.mesh];
+                    _editorState->currentREMesh = &_editorState->currentModel->reMeshes[node.meshIdx];
                     _editorState->uiDrawQueue.push_back({{aabb.first, aabb.second},ale::AABB});
                 }
             }
