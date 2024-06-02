@@ -574,13 +574,9 @@ private:
     std::vector<void*> uniformBuffersMapped;
 
     VkDescriptorPool descriptorPool;
-
     VkDescriptorPool imguiPool;
-    std::vector<VkDescriptorSet> descriptorSets;
 
     std::vector<RenderMaterial> _renderMaterials;
-
-
 
     std::vector<VkCommandBuffer> commandBuffers;
 
@@ -638,7 +634,6 @@ private:
         createDepthResources();
 
         loadRenderMaterials();
-
 
         createVertexBuffer();
         createIndexBuffer();
@@ -1108,14 +1103,6 @@ private:
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
-
-
-        /* destructorStack.push([this](){ */
-        /*     vkDestroyImage(vkb_device, _colorTextureData.image, nullptr); */
-        /*     vkFreeMemory(vkb_device, _colorTextureData.deviceMemory, nullptr); */
-        /*     return false; */
-        /* }); */
-
     }
 
     void createTextureSampler(TextureData& _textureData) {
@@ -1142,19 +1129,9 @@ private:
             .unnormalizedCoordinates = VK_FALSE,
         };
 
-
-
         if (vkCreateSampler(vkb_device, &samplerInfo, nullptr, &_textureData.sampler) != VK_SUCCESS) {
             throw std::runtime_error("failed to create texture sampler!");
         }
-
-
-
-        /* destructorStack.push([this](){ */
-        /*     vkDestroySampler(vkb_device, _colorTextureData.sampler, nullptr); */
-        /*     vkDestroyImageView(vkb_device, _colorTextureData.imageView, nullptr); */
-        /*     return false; */
-        /* }); */
     }
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
@@ -1686,7 +1663,6 @@ private:
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, _idxBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-            /* vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr); */
             renderNodes(commandBuffer, _model);
 
         vkCmdEndRendering(commandBuffer);
