@@ -33,7 +33,6 @@ Implementation details:
   POI: createVertexBuffer(), createIndexBuffer(), pushConstantRanges array
 
 Upcoming features:
-- Optimized rendering for multiple-material scenes
 - Runtime model streaming and shader switching for 3D editing
 - Accurate PBR rendering
 */
@@ -106,6 +105,7 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
     VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
     VK_EXT_DYNAMIC_RENDERING_UNUSED_ATTACHMENTS_EXTENSION_NAME,
+    VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME,
 };
 
 #ifdef NDEBUG
@@ -155,7 +155,6 @@ public:
 
     Renderer(ale::Model& _model):_model(_model){
         // FIXME: For now, treats the first texture as the default tex for all meshes.
-        image = _model.textures[0];
     };
 
 
@@ -322,6 +321,47 @@ public:
 
             for (const ale::Primitive& p : mesh.primitives) {
                 // TODO: Bind materials here
+
+
+                auto& mat = _renderMaterials[p.materialID];
+
+                VkDescriptorBufferInfo mvpUboInfo {
+                    .buffer = uniformBuffers[currentFrame],
+                    .offset = 0,
+                    .range = sizeof(UniformBufferObject),
+                };
+
+                VkDescriptorImageInfo textureImageInfo{
+                    .sampler = mat.textureData.sampler,
+                    .imageView = mat.textureData.imageView,
+                    .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                };
+
+                std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+
+                descriptorWrites[0] = {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .dstSet = mat.descriptorSet,
+                    .dstBinding = 0,
+                    .dstArrayElement = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    .pBufferInfo = &mvpUboInfo,
+                };
+
+                descriptorWrites[1] = {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .dstSet = mat.descriptorSet,
+                    .dstBinding = 1,
+                    .dstArrayElement = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    .pImageInfo = &textureImageInfo,
+                };
+
+                // Push the descriptor set
+                vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+                _vkCmdPushDescriptorSetKHR(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 2, descriptorWrites.data());
                 vkCmdDrawIndexed(commandBuffer, p.size, 1, meshData.offset + p.offsetIdx, 0, 0);
             }
         }
@@ -398,7 +438,11 @@ private:
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
 
-    VkDescriptorSetLayout descriptorSetLayout;
+
+
+    PFN_vkCmdPushDescriptorSetKHR _vkCmdPushDescriptorSetKHR = nullptr;
+
+    VkDescriptorSetLayout _defaultDescriptorSetLayout;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
 
@@ -408,17 +452,25 @@ private:
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
 
-    VkImage textureImage;
-    VkDeviceMemory textureImageMemory;
-    VkImageView textureImageView;
-    VkSampler textureSampler;
 
+    struct TextureData {
+        ale::Image* texturePtr = nullptr;
+        VkImage image = VK_NULL_HANDLE;
+        VkDeviceMemory deviceMemory = VK_NULL_HANDLE;
+        VkImageView imageView = VK_NULL_HANDLE;
+        VkSampler sampler = VK_NULL_HANDLE;
+    };
+
+    struct RenderMaterial {
+        TextureData textureData;
+        VkDescriptorSet descriptorSet;
+    };
+
+
+    std::vector<TextureData> _modelTextures;
 
     std::stack<std::function<bool()>> destructorStack = {};
     ale::Model& _model;
-
-    // TODO: Render materials instead of raw textures
-    ale::Image image;
 
     glm::vec4 _posLight = glm::vec4(30.0, 40.0, 100.0, 1.0);
 
@@ -522,8 +574,13 @@ private:
     std::vector<void*> uniformBuffersMapped;
 
     VkDescriptorPool descriptorPool;
+
     VkDescriptorPool imguiPool;
     std::vector<VkDescriptorSet> descriptorSets;
+
+    std::vector<RenderMaterial> _renderMaterials;
+
+
 
     std::vector<VkCommandBuffer> commandBuffers;
 
@@ -571,19 +628,24 @@ private:
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
+
+        loadExtensionFunctionPointers();
+
         createSwapChain();
         createDescriptorSetLayout();
         createGraphicsPipeline();
         createCommandPool();
         createDepthResources();
-        createTextureImage();
-        createTextureImageView();
-        createTextureSampler();
+
+        loadRenderMaterials();
+
+
         createVertexBuffer();
         createIndexBuffer();
         createUniformBuffers();
+
         createDescriptorPool();
-        createDescriptorSets();
+
         createCommandBuffers();
         createSyncObjects();
     }
@@ -773,6 +835,19 @@ private:
         });
     }
 
+    void loadExtensionFunctionPointers() {
+
+        //NOTE: vkCmdPushDescriptorSetKHR is yet to become a part of the standard
+        // For now it comes as a function pointer
+        _vkCmdPushDescriptorSetKHR =
+            (PFN_vkCmdPushDescriptorSetKHR)vkGetDeviceProcAddr(vkb_device, "vkCmdPushDescriptorSetKHR");
+
+        if (_vkCmdPushDescriptorSetKHR == nullptr) {
+            throw std::runtime_error("Failed to load vkCmdPushDescriptorSetKHR");
+        }
+
+    }
+
     void createSwapChain() {
         vkb::SwapchainBuilder swapchain_builder{ vkb_device };
         auto swap_ret = swapchain_builder
@@ -814,12 +889,15 @@ private:
 
         auto layoutInfo = vk::getDescriptorSetLayout(layoutBindings);
 
-        if (vkCreateDescriptorSetLayout(vkb_device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+        layoutInfo.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
+
+
+        if (vkCreateDescriptorSetLayout(vkb_device, &layoutInfo, nullptr, &_defaultDescriptorSetLayout) != VK_SUCCESS) {
             throw std::runtime_error("failed to create descriptor set layout!");
         }
 
         destructorStack.push([this](){
-            vkDestroyDescriptorSetLayout(vkb_device, descriptorSetLayout, nullptr);
+            vkDestroyDescriptorSetLayout(vkb_device, _defaultDescriptorSetLayout, nullptr);
             return false;
         });
 
@@ -863,7 +941,7 @@ private:
         };
 
         auto dynamicState = vk::getPipelineDynamicState(dynamicStates);
-        auto pipelineLayoutInfo = vk::getPipelineLayout(descriptorSetLayout, pushConstantRanges);
+        auto pipelineLayoutInfo = vk::getPipelineLayout(_defaultDescriptorSetLayout, pushConstantRanges);
 
         if (vkCreatePipelineLayout(vkb_device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create pipeline layout!");
@@ -959,9 +1037,51 @@ private:
         return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
     }
 
-    void createTextureImage() {
+    void loadRenderMaterials() {
 
-        VkDeviceSize imageSize = image.w * image.h * 4;
+        _modelTextures.resize(_model.textures.size());
+
+        // Load textures. Assume all textures are needed
+        for(int i = 0; i < _model.textures.size(); ++i) {
+            auto& texData = _modelTextures[i];
+            ale::Image& texImage = _model.textures[i];
+
+            texData.texturePtr = &texImage;
+            createTextureImage(texData);
+            texData.imageView = createImageView(texData.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+            createTextureSampler(texData);
+        }
+
+        destructorStack.push([this](){
+            for (auto& texData : _modelTextures) {
+                vkDestroySampler(vkb_device, texData.sampler, nullptr);
+                vkDestroyImageView(vkb_device, texData.imageView, nullptr);
+
+                vkDestroyImage(vkb_device, texData.image, nullptr);
+                vkFreeMemory(vkb_device, texData.deviceMemory, nullptr);
+            }
+            return false;
+        });
+
+        // Bind textures to materials
+        _renderMaterials.resize(_model.materials.size());
+        for(int i = 0 ; i < _model.materials.size(); ++i) {
+            ale::Material& modelMat  = _model.materials[i];
+            RenderMaterial& renderMat = _renderMaterials[i];
+            if (modelMat.baseColorTexIdx != -1) {
+                renderMat.textureData = _modelTextures[modelMat.baseColorTexIdx];
+            } else {
+                renderMat.textureData = _modelTextures[0];
+            }
+        }
+    }
+
+
+    void createTextureImage(TextureData& _textureData) {
+        auto& _image = _textureData.texturePtr;
+
+
+        VkDeviceSize imageSize = _image->w * _image->h * 4;
 
         VkBuffer stagingBuffer;
         VkDeviceMemory stagingBufferMemory;
@@ -973,35 +1093,33 @@ private:
         // TODO: store this pointer for later use
         void* data;
         vkMapMemory(vkb_device, stagingBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
-            memcpy(data, &image.data.at(0), static_cast<size_t>(imageSize));
+            memcpy(data, &_image->data.at(0), static_cast<size_t>(imageSize));
         vkUnmapMemory(vkb_device, stagingBufferMemory);
 
-        createImage(image.w, image.h,
+        createImage(_image->w, _image->h,
                     VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
                     VK_IMAGE_USAGE_TRANSFER_DST_BIT |
                     VK_IMAGE_USAGE_SAMPLED_BIT,
-                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, _textureData.image, _textureData.deviceMemory);
 
-        transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-            copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(image.w), static_cast<uint32_t>(image.h));
-        transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        transitionImageLayout(_textureData.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+            copyBufferToImage(stagingBuffer, _textureData.image, static_cast<uint32_t>(_image->w), static_cast<uint32_t>(_image->h));
+        transitionImageLayout(_textureData.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
         vkDestroyBuffer(vkb_device, stagingBuffer, nullptr);
         vkFreeMemory(vkb_device, stagingBufferMemory, nullptr);
 
-        destructorStack.push([this](){
-            vkDestroyImage(vkb_device, textureImage, nullptr);
-            vkFreeMemory(vkb_device, textureImageMemory, nullptr);
-            return false;
-        });
+
+        /* destructorStack.push([this](){ */
+        /*     vkDestroyImage(vkb_device, _colorTextureData.image, nullptr); */
+        /*     vkFreeMemory(vkb_device, _colorTextureData.deviceMemory, nullptr); */
+        /*     return false; */
+        /* }); */
 
     }
 
-    void createTextureImageView() {
-        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
-    }
+    void createTextureSampler(TextureData& _textureData) {
 
-    void createTextureSampler() {
         VkPhysicalDeviceProperties2 props{ .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2 };
         vkGetPhysicalDeviceProperties2(vkb_physicalDevice, &props);
 
@@ -1024,16 +1142,19 @@ private:
             .unnormalizedCoordinates = VK_FALSE,
         };
 
-        if (vkCreateSampler(vkb_device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+
+
+        if (vkCreateSampler(vkb_device, &samplerInfo, nullptr, &_textureData.sampler) != VK_SUCCESS) {
             throw std::runtime_error("failed to create texture sampler!");
         }
 
 
-        destructorStack.push([this](){
-            vkDestroySampler(vkb_device, textureSampler, nullptr);
-            vkDestroyImageView(vkb_device, textureImageView, nullptr);
-            return false;
-        });
+
+        /* destructorStack.push([this](){ */
+        /*     vkDestroySampler(vkb_device, _colorTextureData.sampler, nullptr); */
+        /*     vkDestroyImageView(vkb_device, _colorTextureData.imageView, nullptr); */
+        /*     return false; */
+        /* }); */
     }
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
@@ -1335,6 +1456,7 @@ private:
         });
     }
 
+    // TODO: Make this flexible
     void createDescriptorPool() {
         std::array<VkDescriptorPoolSize, 2> poolSizes{};
         // First UBO is for MVP + Light position
@@ -1362,60 +1484,6 @@ private:
             return false;
         });
 
-    }
-
-    void createDescriptorSets() {
-        std::vector<VkDescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, descriptorSetLayout);
-        VkDescriptorSetAllocateInfo allocInfo{
-            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-            .descriptorPool = descriptorPool,
-            .descriptorSetCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT),
-            .pSetLayouts = layouts.data(),
-        };
-
-        descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-        if (vkAllocateDescriptorSets(vkb_device, &allocInfo, descriptorSets.data()) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate descriptor sets!");
-        }
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            VkDescriptorBufferInfo mvpUboInfo {
-                .buffer = uniformBuffers[i],
-                .offset = 0,
-                .range = sizeof(UniformBufferObject),
-            };
-
-            VkDescriptorImageInfo textureImageInfo{
-                .sampler = textureSampler,
-                .imageView = textureImageView,
-                .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-            };
-
-
-            std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
-            descriptorWrites[0] = {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = descriptorSets[i],
-                .dstBinding = 0,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                .pBufferInfo = &mvpUboInfo,
-            };
-
-            descriptorWrites[1] = {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = descriptorSets[i],
-                .dstBinding = 1,
-                .dstArrayElement = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .pImageInfo = &textureImageInfo,
-            };
-
-            vkUpdateDescriptorSets(vkb_device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-        }
     }
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
@@ -1618,10 +1686,7 @@ private:
             vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
             vkCmdBindIndexBuffer(commandBuffer, _idxBuffer.vkBuffer, 0, VK_INDEX_TYPE_UINT32);
 
-            vkCmdBindDescriptorSets(commandBuffer,
-                                    VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                    pipelineLayout, 0, 1,
-                                    &descriptorSets[currentFrame], 0, nullptr);
+            /* vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[currentFrame], 0, nullptr); */
             renderNodes(commandBuffer, _model);
 
         vkCmdEndRendering(commandBuffer);
