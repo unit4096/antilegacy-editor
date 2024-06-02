@@ -82,6 +82,14 @@ struct Image {
     std::vector<unsigned char> data;
 };
 
+struct Material {
+    int baseColorTexIdx{-1};
+    int normalTexIdx{-1};
+    int emissiveTexIdx{-1};
+    int occlusionTexIdx{-1};
+    //TODO: Extend material with more pbr properties
+};
+
 
 // Primitives bind materials to parts of the mesh
 struct Primitive {
@@ -126,6 +134,8 @@ struct Model {
     std::vector<Node> nodes;
     std::vector<int> rootNodes;
     std::vector<geo::REMesh> reMeshes;
+
+    std::vector<Material> materials;
 
     void applyNodeParentTransforms(int nodeID, glm::mat4& result) const {
         auto n = nodes[nodeID];
