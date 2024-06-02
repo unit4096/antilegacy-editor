@@ -323,6 +323,33 @@ int Loader::_loadTexturesGLTF(const tinygltf::Model& in_model, ale::Model& out_m
     return 0;
 }
 
+
+int Loader::_loadMaterialsGLTF(const tinygltf::Model& in_model, ale::Model& out_model) {
+
+
+
+    if (in_model.materials.size() <= 0) {
+        trc::log("No materials found!", trc::WARNING);
+        return -1;
+    }
+
+    for (const tinygltf::Material& mat: in_model.materials) {
+        Material out_mat {};
+
+        if(mat.values.contains("baseColorTexture")) {
+            out_mat.baseColorTexIdx = mat.values.at("baseColorTexture").TextureIndex();
+        }
+
+        out_mat.normalTexIdx = mat.normalTexture.index;
+        out_mat.occlusionTexIdx = mat.occlusionTexture.index;
+        out_mat.emissiveTexIdx = mat.emissiveTexture.index;
+
+        out_model.materials.push_back(out_mat);
+
+    }
+    return 0;
+}
+
 // Loads data from a tinygltf Texture to the inner Image format
 int Loader::_loadTextureGLTF(const tinygltf::Image& in_texture, ale::Image& out_texture) {
 
@@ -484,6 +511,8 @@ int Loader::loadModelGLTF(const std::string model_path,
         out_model.textures.push_back(fallbackTexture);
 
     }
+
+    _loadMaterialsGLTF(in_model, out_model);
 
     // Multithreading ahead
 
