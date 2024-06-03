@@ -509,7 +509,6 @@ int Loader::loadModelGLTF(const std::string model_path,
         ale::Image fallbackTexture;
         Loader::loadTexture(_default_checker_texture_path.data(), fallbackTexture);
         out_model.textures.push_back(fallbackTexture);
-
     }
 
     _loadMaterialsGLTF(in_model, out_model);
@@ -520,43 +519,52 @@ int Loader::loadModelGLTF(const std::string model_path,
     // than just spawning new threads.
     // For this task though, context switching overhead is not a big problem
 
-    std::vector<std::future<void>> futures;
-    // Temporary array of meshes that exists to maintain their
-    // indexing order
-    std::vector<ale::ViewMesh> out_meshes;
-    out_meshes.resize(in_model.meshes.size());
+    trc::log("Populating ViewMeshes");
+    std::vector<std::future<int>> viewMeshFutures;
+    out_model.viewMeshes.resize(in_model.meshes.size());
 
-    auto load = [&](int i) {
-        out_meshes[i].id = i;
-        _loadMeshGLTF(in_model, in_model.meshes[i], out_meshes[i]);
+    auto loadViewMesh = [&](int i) {
+        out_model.viewMeshes[i].id = i;
+        return _loadMeshGLTF(in_model, in_model.meshes[i], out_model.viewMeshes[i]);
     };
 
-    // Run each _loadMeshGLTF on a separate thread
-    // to make loading multiple meshes FAST
-    // Use explicit indexing to load them in order
     for (int i = 0; i < in_model.meshes.size(); i++) {
-        futures.push_back(std::async(std::launch::async, load, i));
+        viewMeshFutures.push_back(std::async(std::launch::async, loadViewMesh, i));
     }
 
-    // Wait for threads
-    for (auto& fut : futures) {
+    for (auto& fut : viewMeshFutures) {
         fut.wait();
+        if (fut.get() != 0) {
+            return -1;
+        }
     }
+    trc::log("ViewMeshes loaded");
 
-    // Load meshes
-    for (auto& mesh: out_meshes) {
-        out_model.viewMeshes.push_back(mesh);
-    }
 
     _loadNodesGLTF(in_model, out_model);
 
-    out_model.reMeshes.reserve(out_model.viewMeshes.size());
+
     trc::log("Populating REMeshes");
-    for(size_t i = 0; i < out_model.viewMeshes.size(); i++) {
-        geo::REMesh r;
-        out_model.reMeshes.push_back(r);
-        populateREMesh(out_model.viewMeshes[i], out_model.reMeshes[i]);
+    out_model.reMeshes.resize(out_model.viewMeshes.size());
+
+    std::vector<std::future<int>> reMeshFutures;
+
+    auto loadREMesh = [&](int i) {
+        out_model.reMeshes[i].id = i;
+        return populateREMesh(out_model.viewMeshes[i], out_model.reMeshes[i]);
+    };
+
+    for (int i = 0; i < out_model.reMeshes.size(); i++) {
+        viewMeshFutures.push_back(std::async(std::launch::async, loadREMesh, i));
     }
+
+    for (auto& fut : reMeshFutures) {
+        fut.wait();
+        if (fut.get() != 0) {
+            return -1;
+        }
+    }
+    trc::log("REMeshes loaded");
 
     trc::log("Finished loading model");
     return 0;
@@ -570,7 +578,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     This function is more of a test chamber for the REMesh data structure.
     I do not recommend to use it in a product code.
 */
-bool Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
+int Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
     auto numVerts = _inpMesh.vertices.size();
 
     // FIXME: Use growing storage to avoid use of excess memory
