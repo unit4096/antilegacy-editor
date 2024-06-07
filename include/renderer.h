@@ -863,11 +863,6 @@ private:
 
         swapChainImageFormat =  vkb_swapchain.image_format;
         swapChainExtent = vkb_swapchain.extent;
-
-        // destructorStack.push([this](){
-        //     vkb::destroy_swapchain(vkb_swapchain);
-        //     return false;
-        // });
     }
 
 
@@ -1968,7 +1963,6 @@ private:
 
     void updateCameraData() {
         // NOTE: for now the "up" axis is Y
-        const glm::vec3 GLOBAL_UP = glm::vec3(0,1,0);
         auto yawPitch = mainCamera->getYawPitch();
         auto camPos = mainCamera->getPos();
 
@@ -1978,24 +1972,19 @@ private:
                                 glm::radians(1.5f),
                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
-        // View matrix
-        if (mainCamera->mode == CameraMode::FREE) {
-            glm::mat4x4 view(1.0f);
+        glm::mat4x4 view(1.0f);
 
-            float yawAng = glm::radians(yawPitch.x);
+        float yawAng = glm::radians(yawPitch.x);
 
-            // Generate pitch vector based on the yaw angle
-            glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
-            float pitchAng = glm::radians(yawPitch.y);
+        // Generate pitch vector based on the yaw angle
+        glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
+        float pitchAng = glm::radians(yawPitch.y);
 
-            view = glm::rotate(view, yawAng, GLOBAL_UP);
-            view = glm::rotate(view, pitchAng, pitchVec);
-            view = glm::translate(view, -camPos);
+        view = glm::rotate(view, yawAng, mainCamera->getGlobalUp());
+        view = glm::rotate(view, pitchAng, pitchVec);
+        view = glm::translate(view, -camPos);
 
-            ubo.view = view;
-        } else {
-            ubo.view = glm::lookAt(camPos, mainCamera->getTarget(), GLOBAL_UP);
-        }
+        ubo.view = view;
 
         // Porjection matrix
         ubo.proj = glm::perspective(glm::radians(mainCamera->getFov()),
