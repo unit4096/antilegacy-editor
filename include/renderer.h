@@ -1966,11 +1966,8 @@ private:
         auto yawPitch = mainCamera->getYawPitch();
         auto camPos = mainCamera->getPos();
 
-        // TODO: get this data from the node transform matrix
-        // Model matrix
-        ubo.model =  glm::rotate(glm::mat4(1.0f),
-                                glm::radians(1.5f),
-                                glm::vec3(1.0f, 0.0f, 0.0f));
+        ubo.model =  glm::rotate(glm::mat4(1.0f), glm::radians(0.0f),
+                                 glm::vec3(1.0f, 0.0f, 0.0f));
 
         glm::mat4x4 view(1.0f);
 
