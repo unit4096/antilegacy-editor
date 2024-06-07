@@ -418,7 +418,7 @@ private:
 
     ale::sp<Camera> mainCamera = std::make_shared<Camera>();
 
-    UniformBufferObject ubo{};
+    UniformBufferObject ubo{.model = glm::mat4(1)};
 
     // GLFW variables
 
@@ -1962,25 +1962,18 @@ private:
     }
 
     void updateCameraData() {
-        // NOTE: for now the "up" axis is Y
         auto yawPitch = mainCamera->getYawPitch();
         auto camPos = mainCamera->getPos();
-
-        ubo.model =  glm::rotate(glm::mat4(1.0f), glm::radians(0.0f),
-                                 glm::vec3(1.0f, 0.0f, 0.0f));
-
-        glm::mat4x4 view(1.0f);
-
         float yawAng = glm::radians(yawPitch.x);
 
         // Generate pitch vector based on the yaw angle
         glm::vec3 pitchVec = glm::vec3(glm::cos(yawAng), 0.0f, glm::sin(yawAng));
         float pitchAng = glm::radians(yawPitch.y);
 
+        glm::mat4x4 view(1.0f);
         view = glm::rotate(view, yawAng, mainCamera->getGlobalUp());
         view = glm::rotate(view, pitchAng, pitchVec);
         view = glm::translate(view, -camPos);
-
         ubo.view = view;
 
         // Porjection matrix
