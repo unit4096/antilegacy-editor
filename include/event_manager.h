@@ -45,8 +45,8 @@ public:
         _inputManager->bindFunction(inp::CAMERA_MOVE_B, moveB, true);
         _inputManager->bindFunction(inp::CAMERA_MOVE_L, moveL, true);
         _inputManager->bindFunction(inp::CAMERA_MOVE_R, moveR, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_U, moveY, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_D,moveNY, true);
+        _inputManager->bindFunction(inp::CAMERA_MOVE_U, moveU, true);
+        _inputManager->bindFunction(inp::CAMERA_MOVE_D,moveD, true);
 
         _inputManager->bindFunction(inp::ADD_SELECT,raycast, false);
         _inputManager->bindFunction(inp::RMV_SELECT_ALL,flushBuffer, false);
@@ -104,16 +104,13 @@ private:
     sp<ale::InputManager> _inputManager;
 
 
-    // Movement along global Y aixs
-    std::function<void()> moveY  = [&]() {_renderer->getCurrentCamera()->movePosGlobal( glm::vec3(0,1,0));};
-    std::function<void()> moveNY = [&]() {_renderer->getCurrentCamera()->movePosGlobal(glm::vec3(0,-1,0));};
-
-
     // WASD free camera movement
     std::function<void()> moveF = [&]() { _renderer->getCurrentCamera()->moveForwardLocal();};
     std::function<void()> moveB = [&]() {_renderer->getCurrentCamera()->moveBackwardLocal();};
     std::function<void()> moveL = [&]() {    _renderer->getCurrentCamera()->moveLeftLocal();};
     std::function<void()> moveR = [&]() {   _renderer->getCurrentCamera()->moveRightLocal();};
+    std::function<void()> moveU  = [&]() {     _renderer->getCurrentCamera()->moveUpLocal();};
+    std::function<void()> moveD = [&]() {    _renderer->getCurrentCamera()->moveDownLocal();};
 
     // FIXME: Without proper architecture this will get ugly pretty quickly
     std::function<void()> raycast = [&]() {
