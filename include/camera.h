@@ -61,13 +61,19 @@ public:
     Camera();
     ~Camera();
 
-    // Generic data set (use with utmost care)
 
+
+    // Generic data set (use with utmost care)
     void setData(CameraData data);
     CameraData getData();
 
-    // View data
 
+
+    // View data
+    
+    glm::vec3 getGlobalUp();
+    glm::vec3 getGlobalForward();
+    glm::vec3 getGlobalRight();
     float getFov();
     void setFov(float fov);
     float getPlaneFar();
@@ -83,7 +89,7 @@ public:
     void setOrientation(float yaw, float pitch);
     void setOrientation(glm::quat orientation);
     void setOrientation(glm::mat4 rotatioh);
-    // FIXME: custom data types of this sort are no good
+
     glm::vec2 getYawPitch();
     glm::quat getOrientation();
     // Normalized vector with the direction of the camera
@@ -107,6 +113,10 @@ public:
     void moveBackwardLocal();
     void moveLeftLocal();
     void moveRightLocal();
+
+    void moveUpLocal();
+    void moveDownLocal();
+
     void movePosGlobal(const glm::vec3 movementVector);
 
     void setTarget(glm::vec3 target);

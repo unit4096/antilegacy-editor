@@ -57,6 +57,17 @@ void Camera::setData(CameraData data) {
 
 // VIEWPORT DATA
 
+glm::vec3 Camera::getGlobalUp() {
+    return GLOBAL_UP;
+}
+
+glm::vec3 Camera::getGlobalForward() {
+    return GLOBAL_FORWARD;
+}
+
+glm::vec3 Camera::getGlobalRight() {
+    return GLOBAL_RIGHT;
+}
 float Camera::getFov() {
     return _data.fov;
 }
@@ -107,6 +118,16 @@ glm::vec2 Camera::getYawPitch() {
     return {_data.yaw,_data.pitch};
 }
 
+// Get vec3 pointing in the camera direction
+glm::vec3 Camera::getForwardVec() {
+    return _data.front;
+}
+
+// Get camera orientation quat in global space
+glm::quat Camera::getOrientation() {
+    return _data.transform.rot;
+}
+
 // Set the orientation quat using yaw and pitch variables in degrees
 void Camera::setOrientation(float yaw, float pitch) {
     _data.yaw = yaw;
@@ -128,24 +149,17 @@ void Camera::setOrientation(float yaw, float pitch) {
     _setOrientationInternal(glm::quat_cast(mat));
 }
 
-// Get vec3 pointing in the camera direction
-glm::vec3 Camera::getForwardVec() {
-    return _data.front;
-}
-
-// Get camera orientation quat in global space
-glm::quat Camera::getOrientation() {
-    return _data.transform.rot;
-}
 
 // Some internal orientation functions
 
 void Camera::setOrientation(glm::mat4 rotation) {
     _setOrientationInternal(rotation);
+     _setYawPitchInternal(rotation);
 }
 
 void Camera::setOrientation(glm::quat rotation) {
     _setOrientationInternal(glm::mat4_cast(rotation));
+     _setYawPitchInternal(rotation);
 }
 
 void Camera::_setOrientationInternal(glm::quat newRotation) {
@@ -202,6 +216,14 @@ void Camera::moveLeftLocal() {
 // Moves the camera right from the forward direction
 void Camera::moveRightLocal() {
     _data.transform.pos += _data.speed * (_delta) * glm::normalize(glm::cross(_data.front, _data.up));
+}
+
+void Camera::moveUpLocal() {
+    _data.transform.pos +=  _data.up * _data.speed * (_delta);
+}
+
+void Camera::moveDownLocal() {
+    _data.transform.pos +=  _data.up * -_data.speed * (_delta);
 }
 
 // Moves the camera in the direction of the specified vector
