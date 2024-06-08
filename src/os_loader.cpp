@@ -19,7 +19,7 @@ using namespace ale;
 
 namespace trc = ale::Tracer;
 
-const bool COMPRESS_VERTEX_DUPLICATES = false;
+const bool COMPRESS_VERTEX_DUPLICATES = true;
 
 Loader::Loader() { }
 
@@ -555,7 +555,7 @@ int Loader::loadModelGLTF(const std::string model_path,
     };
 
     for (int i = 0; i < out_model.reMeshes.size(); i++) {
-        viewMeshFutures.push_back(std::async(std::launch::async, loadREMesh, i));
+        reMeshFutures.push_back(std::async(std::launch::async, loadREMesh, i));
     }
 
     for (auto& fut : reMeshFutures) {

@@ -38,7 +38,7 @@ public:
     bool cmdOptionExists(const std::string &option) const;
     static bool isFileValid(std::string file_path);
     static std::vector<char> getFileContent(const std::string& file_path);
-    bool populateREMesh(ViewMesh &_inpMesh, geo::REMesh &_outMesh);
+    int populateREMesh(ViewMesh &_inpMesh, geo::REMesh &_outMesh);
 
 private:
     std::vector<std::string> commandLineTokens;
