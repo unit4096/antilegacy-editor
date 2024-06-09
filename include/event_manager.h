@@ -46,7 +46,7 @@ public:
         _inputManager->bindFunction(inp::CAMERA_MOVE_L, moveL, true);
         _inputManager->bindFunction(inp::CAMERA_MOVE_R, moveR, true);
         _inputManager->bindFunction(inp::CAMERA_MOVE_U, moveU, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_D,moveD, true);
+        _inputManager->bindFunction(inp::CAMERA_MOVE_D, moveD, true);
 
         _inputManager->bindFunction(inp::ADD_SELECT,raycast, false);
         _inputManager->bindFunction(inp::RMV_SELECT_ALL,flushBuffer, false);
@@ -138,7 +138,7 @@ private:
                 break;
 
             case ale::EDITOR_MODE_MAX:
-                trc::log("Enum size passed as an argument!");
+                trc::log("Enum size passed as an argument!", trc::ERROR);
                 break;
         }
 
@@ -249,7 +249,6 @@ private:
         msg.append(" Distance: " + std::to_string(distance));
         trc::log(msg);
     };
-
 };
 
 } // namespace ale
