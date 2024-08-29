@@ -95,7 +95,8 @@ public:
     void init(GLFWwindow *window);
     bool executeActiveKeyActions();
     bool executeActiveMouseAcitons();
-    void bindFunction(InputAction _action, std::function<void()> _function, bool isContinuous = false);
+    void setActionBinding(InputAction _action, std::function<void()> _function, bool isContinuous = false);
+    void clearActionBinding(InputAction _action);
     bool isActionActive(InputAction _action);
     glm::highp_vec2 getLastDeltaMouseOffset();
     glm::highp_vec2 getMousePos();
