@@ -10,7 +10,6 @@ responsibilities. Think about better design patterns
 #ifndef ALE_EVENT_MANAGER
 #define ALE_EVENT_MANAGER
 
-
 //ext
 #include <functional>
 
@@ -41,17 +40,17 @@ public:
         _inputManager = inputManager;
 
         // Bind lambda functions to keyboard actions
-        _inputManager->bindFunction(inp::CAMERA_MOVE_F, moveF, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_B, moveB, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_L, moveL, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_R, moveR, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_U, moveU, true);
-        _inputManager->bindFunction(inp::CAMERA_MOVE_D, moveD, true);
+        _inputManager->setActionBinding(inp::CAMERA_MOVE_F, moveF, true);
+        _inputManager->setActionBinding(inp::CAMERA_MOVE_B, moveB, true);
+        _inputManager->setActionBinding(inp::CAMERA_MOVE_L, moveL, true);
+        _inputManager->setActionBinding(inp::CAMERA_MOVE_R, moveR, true);
+        _inputManager->setActionBinding(inp::CAMERA_MOVE_U, moveU, true);
+        _inputManager->setActionBinding(inp::CAMERA_MOVE_D, moveD, true);
 
-        _inputManager->bindFunction(inp::ADD_SELECT,raycast, false);
-        _inputManager->bindFunction(inp::RMV_SELECT_ALL,flushBuffer, false);
-        _inputManager->bindFunction(inp::CYCLE_MODE_EDITOR,changeModeEditor, false);
-        _inputManager->bindFunction(inp::CYCLE_MODE_OPERATION,changeModeOperation, false);
+        _inputManager->setActionBinding(inp::ADD_SELECT,raycast, false);
+        _inputManager->setActionBinding(inp::RMV_SELECT_ALL,flushBuffer, false);
+        _inputManager->setActionBinding(inp::CYCLE_MODE_EDITOR,changeModeEditor, false);
+        _inputManager->setActionBinding(inp::CYCLE_MODE_OPERATION,changeModeOperation, false);
     }
 
 void frameEventCallback() {
@@ -75,6 +74,7 @@ void frameEventCallback() {
 
     }
 
+
     for(auto pair: _state->uiDrawQueue) {
         ale::UI_DRAW_TYPE type = pair.second;
         auto vec = pair.first;
@@ -88,17 +88,43 @@ void frameEventCallback() {
         ui::drawVectorOfPrimitives(vec, type, pvm);
     }
 
+
     std::string msg = "selected node: " + (_state->currentModelNode == nullptr
                       ? "NONE"
                       : _editorState->currentModel->nodes[_state->currentModelNode->id].name);
     msg.append("\neditor mode: " + ale::GEditorMode_Names[_state->editorMode]);
     msg.append("\ntransfor mode: " + ale::GTransformMode_Names[_state->transformMode]);
     msg.append("\nspace mode: " + ale::GSpaceMode_Names[_state->spaceMode]);
+
+
+    auto & _model = _state->currentModel;
+    msg.append("Model info:\n");
+    msg.append("  VM count: " + std::to_string(_model->viewMeshes.size()));
+    msg.append("  RM count: " + std::to_string(_model->reMeshes.size()));
+    msg.append("\n");
+
+    auto & _viewmesh = _model->viewMeshes[0];
+    msg.append("First View Mesh Sample:\n");
+    msg.append("  V count: " + std::to_string(_viewmesh.vertices.size()));
+    msg.append("  i count: " + std::to_string(_viewmesh.vertices.size()));
+    msg.append("\n");
+
+    auto & _remesh = _model->reMeshes[0];
+    msg.append("First RE Mesh Sample:\n");
+    msg.append("  V count: " + std::to_string(_remesh.verts.size()));
     ui::drawTextBG({100,100}, msg);
 
 };
 
 private:
+    struct InputBindingData {
+
+    };
+
+    struct InputMode {
+
+    };
+
     sp<ale::Renderer> _renderer;
     sp<ale::GEditorState> _editorState;
     sp<ale::InputManager> _inputManager;
