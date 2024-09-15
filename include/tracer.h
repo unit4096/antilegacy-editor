@@ -109,6 +109,21 @@ Raw& operator<< (Raw &s, const T &x) {
   return s;
 }
 
+
+template<typename T>
+concept Printable = requires(T value) {
+    { std::cout << value } -> std::same_as<std::ostream&>;
+};
+
+
+template <Printable T>
+[[maybe_unused]] static void LogVec(std::vector<T> vec) {
+    for (auto i : vec) {
+        std::cout << i << " ";
+    }
+    std::cout << "\n";
+}
+
 // Set bool value for a log level (enabled when `true`)
 [[maybe_unused]] static void SetLogLevel(LogLevel lvl, bool isEnabled) {
 
