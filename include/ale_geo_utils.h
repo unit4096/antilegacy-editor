@@ -97,8 +97,10 @@ static void addLoopToEdge(geo::Edge* e, geo::Loop* l) {
         return;
     }
 
-    auto _l = e->loop;
+    auto* _l = e->loop;
     // e->loop loops to itself
+    assert(_l);
+
     if (_l->radial_next == _l) {
         // Make e->loop to loop back to l
         l->radial_next = _l;
@@ -108,7 +110,6 @@ static void addLoopToEdge(geo::Edge* e, geo::Loop* l) {
         return;
     }
     // There is a radial cycle and it is not just one loop
-
     // Insert l between e->loop and its radial_next
     l->radial_prev = _l;
     l->radial_next = _l->radial_next;

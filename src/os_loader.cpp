@@ -19,7 +19,7 @@ using namespace ale;
 
 namespace trc = ale::Tracer;
 
-const bool COMPRESS_VERTEX_DUPLICATES = true;
+const bool COMPRESS_VERTEX_DUPLICATES = false;
 
 Loader::Loader() { }
 
@@ -677,6 +677,7 @@ int Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         for (size_t j = 0; j < 3; j++) {
 			int next = (j + 1) % 3;
             geo::Edge e;
+            e.loop = nullptr;
             e.v1 = verts[j];
             e.v2 = verts[next];
 
