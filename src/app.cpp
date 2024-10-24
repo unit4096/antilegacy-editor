@@ -108,7 +108,9 @@ int App::run() {
             deltaTime = duration_cast<std::chrono::duration<double>>(thisFrame - lastFrame);
             lastFrame = thisFrame;
 
-            renderer->getCurrentCamera()->setDelta(deltaTime.count() * 100 / 8);
+            sp<Camera> _cam = renderer->getCurrentCamera();
+
+            _cam->setDelta(deltaTime.count() * 100 / 8);
 
             // polling events, callbacks fired
             glfwPollEvents();
@@ -118,9 +120,11 @@ int App::run() {
             // Mouse camera input
             input->executeActiveMouseAcitons();
             auto mouseMovement = input->getLastDeltaMouseOffset();
-            auto camYawPitch = renderer->getCurrentCamera()->getYawPitch();
-            camYawPitch-= mouseMovement * renderer->getCurrentCamera()->getSensitivity();
-            renderer->getCurrentCamera()->setOrientation(camYawPitch.x,camYawPitch.y);
+            auto camYawPitch = _cam->getYawPitch();
+
+            camYawPitch-= mouseMovement * _cam->getSensitivity();
+
+            _cam->setOrientation(camYawPitch.x,camYawPitch.y);
 
 
             std::function<void()> perFrameUIEvents = [&] () {
