@@ -50,6 +50,8 @@ struct Vert {
     // An edge in the disk loop
     Edge *edge;
     size_t id;
+    size_t viewId;
+
 
     // Compares vertices. Only position is important for RE Vertices
     bool operator==(const Vert& other) const {

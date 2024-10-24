@@ -618,6 +618,7 @@ int Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
         v.pos = _v.pos;
         v.color = _v.color;
         v.texCoord = _v.texCoord;
+        v.viewId = _inpMesh.indices[i];
     };
 
     auto bindLoop = [&](geo::Loop* l,
@@ -659,6 +660,7 @@ int Loader::populateREMesh(ViewMesh& _inpMesh, geo::REMesh& _outMesh ) {
 
         for (size_t j = 0; j < 3; j++) {
             geo::Vert v;
+            v.id = -1;
 
             bindVert(v, i + j);
             if (uniqueVerts.contains(v)) {

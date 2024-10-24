@@ -213,14 +213,18 @@ public:
                 auto& rmv = rms[i].verts;
 
                 for (int j = 0; j < rmv.size(); j++ ) {
-                    vmv[j].pos = rmv[j]->pos;
+                    auto newpos = rmv[j]->pos;
+                    /* newpos.x += 100; */
+                    auto id = rmv[j]->viewId;
+                    vmv[id].pos = newpos;
                 }
             }
         };
         updateREMesh();
 
 
-        auto updateAllVertices = [this]() {
+
+        auto updateDirtyVertices = [this]() {
             auto& av = this->_allVertices;
             auto& vms = this->_model.viewMeshes;
 
@@ -234,9 +238,7 @@ public:
             }
 
         };
-
-
-        /* updateAllVertices(); */
+        updateDirtyVertices();
 
         // Draw UI
         drawImGui(uiEvents);
@@ -1571,7 +1573,7 @@ private:
 
 
         memcpy(_vertStagingBuffer.handle, _allVertices.data(), _vertBuffer.size);
-        /* copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size); */
+        copyBuffer(_vertStagingBuffer.vkBuffer, _vertBuffer.vkBuffer, _vertBuffer.size);
 
 
         if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
