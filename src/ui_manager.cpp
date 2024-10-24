@@ -4,7 +4,6 @@ using namespace ale;
 
 const float VIEW_LIMIT = 0.01f;
 
-
 // Flips passed projection
 void UIManager::flipProjection(glm::mat4& proj) {
         proj *=  glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
@@ -16,6 +15,7 @@ glm::mat4 UIManager::getFlippedProjection(const glm::mat4& proj) {
         return proj * glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, -1.0f, 1.0f));
 }
 
+
 // Returns a flipped version of the projection
 ale::MVP UIManager::getMVPWithFlippedProjection(const MVP& mvp) {
         return {
@@ -24,6 +24,7 @@ ale::MVP UIManager::getMVPWithFlippedProjection(const MVP& mvp) {
             .p = getFlippedProjection(mvp.p),
         };
 }
+
 
 void UIManager::drawWorldSpaceLine(const glm::vec3& pos1, const glm::vec3& pos2,
                                    const MVP& mvp) {
@@ -297,14 +298,12 @@ void UIManager::drawDefaultWindowUI(sp<ale::Camera> cam,
     ale::UIManager::drawNodeRootsUI(model, pvm);
     ui::drawMenuBarUI();
 
-
     ImGui::Begin("View configs");
     ImGui::Text("Camera properties");
     ui::CameraControlWidgetUI(cam);
 
     ImGui::Text(" %.3f ms/frame (%.1f FPS). FPS CAP ENABLED",
                 1000.0f / _io.Framerate, _io.Framerate);
-
     ImGui::End();
 }
 
@@ -351,10 +350,10 @@ void UIManager::drawTextFG(const glm::vec2& pos, std::string name) {
                     name.data());
 }
 
+
 void UIManager::drawTextBG(const glm::vec2& pos, std::string name) {
                 auto* bg = ImGui::GetBackgroundDrawList();
                 bg->AddText(ImVec2(pos.x,pos.y),
                     ImColor(50.0f,45.0f,255.0f,255.0f),
                     name.data());
 }
-
